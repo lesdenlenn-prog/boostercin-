@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boosters ciné</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12070b; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
+  --gold:#e8c46a; --gold-hi:#fff2c2; --gold-lo:#a9792b;
+  --common:#aaa4a8; --uncommon:#4db38a; --rare:#5b97f0; --epic:#b65cf2; --legendary:#f6c453;
+  box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+.hidden{display:none !important}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:500;line-height:1.45;min-height:100vh;
+  background:
+    radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
+    radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%);
+  background-attachment:fixed;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outline-offset:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+#screen{position:relative;overflow:hidden;min-height:100vh;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 56px} /* pas de z-index ici : les effets plein écran doivent rester au-dessus des cartes */
+
+header.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
+  background:linear-gradient(var(--gold-hi),var(--gold) 55%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs{display:flex;gap:6px;background:rgba(0,0,0,.35);padding:4px;border-radius:12px;margin-bottom:18px;box-shadow:inset 0 0 0 1px var(--line)}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 12px;border-radius:9px;color:var(--muted);font-weight:800}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--text)}
+.tabs button:disabled{opacity:.45;cursor:not-allowed}
+
+.btn{border:0;border-radius:12px;padding:13px 22px;font-weight:800;color:#2b1403;
+  background:linear-gradient(#fbeab0,#e8c46a 55%,#c89a3e);box-shadow:0 6px 18px -6px rgba(232,196,106,.6)}
+.btn.ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 2px var(--line)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;min-height:48px}
+.caption{text-align:center;color:var(--muted);margin:10px auto 0;max-width:46ch}
+.caption:empty{display:none}
+.caption .err{color:#ff9b9b}
+
+.setup{background:var(--surface);border-radius:16px;padding:20px;margin-bottom:22px;box-shadow:inset 0 0 0 1px var(--line)}
+.setup h2{margin:0 0 6px;font-size:1.15rem}
+.setup p{margin:0 0 12px;color:var(--muted);max-width:60ch}
+.setup form{display:flex;gap:8px;flex-wrap:wrap}
+.setup input{flex:1;min-width:220px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:11px 12px;-webkit-user-select:text;user-select:text}
+.setup .err{color:#ff9b9b;margin:10px 0 0}
+
+/* ================= CARTES ================= */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px}
+.card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 3px var(--rc)}
+.r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
+.card.r-epic{box-shadow:0 0 0 3px var(--rc),0 0 16px -2px var(--rc)}
+.card.r-legendary{box-shadow:0 0 0 3px var(--rc),0 0 28px 2px rgba(246,196,83,.65)}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
+.card .meta{position:absolute;left:0;right:0;bottom:0;padding:26px 8px 7px;background:linear-gradient(to top,rgba(10,4,6,.96) 35%,rgba(10,4,6,0));font-size:.72rem;line-height:1.25}
+.card .meta b{font-weight:800;font-size:.8rem;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.card .meta .row{display:flex;justify-content:space-between;gap:6px;color:var(--muted)}
+.card .meta .rar{color:var(--rc);font-weight:800}
+.badge{position:absolute;top:7px;right:7px;background:var(--text);color:#12070b;font-weight:800;font-size:.68rem;padding:2px 7px;border-radius:99px}
+.badge.new{background:var(--legendary);left:7px;right:auto}
+
+/* Balayage de lumière unique quand une carte épique/légendaire arrive au-dessus de la pile */
+.card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
+.scard.fx .card.r-epic::after{animation:shine 1s .15s ease-out 1}
+.scard.fx .card.r-legendary::after{animation:shine 1.4s .25s ease-out 1}
+@keyframes shine{to{transform:translateX(110%)}}
+
+/* Épique : reflet holographique */
+.holo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:color-dodge;opacity:.8;
+  background:
+    repeating-linear-gradient(115deg,rgba(255,0,140,.18) 0 6px,rgba(0,220,255,.18) 6px 12px,rgba(255,230,0,.16) 12px 18px,rgba(150,60,255,.18) 18px 24px),
+    linear-gradient(115deg,transparent 12%,rgba(255,255,255,.55) 28%,rgba(120,255,240,.5) 40%,rgba(255,120,220,.5) 52%,rgba(255,240,120,.45) 64%,transparent 80%);
+  background-size:auto,280% 100%;background-position:0 0,110% 0;animation:holo 3.8s ease-in-out infinite}
+@keyframes holo{0%,100%{background-position:0 0,110% 0}50%{background-position:24px 0,-10% 0}}
+/* Légendaire : feuille d'or */
+.gold{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
+  background:linear-gradient(120deg,transparent 22%,rgba(255,240,190,.85) 44%,rgba(255,200,90,.6) 56%,transparent 78%);
+  background-size:260% 100%;background-position:110% 0;animation:goldsweep 4.2s ease-in-out infinite}
+@keyframes goldsweep{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
+.scard.under .holo,.scard.under .gold,.grid .holo,.grid .gold{animation-play-state:paused}
+.grid .card:hover .holo,.grid .card:hover .gold{animation-play-state:running}
+
+/* ================= SCÈNE ================= */
+.arena{
+  --pw:min(62vw,250px,37svh);      /* largeur du booster */
+  --cw:min(68vw,280px,41svh);      /* largeur d'une carte de la pile */
+  position:relative;height:clamp(440px,70svh,680px);
+}
+
+/* Flèches latérales (pas de texte) */
+.edge{position:absolute;top:0;bottom:0;width:18%;display:grid;place-items:center;color:var(--gold-hi);pointer-events:none;opacity:0;transition:opacity .35s}
+.edge.l{left:0}.edge.r{right:0}
+.edge svg{width:36px;height:36px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.edge.r svg{transform:scaleX(-1)}
+.edge::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.edge.l::before{background:linear-gradient(90deg,rgba(255,214,110,.32),transparent)}
+.edge.r::before{background:linear-gradient(270deg,rgba(255,214,110,.32),transparent)}
+.edge.hit::before{opacity:1;transition:none}
+.arena.can-next .edge{opacity:.7}
+.arena.can-next .edge.l svg{animation:nudgeL 1.6s ease-in-out infinite}
+.arena.can-next .edge.r svg{animation:nudgeR 1.6s ease-in-out infinite}
+@keyframes nudgeL{50%{transform:translateX(-7px)}}
+@keyframes nudgeR{50%{transform:scaleX(-1) translateX(-7px)}}
+
+/* ================= PILE ================= */
+/* Cartes 2D (plans) posées à translateZ(-d × écart) dans un conteneur 3D : quand le .deck pivote en rotateY,
+   on voit les cartes du dessous dépasser sur le côté, chacune avec son cadre de rareté. */
+.stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
+  z-index:4;visibility:hidden;perspective:1100px}
+.stack.show{visibility:visible}
+.stack.lift{z-index:50}
+.deck{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(var(--ry,0deg))}
+.deck-shadow{position:absolute;left:6%;right:6%;bottom:-5%;height:8%;pointer-events:none;
+  background:radial-gradient(ellipse closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));filter:blur(8px)}
+.scard{position:absolute;inset:0;transition:transform .5s cubic-bezier(.2,.9,.2,1);
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}                        /* l'ombre sépare visuellement chaque couche */
+.stack.lift .scard.under{filter:drop-shadow(0 6px 8px rgba(0,0,0,.5)) brightness(.45)}
+.lifter,.shaker{position:absolute;inset:0}
+.shaker .card{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
+
+/* Cadre de rareté : c'est lui qu'on voit dépasser sur le côté quand la pile s'incline.
+   Largeur ≥ décalage visible entre deux cartes (écart × sin de l'inclinaison). */
+.scard .card{--fw:calc(var(--cw)*.032)}
+.scard .card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:var(--fw);z-index:3;pointer-events:none;
+  background:var(--frame,linear-gradient(160deg,#ece7e1,#aaa39c));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+.scard .card .meta{padding-left:calc(var(--fw) + 4px);padding-right:calc(var(--fw) + 4px);padding-bottom:calc(var(--fw) + 2px)}
+.scard .card.r-uncommon{--frame:linear-gradient(160deg,#7fe0b8,#2c8a68)}
+.scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
+.scard .card.r-epic{                                   /* épique : cadre holographique */
+  --frame:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dffb8,#4db8ff,#b04dff,#ff4d9d);
+  box-shadow:0 0 0 3px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
+.scard .card.r-epic::before{background-size:300% 300%;animation:framemove 2.4s linear infinite}
+.scard .card.r-legendary{                              /* légendaire : cadre d'or lumineux */
+  --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
+  box-shadow:0 0 0 3px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
+.scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
+@keyframes framemove{to{background-position:300% 300%}}
+.scard.under .card::before{animation-play-state:running}
+
+/* Halo derrière une carte légendaire */
+.aura{position:absolute;inset:-38%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .6s;
+  background:radial-gradient(circle closest-side,rgba(255,214,110,.95) 0,rgba(255,150,40,.45) 52%,rgba(255,150,40,0) 100%)}
+.scard.charging .aura{opacity:.6}
+.scard.blast .aura{opacity:1;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.12);opacity:.75}}
+.scard.charging .shaker{animation:tremble .08s linear infinite}
+@keyframes tremble{
+  0%{transform:translate(1.5px,0) rotate(-.8deg)}25%{transform:translate(-1.5px,1px) rotate(.8deg)}
+  50%{transform:translate(1px,-1px) rotate(-.5deg)}75%{transform:translate(-1px,0) rotate(.6deg)}100%{transform:translate(1.5px,0) rotate(-.8deg)}
+}
+
+/* Progression */
+.dots{display:flex;gap:8px;justify-content:center;margin-top:10px;height:10px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:background .3s,transform .3s}
+.dots i.done{background:var(--gold-lo)}
+.dots i.cur{background:var(--gold-hi);transform:scale(1.45)}
+
+/* Effets plein écran */
+#fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#fxBack{z-index:40}
+#fxFront{z-index:60}
+.veil{position:absolute;inset:0;opacity:0;transition:opacity .5s;
+  background:radial-gradient(ellipse at 50% 45%,rgba(110,8,22,.5) 0,rgba(18,3,7,.9) 55%,rgba(6,1,3,.97) 100%)}
+.veil.on{opacity:1}
+.rays{position:absolute;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;left:50%;top:50%;border-radius:50%;opacity:0;transition:opacity .7s;
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,120,0) 0 7deg,rgba(255,214,120,.36) 7deg 11deg,rgba(255,214,120,0) 11deg 18deg);
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.65) 22%,transparent 62%);
+  mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.65) 22%,transparent 62%);
+  animation:spin 18s linear infinite}
+.rays.on{opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+.flash{position:absolute;inset:0;opacity:0;
+  background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),#fff 0,rgba(255,236,170,.95) 22%,rgba(255,170,60,.5) 52%,transparent 82%)}
+.ring{position:absolute;width:140px;height:140px;border-radius:50%;border:3px solid #ffe08a;opacity:0;
+  box-shadow:0 0 24px 4px rgba(255,200,80,.8),inset 0 0 20px rgba(255,200,80,.6)}
+.spark{position:absolute;border-radius:50%;background:#fff3c4;box-shadow:0 0 8px 2px rgba(255,200,80,.95);opacity:0}
+.shard{position:absolute;opacity:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
+#screen.shake{animation:shake .75s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes shake{
+  10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-3px) rotate(.2deg)}
+  30%,50%,70%{transform:translate(-8px,4px)}40%,60%{transform:translate(8px,-4px) rotate(-.2deg)}
+}
+#screen.jolt{animation:jolt .22s linear both}
+@keyframes jolt{
+  0%{transform:translate(0,0)}15%{transform:translate(-4px,2px)}30%{transform:translate(4px,-3px)}
+  50%{transform:translate(-3px,-1px)}70%{transform:translate(2px,2px)}100%{transform:translate(0,0)}
+}
+
+/* ================= BOOSTER (plat, classique) ================= */
+.pack-pos{position:absolute;left:50%;top:50%;width:var(--pw);aspect-ratio:5/8;transform:translate(-50%,-50%);z-index:5;
+  cursor:pointer;outline:none}
+.pack-pos.opened{cursor:default}
+.pack-pos.gone{display:none}
+
+.pack-halo{position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .7s;
+  background:radial-gradient(ellipse closest-side,rgba(255,196,90,.5) 0,rgba(200,20,40,.22) 55%,rgba(200,20,40,0) 100%)}
+.pack-pos.zoomed .pack-halo,.pack-pos:focus-visible .pack-halo{opacity:1}
+.pack-pos.opened .pack-halo{opacity:0;transition:opacity .3s}
+.pack-shadow{position:absolute;left:4%;right:4%;bottom:-6%;height:10%;pointer-events:none;
+  background:radial-gradient(ellipse closest-side,rgba(0,0,0,.6),rgba(0,0,0,0));filter:blur(8px)}
+
+.pack-zoom{position:absolute;inset:0;transition:transform .75s cubic-bezier(.2,.9,.2,1)}
+.pack-pos.zoomed .pack-zoom{transform:scale(1.17)}
+.pack-float{position:absolute;inset:0;animation:float 5s ease-in-out infinite}
+.pack-pos.opened .pack-float{animation-play-state:paused}
+@keyframes float{50%{transform:translateY(-9px)}}
+.pack-tilt{position:absolute;inset:0;
+  transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out}
+.part{position:absolute;inset:0;container-type:inline-size;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;outline:1px solid transparent}
+.part.top{clip-path:var(--clipTop);transform-origin:15% 15%}
+.part.bottom{clip-path:var(--clipBottom)}
+
+/* Fissure : suit exactement le bord déchiré (SVG) */
+.crack{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.crack path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.crack-glow{stroke:rgba(255,196,80,.85);stroke-width:8;stroke-dasharray:100;stroke-dashoffset:100}
+.crack-core{stroke:#fffbe8;stroke-width:2.5;stroke-dasharray:100;stroke-dashoffset:100}
+.crack-hint{stroke:#fff4c8;stroke-width:3;stroke-dasharray:14 86;stroke-dashoffset:14;opacity:0}
+.pack-pos.zoomed:not(.opened) .crack-hint{opacity:1;animation:hint 2.2s linear infinite}
+@keyframes hint{from{stroke-dashoffset:14}to{stroke-dashoffset:-86}}
+
+.burst{position:absolute;left:-25%;right:-25%;top:15%;height:90px;margin-top:-45px;z-index:4;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse closest-side,rgba(255,238,175,.98),rgba(255,170,60,.55) 55%,rgba(255,170,60,0) 100%)}
+
+.art{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#7a0c18}
+.art>*{position:absolute}
+.curtain{inset:0;background:
+  linear-gradient(to bottom,rgba(0,0,0,.4),transparent 22%,transparent 72%,rgba(0,0,0,.5)),
+  repeating-linear-gradient(90deg,rgba(0,0,0,.3) 0%,rgba(255,255,255,.08) 3.5%,rgba(0,0,0,.3) 7%),
+  linear-gradient(100deg,#4a0710 0%,#a3121f 20%,#d01d30 34%,#8a0e1d 50%,#c0182b 66%,#8f0f1e 82%,#4a0710 100%)}
+.frame{inset:5% 11%;border:1.5px solid rgba(232,196,106,.78);border-radius:2cqw;
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.18),inset 0 0 0 4.5px rgba(232,196,106,.35)}
+.film{top:6.5%;bottom:6.5%;width:8.5%;background:#14080b;box-shadow:inset 0 0 0 1px rgba(232,196,106,.4)}
+.film::before{content:'';position:absolute;inset:0 24%;
+  background:repeating-linear-gradient(to bottom,#f6e3a1 0 2.4cqw,transparent 2.4cqw 4.8cqw);opacity:.9}
+.film.l{left:0}.film.r{right:0}
+.crimp{left:0;right:0;height:6.5%;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 .5cqw,rgba(0,0,0,.3) .5cqw 1.6cqw),#781018}
+.crimp.t{top:0}.crimp.b{bottom:0}
+.emblem{left:27%;width:46%;top:22%;aspect-ratio:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+.emblem svg{width:100%;height:100%}
+.title{left:0;right:0;top:55%;text-align:center;font-weight:800;font-size:21cqw;line-height:1;letter-spacing:.06em;
+  background:linear-gradient(#fff6d0,#f0cd78 45%,#a9792b 80%,#e8c46a);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.sub{left:0;right:0;top:76%;text-align:center;font-size:6.4cqw;letter-spacing:.14em;color:#f3dfa0}
+.irid{inset:0;mix-blend-mode:color-dodge;opacity:.55;background-size:260% 100%;background-position:var(--bx,50%) 0;
+  background-image:linear-gradient(115deg,rgba(255,60,140,0) 20%,rgba(255,120,200,.35) 32%,rgba(120,230,255,.30) 44%,rgba(255,236,140,.35) 56%,rgba(190,120,255,.3) 68%,rgba(255,60,140,0) 80%)}
+.sheen{inset:0;mix-blend-mode:screen;background-size:320% 100%;animation:sheen 5.5s ease-in-out infinite;
+  background-image:linear-gradient(112deg,transparent 38%,rgba(255,255,255,.55) 47%,rgba(255,232,170,.35) 52%,transparent 60%)}
+@keyframes sheen{0%,12%{background-position:115% 0}55%,100%{background-position:-15% 0}}
+.spot{inset:0;mix-blend-mode:soft-light;background:radial-gradient(circle at var(--sx,50%) var(--sy,25%),rgba(255,255,255,.75),transparent 48%)}
+.grain{inset:0;opacity:.18;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ================= RÉSUMÉ ================= */
+.recapwrap{max-width:820px;margin:0 auto;text-align:center}
+.recapwrap h2{margin:6px 0 2px;font-size:1.5rem;letter-spacing:-.01em}
+.recapwrap .tally{margin:0 0 18px;color:var(--muted)}
+.recap{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.recap .card{width:calc((100% - 28px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
+@media (min-width:720px){.recap .card{width:calc((100% - 56px)/5)}}
+@keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
+.recap .card.r-epic::after{animation:shine 1s calc(var(--i)*110ms + 600ms) ease-out 1}
+.recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
+
+/* ================= COLLECTION ================= */
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{border:0;border-radius:99px;padding:7px 13px;background:var(--surface);color:var(--text);font-weight:800;font-size:.85rem;box-shadow:inset 0 0 0 2px var(--line)}
+.chip[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--rc,var(--text));background:var(--bg)}
+.summary{color:var(--muted);margin:0 0 12px}
+.empty{text-align:center;color:var(--muted);padding:40px 12px}
+
+footer{margin-top:36px;color:var(--muted);font-size:.78rem;display:flex;flex-direction:column;gap:6px}
+footer button{align-self:flex-start;background:none;border:0;color:var(--muted);text-decoration:underline;padding:0;font-size:.78rem}
+
+@media (prefers-reduced-motion:reduce){
+  .pack-zoom,.scard{transition-duration:.01s}
+  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.edge svg,.crack-hint,.scard .card::before{animation:none !important}
+  .scard.fx .card::after,.recap .card{animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- Symbole SVG : bobine de film dorée (booster) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff2c2"/><stop offset=".45" stop-color="#e8c46a"/><stop offset="1" stop-color="#a9792b"/>
+    </linearGradient>
+    <mask id="reelMask">
+      <rect width="100" height="100" fill="#fff"/>
+      <circle cx="50" cy="50" r="7" fill="#000"/>
+      <circle cx="50" cy="25" r="9" fill="#000"/><circle cx="71.65" cy="37.5" r="9" fill="#000"/>
+      <circle cx="71.65" cy="62.5" r="9" fill="#000"/><circle cx="50" cy="75" r="9" fill="#000"/>
+      <circle cx="28.35" cy="62.5" r="9" fill="#000"/><circle cx="28.35" cy="37.5" r="9" fill="#000"/>
+    </mask>
+  </defs>
+  <symbol id="reel" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="46" fill="url(#goldGrad)" mask="url(#reelMask)"/>
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#fff2c2" stroke-opacity=".6" stroke-width="1"/>
+    <circle cx="50" cy="50" r="14" fill="none" stroke="#7a4d12" stroke-opacity=".5" stroke-width="1"/>
+  </symbol>
+</svg>
+
+<main id="screen">
+  <div class="wrap">
+    <header class="top"><h1>Boosters ciné</h1></header>
+
+    <section class="setup hidden" id="setup">
+      <h2>Colle ta clé TMDB pour commencer</h2>
+      <p>Crée un compte gratuit sur themoviedb.org, puis demande une clé dans Paramètres, API. La clé v3 et le jeton v4 fonctionnent tous les deux. Elle reste dans ton navigateur.</p>
+      <form id="keyForm">
+        <input id="keyInput" type="password" autocomplete="off" placeholder="Clé API ou jeton d'accès" aria-label="Clé API TMDB" required>
+        <button class="btn" type="submit">Enregistrer</button>
+      </form>
+      <p class="err" id="keyStatus" role="status"></p>
+    </section>
+
+    <div id="app" class="hidden">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-open" aria-selected="true">Ouvrir un booster</button>
+        <button role="tab" id="tab-col" aria-selected="false">Ma collection</button>
+      </div>
+
+      <section id="view-open">
+        <div class="arena" id="arena">
+          <div class="edge l" id="edgeL" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="edge r" id="edgeR" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+          <!-- Pile de cartes -->
+          <div class="stack" id="stack">
+            <div class="deck-shadow"></div>
+            <div class="deck" id="deck"></div>
+          </div>
+
+          <!-- Booster -->
+          <div class="pack-pos" id="pack" role="button" tabindex="0" aria-label="Booster">
+            <div class="pack-halo"></div>
+            <div class="pack-zoom" id="packZoom">
+              <div class="pack-shadow"></div>
+              <div class="pack-float">
+                <div class="pack-tilt" id="tilt">
+                  <div class="part bottom" id="partBottom"></div>
+                  <div class="part top" id="partTop"></div>
+                  <svg class="crack" id="crack" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="crack-glow" id="crackGlow" pathLength="100"/>
+                    <path class="crack-core" id="crackCore" pathLength="100"/>
+                    <path class="crack-hint" id="crackHint" pathLength="100"/>
+                  </svg>
+                </div>
+                <div class="burst" id="burst"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dots" id="dots" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i></div>
+
+        <div class="recapwrap hidden" id="recapWrap">
+          <h2>Ton pull</h2>
+          <p class="tally" id="tally"></p>
+          <div class="recap" id="recap"></div>
+        </div>
+
+        <p class="caption" id="caption" role="status"></p>
+        <div class="actions">
+          <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
+          <button class="btn ghost" id="toColBtn" hidden>Voir ma collection</button>
+          <button class="btn ghost" id="skipBtn" hidden>Passer au résumé</button>
+        </div>
+      </section>
+
+      <section id="view-col" class="hidden">
+        <p class="summary" id="summary"></p>
+        <div class="stats" id="chips"></div>
+        <div class="grid" id="colGrid"></div>
+        <p class="empty hidden" id="empty">Ta collection est vide. Ouvre ton premier booster pour la commencer.</p>
+      </section>
+    </div>
+
+    <footer>
+      <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+      <button id="demoBtn" class="hidden"></button>
+      <button id="changeKey" class="hidden">Changer de clé TMDB</button>
+      <button id="resetCol" class="hidden">Vider ma collection</button>
+    </footer>
+  </div>
+
+  <div id="fxBack" aria-hidden="true"><div class="veil" id="veil"></div><div class="rays" id="rays"></div></div>
+  <div id="fxFront" aria-hidden="true"><div class="flash" id="flash"></div></div>
+</main>
+<div class="sr" id="sr" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   1. RÉGLAGES
+   ===================================================================== */
+const TIERS = [
+  {id:'legendary', label:'Légendaire',  pages:[1,5],     p:0.005},
+  {id:'epic',      label:'Épique',      pages:[6,30],    p:0.025},
+  {id:'rare',      label:'Rare',        pages:[31,100],  p:0.09},
+  {id:'uncommon',  label:'Peu commune', pages:[101,250], p:0.28},
+  {id:'common',    label:'Commune',     pages:[251,500], p:0.60}
+];
+const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
+
+// Rythme de l'ouverture (millisecondes)
+const TIMING = {
+  crackDraw:70,        // la fissure court le long du bord (était 140 ; 320 en v4)
+  topFlight:230,       // le haut du booster est arraché (était 380 ; 520 en v4)
+  slideDelay:40,       // délai entre le snap et le glissement du booster
+  packSlide:320,       // glissement du booster vers le bas
+  stackRise:340,       // apparition de chaque carte de la pile
+  stackStagger:45,     // décalage entre les cartes de la pile
+  legendCharge:800,    // suspense (tremblement) avant l'explosion de la légendaire
+  legendGrow:520,      // agrandissement de la légendaire à l'impact
+  legendAfter:800,     // temps avant de pouvoir faire partir la légendaire
+  exit:520,            // sortie d'une carte sur le côté
+  unlockAfterExit:240  // délai avant de pouvoir toucher la carte suivante
+};
+
+// Peek (inclinaison 3D de la pile)
+const PEEK = {
+  maxTilt:40,          // inclinaison maximale (degrés)
+  tiltPerPx:.26,       // degrés d'inclinaison par pixel de glissement
+  gap:.05,             // écart entre deux cartes de la pile, en fraction de la largeur d'une carte (translateZ)
+  minDx:40,            // glissement minimal (px) pour qu'un balayage puisse être validé
+  flickSpeed:.5,       // vitesse minimale au relâchement (px/ms) pour valider le balayage
+  velWindow:100,       // la vitesse est mesurée sur les 100 derniers ms avant le relâchement
+  kickOnClick:16,      // petite inclinaison « coup d'œil » quand on passe une carte d'un simple clic
+  springK:190,         // raideur du ressort de retour
+  springC:15           // amortissement (plus bas = plus de rebond)
+};
+
+const TIER = Object.fromEntries(TIERS.map(t => [t.id, t]));
+const tierIdx = id => TIERS.findIndex(t => t.id === id);
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const imgUrl = (c, hi = false) => 'https://image.tmdb.org/t/p/' + (hi || c.rarity==='epic' || c.rarity==='legendary' ? 'w500' : 'w342') + c.poster;
+
+/* =====================================================================
+   2. UTILITAIRES
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const randInt = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+function play(el, keyframes, opts = {}){
+  const a = el.animate(keyframes, {fill:'both', ...opts});
+  return a.finished.catch(() => {}).then(() => a);
+}
+// Annule seulement les animations WAAPI (pas les animations CSS en boucle : float, sheen…)
+function cancelWaapi(root){
+  root.getAnimations({subtree:true})
+    .filter(a => !('animationName' in a) && !('transitionProperty' in a))
+    .forEach(a => a.cancel());
+}
+
+/* =====================================================================
+   3. API TMDB ET TIRAGE
+   ===================================================================== */
+async function tmdb(path, params = {}, keyOverride){
+  const key = keyOverride || store.get('tmdb_key','');
+  const url = new URL('https://api.themoviedb.org/3' + path);
+  const headers = {};
+  if(key.length > 40) headers.Authorization = 'Bearer ' + key;
+  else url.searchParams.set('api_key', key);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  const r = await fetch(url, {headers});
+  if(r.status === 401) throw new Error('Clé TMDB refusée. Vérifie qu\'elle est complète.');
+  if(!r.ok) throw new Error('Erreur TMDB (' + r.status + '). Réessaie dans un instant.');
+  return r.json();
+}
+
+const pageCache = new Map();
+async function getPage(page){
+  if(pageCache.has(page)) return pageCache.get(page);
+  const d = await tmdb('/discover/movie', {sort_by:'vote_count.desc', include_adult:'false', language:'fr-FR', page});
+  const films = d.results.map((m,i) => ({...m, rank:(page-1)*20 + i + 1}));
+  pageCache.set(page, films);
+  return films;
+}
+
+const demoOn = () => store.get('demo', false);
+function pickTier(noCommon = false){
+  const pool = (noCommon ? TIERS.filter(t => t.id !== 'common') : TIERS)
+    .map(t => ({t, p: demoOn() ? DEMO_P[t.id] : t.p}));
+  const sum = pool.reduce((a,x) => a + x.p, 0);
+  let r = Math.random() * sum;
+  for(const x of pool){ r -= x.p; if(r < 0) return x.t; }
+  return pool[pool.length-1].t;
+}
+
+async function drawBooster(){
+  const tiers = [pickTier(), pickTier(), pickTier(), pickTier(), pickTier(true)]; // la 5e carte est au moins "Peu commune"
+  const pages = await Promise.all(tiers.map(t => getPage(randInt(t.pages[0], t.pages[1]))));
+  const used = new Set();
+  const cards = tiers.map((t,i) => {
+    let pool = pages[i].filter(m => m.poster_path && !used.has(m.id));
+    if(!pool.length) pool = pages[i].filter(m => m.poster_path);
+    const m = pool[randInt(0, pool.length-1)];
+    used.add(m.id);
+    return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count};
+  });
+  // Les cartes les plus rares sont au fond de la pile : elles apparaissent en dernier
+  return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));
+}
+
+function preload(cards){
+  return Promise.all(cards.map(c => new Promise(res => {
+    const i = new Image(); i.onload = i.onerror = res; i.src = imgUrl(c, true); setTimeout(res, 4000);
+  })));
+}
+function prefetchBooster(){
+  return drawBooster().then(async cards => { await preload(cards); return {cards}; }, error => ({error}));
+}
+
+/* =====================================================================
+   4. COLLECTION
+   ===================================================================== */
+const getCol = () => store.get('collection', {});
+function addToCol(cards){
+  const col = getCol();
+  const out = cards.map(c => {
+    const isNew = !col[c.id];
+    col[c.id] = isNew ? {...c, count:1} : {...col[c.id], count: col[c.id].count + 1};
+    return {...c, isNew};
+  });
+  store.set('collection', col);
+  return out;
+}
+
+function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
+  const t = TIER[c.rarity];
+  return `<div class="card r-${c.rarity}" title="${esc(c.title)}">
+    <img src="${imgUrl(c, hi)}" alt="Affiche de ${esc(c.title)}" decoding="async" draggable="false" ${lazy ? 'loading="lazy"' : ''}>
+    ${c.rarity==='epic' ? '<span class="holo"></span>' : ''}
+    ${c.rarity==='legendary' ? '<span class="gold"></span>' : ''}
+    ${isNew ? '<span class="badge new">Nouvelle</span>' : ''}
+    ${count > 1 ? `<span class="badge">×${count}</span>` : ''}
+    <div class="meta"><b>${esc(c.title)}</b>
+      <div class="row"><span>${esc(c.year)}</span><span class="rar">${t.label}</span></div>
+    </div></div>`;
+}
+
+/* =====================================================================
+   5. ÉTAT ET ÉLÉMENTS
+   ===================================================================== */
+const screenEl = $('#screen'), arena = $('#arena'), stackEl = $('#stack'), deck = $('#deck'), pack = $('#pack'), packZoom = $('#packZoom'), tilt = $('#tilt');
+const partTop = $('#partTop'), partBottom = $('#partBottom'), burst = $('#burst'), crack = $('#crack');
+const crackGlow = $('#crackGlow'), crackCore = $('#crackCore'), crackHint = $('#crackHint');
+const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), rays = $('#rays'), flashEl = $('#flash'), fxFront = $('#fxFront');
+const againBtn = $('#againBtn'), skipBtn = $('#skipBtn'), toColBtn = $('#toColBtn');
+const dotsEl = $('#dots'), edgeL = $('#edgeL'), edgeR = $('#edgeR'), recapWrap = $('#recapWrap');
+
+/*  idle → zoomed → opening → stack → summary  */
+let state = 'idle';
+let busy = false;          // une animation de carte est en cours : on ignore les clics et les glissements
+let idx = 0;               // index de la carte du dessus dans `cards`
+let cards = [];            // les 5 cartes du booster
+let els = [];              // les 5 éléments .scard
+let pending = null;        // promesse du tirage (lancée au 1er clic)
+let G = 14;                // écart en profondeur entre deux cartes (px), calculé depuis la largeur de la pile
+
+function setCaption(html){ capEl.innerHTML = html; }   // uniquement pour les erreurs et la note du mode démo
+function setBusyTabs(b){ document.querySelectorAll('.tabs button').forEach(x => x.disabled = b); }
+
+/* =====================================================================
+   6. BOOSTER : dessin plat, bord déchiré organique, inclinaison
+   ===================================================================== */
+const packArt = () => `<div class="art">
+  <div class="curtain"></div><div class="film l"></div><div class="film r"></div><div class="frame"></div>
+  <div class="crimp t"></div><div class="crimp b"></div>
+  <div class="emblem"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg></div>
+  <div class="title">CINÉ</div><div class="sub">Booster de 5 films</div>
+  <div class="irid"></div><div class="sheen"></div><div class="spot"></div><div class="grain"></div></div>`;
+partTop.innerHTML = partBottom.innerHTML = packArt();
+
+// Bord déchiré : globalement horizontal à 15 %, avec pente légère, ondulation, dents de scie subtiles et bruit.
+function makeTear(){
+  const n = 44, slope = (Math.random() - .5) * 1.2, ph = Math.random() * 6, pts = [];
+  for(let i=0; i<=n; i++){
+    const x = i * 100 / n;
+    const wave = Math.sin(i * .55 + ph) * .5;
+    const saw = i % 2 ? .35 : -.35;
+    const jit = (Math.random() - .5) * 1.1;
+    pts.push([x, 15 + slope * (x/100 - .5) + wave + saw + jit]);
+  }
+  return pts;
+}
+function applyTear(tear){
+  const fmt = p => 'polygon(' + p.map(([x,y]) => x.toFixed(2) + '% ' + y.toFixed(2) + '%').join(',') + ')';
+  const topEdge = [], bottomEdge = [];
+  const n = 24; for(let i=0; i<=n; i++){ const x = i*100/n; topEdge.push([x, i%2 ? 0 : 1.4]); bottomEdge.push([x, i%2 ? 98.6 : 100]); }
+  const overlap = tear.map(([x,y]) => [x, y - 2]);      // la partie basse passe SOUS la partie haute : pas de couture
+  const root = document.documentElement.style;
+  root.setProperty('--clipTop', fmt([...topEdge, ...[...tear].reverse()]));
+  root.setProperty('--clipBottom', fmt([...overlap, ...[...bottomEdge].reverse()]));
+  const d = 'M' + tear.map(([x,y]) => x.toFixed(2) + ' ' + y.toFixed(2)).join(' L');
+  [crackGlow, crackCore, crackHint].forEach(p => p.setAttribute('d', d));
+}
+applyTear(makeTear());
+
+// Inclinaison et reflet foil qui suivent le pointeur (tant que le booster est fermé)
+arena.addEventListener('pointermove', e => {
+  if(state !== 'idle' && state !== 'zoomed') return;
+  const r = pack.getBoundingClientRect();
+  const x = clamp((e.clientX - r.left) / r.width, -.3, 1.3);
+  const y = clamp((e.clientY - r.top) / r.height, -.3, 1.3);
+  tilt.style.setProperty('--ry', ((x-.5)*16) + 'deg');
+  tilt.style.setProperty('--rx', (-(y-.5)*12) + 'deg');
+  tilt.style.setProperty('--sx', (x*100) + '%');
+  tilt.style.setProperty('--sy', (y*100) + '%');
+  tilt.style.setProperty('--bx', (20 + x*60) + '%');
+});
+arena.addEventListener('pointerleave', () => ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg')));
+
+/* =====================================================================
+   7. CLIC 1 : ZOOM  /  CLIC 2 : DÉCHIRURE ULTRA RAPIDE + DESCENTE
+   ===================================================================== */
+pack.addEventListener('click', onPackClick);
+pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
+function onPackClick(){
+  if(state === 'idle') zoomIn();
+  else if(state === 'zoomed') openPack();
+}
+
+function zoomIn(){
+  state = 'zoomed';
+  setCaption('');
+  pack.classList.add('zoomed');
+  pending = prefetchBooster();
+}
+
+function microShake(){
+  if(RM) return;
+  screenEl.classList.remove('jolt'); void screenEl.offsetWidth; screenEl.classList.add('jolt');
+  setTimeout(() => screenEl.classList.remove('jolt'), 260);
+}
+function tearShards(){
+  if(RM) return;
+  const r = packZoom.getBoundingClientRect(), s = screenEl.getBoundingClientRect();
+  const y = r.top + r.height*.15 - s.top;
+  for(let k=0; k<14; k++){
+    const el = document.createElement('i'); el.className = 'shard';
+    el.style.width = (5 + Math.random()*9) + 'px'; el.style.height = (6 + Math.random()*10) + 'px';
+    el.style.background = Math.random() < .5 ? '#f6e3a1' : '#d01d30';
+    el.style.left = (r.left - s.left + Math.random()*r.width) + 'px'; el.style.top = y + 'px';
+    fxFront.appendChild(el);
+    const ang = -Math.PI/2 + (Math.random() - .5)*2.2, dist = 90 + Math.random()*200;
+    play(el, [
+      {transform:'translate(-50%,-50%) rotate(0deg)', opacity:1},
+      {transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),calc(-50% + ${Math.sin(ang)*dist + 60}px)) rotate(${(Math.random()-.5)*720}deg)`, opacity:0}
+    ], {duration:380 + Math.random()*280, easing:'cubic-bezier(.1,.8,.3,1)', fill:'forwards'}).then(() => el.remove());
+  }
+}
+
+async function openPack(){
+  state = 'opening'; setBusyTabs(true);
+  pack.classList.add('opened'); pack.setAttribute('tabindex', '-1');
+  ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg'));
+  try{
+    const res = await pending;
+    if(res.error) throw res.error;
+    cards = demoOn() ? res.cards.map(c => ({...c, isNew: !getCol()[c.id]})) : addToCol(res.cards);
+    buildStack();
+
+    // 1. La fissure court le long du bord déchiré (70 ms)
+    const draw = {duration: RM ? 30 : TIMING.crackDraw, easing:'cubic-bezier(.3,0,.2,1)'};
+    await Promise.all([
+      play(crackGlow, [{strokeDashoffset:100}, {strokeDashoffset:0}], draw),
+      play(crackCore, [{strokeDashoffset:100}, {strokeDashoffset:0}], draw)
+    ]);
+
+    // 2. SNAP : rupture nette, secousse, éclats ; le haut est arraché, les cartes apparaissent dans l'ouverture
+    microShake(); tearShards();
+    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.25}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 360, easing:'ease-out'});
+    play(crack, [{opacity:1}, {opacity:0}], {duration:140});
+    showStack();
+    const topFlight = play(partTop, [
+      {transform:'none', opacity:1},
+      {transform:'rotate(-9deg) translateY(-6%)', opacity:1, offset:.25},
+      {transform:'translate(40%,-170%) rotate(-30deg)', opacity:0}
+    ], {duration: RM ? 100 : TIMING.topFlight, easing:'cubic-bezier(.1,.8,.3,1)'});
+    play(partBottom, [{transform:'none'}, {transform:'translateY(8px)', offset:.35}, {transform:'none'}], {duration: RM ? 50 : 160});
+
+    // 3. Le booster glisse vers le bas
+    await sleep(RM ? 0 : TIMING.slideDelay);
+    const dist = innerHeight - pack.getBoundingClientRect().top + 80;
+    await play(packZoom, [
+      {transform:'translateY(0px) scale(1.17)', opacity:1},
+      {opacity:1, offset:.75},
+      {transform:`translateY(${dist}px) scale(1.17)`, opacity:0}
+    ], {duration: RM ? 100 : TIMING.packSlide, easing:'cubic-bezier(.6,0,.9,.45)'});
+    pack.classList.add('gone');
+    await topFlight;
+    startStack();
+  }catch(err){
+    failOpen(err && err.message ? err.message : 'Une erreur est survenue.');
+  }
+}
+
+function failOpen(msg){
+  resetPackVisuals(); clearStack();
+  state = 'idle'; pending = null; setBusyTabs(false);
+  setCaption(`<span class="err">${esc(msg)}</span>`);
+}
+
+/* =====================================================================
+   8. LA PILE : cartes 2D espacées en profondeur
+   ===================================================================== */
+// d = profondeur dans la pile (0 = dessus). Toujours la même liste de fonctions CSS (translateZ translate rotate)
+// pour que transitions et sorties s'interpolent proprement.
+const stackTransform = d => `translateZ(${-d*G}px) translate(0px,0px) rotate(0deg)`;
+
+function layoutStack(){
+  G = Math.max(6, stackEl.offsetWidth * PEEK.gap);
+  els.forEach((el, k) => { if(k >= idx) el.style.transform = stackTransform(k - idx); });
+}
+window.addEventListener('resize', () => { if(els.length) layoutStack(); });
+
+function buildStack(){
+  deck.innerHTML = '';
+  setTilt(0);
+  idx = 0; busy = true;
+  G = Math.max(6, stackEl.offsetWidth * PEEK.gap);
+  els = cards.map((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'scard' + (i > 0 ? ' under' : '');
+    el.style.transform = stackTransform(i);
+    el.innerHTML = `<div class="aura"></div>
+      <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}</div></div>`;
+    deck.appendChild(el);
+    return el;
+  });
+}
+function showStack(){   // les cartes apparaissent là où était le booster
+  stackEl.classList.add('show');
+  els.forEach((el, i) => play(el.querySelector('.lifter'),
+    [{transform:'translateY(26px) scale(.94)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1}],
+    {duration: RM ? 1 : TIMING.stackRise, delay: RM ? 0 : (els.length - 1 - i) * TIMING.stackStagger, easing:'cubic-bezier(.2,.9,.2,1)', fill:'backwards'}));
+}
+function clearStack(){
+  deck.innerHTML = ''; stackEl.classList.remove('show', 'lift'); els = []; cancelAnimationFrame(springRaf); setTilt(0);
+}
+function startStack(){
+  state = 'stack'; busy = false;
+  dotsEl.hidden = false; updateDots();
+  skipBtn.hidden = false;
+  activateTop();
+}
+function updateDots(){
+  [...dotsEl.children].forEach((d, i) => { d.className = i < idx ? 'done' : (i === idx ? 'cur' : ''); });
+}
+function updateStack(){
+  els.forEach((el, k) => {
+    if(k < idx) return;
+    el.classList.toggle('under', k > idx);
+    el.style.transform = stackTransform(k - idx);       // les cartes du dessous avancent en profondeur (transition CSS)
+  });
+}
+
+/* =====================================================================
+   9. PEEK : INCLINAISON DE LA PILE + RETOUR EN RESSORT
+   ===================================================================== */
+let curTilt = 0, springRaf = 0;
+function setTilt(deg){
+  curTilt = deg;
+  deck.style.setProperty('--ry', deg + 'deg');
+  deck.style.setProperty('--peek', Math.min(1, Math.abs(deg) / PEEK.maxTilt));   // intensité du halo des cadres épique/légendaire
+}
+// Ressort amorti réel : la pile revient face au joueur avec un léger rebond
+function springTilt(from, v0 = 0){
+  cancelAnimationFrame(springRaf);
+  if(RM){ setTilt(0); return; }
+  let x = from, v = v0, last = performance.now();
+  const step = now => {
+    const dt = Math.min(.032, (now - last) / 1000); last = now;
+    v += (-PEEK.springK * x - PEEK.springC * v) * dt;
+    x += v * dt;
+    if(Math.abs(x) < .04 && Math.abs(v) < .25){ setTilt(0); return; }
+    setTilt(x);
+    springRaf = requestAnimationFrame(step);
+  };
+  springRaf = requestAnimationFrame(step);
+}
+
+/* =====================================================================
+   10. EFFETS DE RARETÉ (quand une carte arrive au-dessus de la pile)
+   ===================================================================== */
+async function activateTop(){
+  const el = els[idx], c = cards[idx];
+  srEl.textContent = `Carte ${idx+1} sur ${cards.length} : ${c.title}, ${TIER[c.rarity].label}`;
+  if(c.rarity === 'legendary'){
+    busy = true;
+    await legendaryMoment(el);
+    busy = false;
+  }else if(c.rarity === 'epic'){
+    epicMoment(el);
+  }
+  if(state === 'stack') arena.classList.add('can-next');
+}
+
+function epicMoment(el){
+  el.classList.add('fx');
+  play(el.querySelector('.lifter'),
+    [{transform:'translateY(0) scale(1)'}, {transform:'translateY(-5px) scale(1.05)', offset:.4}, {transform:'translateY(0) scale(1)'}],
+    {duration: RM ? 1 : 800, easing:'ease-in-out'});
+}
+
+async function legendaryMoment(el){
+  const lifter = el.querySelector('.lifter');
+  const r = el.getBoundingClientRect(), scr = screenEl.getBoundingClientRect();
+  const fxX = r.left + r.width/2 - scr.left, fxY = r.top + r.height/2 - scr.top;
+  rays.style.left = fxX + 'px'; rays.style.top = fxY + 'px';
+
+  stackEl.classList.add('lift');
+  veil.classList.add('on');
+  el.classList.add('charging');
+  await sleep(RM ? 200 : TIMING.legendCharge);
+
+  el.classList.remove('charging'); el.classList.add('blast', 'fx');
+  play(lifter, [{transform:'scale(1)'}, {transform:'scale(1.2)'}], {duration: RM ? 150 : TIMING.legendGrow, easing:'cubic-bezier(.2,1.3,.3,1)'});
+  rays.classList.add('on');
+  if(!RM){ flash(fxX, fxY); shake(); rings(fxX, fxY); sparks(fxX, fxY); }
+  await sleep(RM ? 400 : TIMING.legendAfter);
+}
+function clearLegendFx(){
+  veil.classList.remove('on'); rays.classList.remove('on');
+  screenEl.classList.remove('shake');
+  fxFront.querySelectorAll('.ring,.spark').forEach(n => n.remove());
+}
+function flash(x, y){
+  flashEl.style.setProperty('--fx', x + 'px'); flashEl.style.setProperty('--fy', y + 'px');
+  play(flashEl, [{opacity:0}, {opacity:.95, offset:.15}, {opacity:0}], {duration:800, easing:'ease-out'});
+}
+function shake(){
+  screenEl.classList.remove('shake'); void screenEl.offsetWidth; screenEl.classList.add('shake');
+  setTimeout(() => screenEl.classList.remove('shake'), 800);
+}
+function rings(x, y){
+  for(let k=0; k<2; k++){
+    const r = document.createElement('div'); r.className = 'ring'; r.style.left = x + 'px'; r.style.top = y + 'px';
+    fxFront.appendChild(r);
+    play(r, [{transform:'translate(-50%,-50%) scale(.2)', opacity:.9}, {transform:'translate(-50%,-50%) scale(7)', opacity:0}],
+         {duration:1100, delay:k*160, easing:'cubic-bezier(.1,.7,.2,1)', fill:'forwards'}).then(() => r.remove());
+  }
+}
+function sparks(x, y){
+  for(let k=0; k<44; k++){
+    const el = document.createElement('i'); el.className = 'spark';
+    const size = 3 + Math.random()*5; el.style.width = el.style.height = size + 'px';
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    fxFront.appendChild(el);
+    const ang = Math.random()*Math.PI*2, dist = 120 + Math.random()*Math.min(innerWidth, 520)*.55;
+    play(el, [
+      {transform:'translate(-50%,-50%) translate(0,0) scale(1)', opacity:1},
+      {transform:`translate(-50%,-50%) translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist + 40}px) scale(.2)`, opacity:0}
+    ], {duration:900 + Math.random()*900, easing:'cubic-bezier(.1,.8,.3,1)', fill:'forwards'}).then(() => el.remove());
+  }
+}
+
+/* =====================================================================
+   11. PASSER LA CARTE
+   ===================================================================== */
+function hit(side){
+  const e = side < 0 ? edgeL : edgeR;
+  e.classList.add('hit'); setTimeout(() => e.classList.remove('hit'), 260);
+}
+
+// side = -1 (gauche) ou +1 (droite)
+async function dismissTop(side){
+  if(state !== 'stack' || busy) return;
+  busy = true;
+  arena.classList.remove('can-next');
+  const el = els[idx], c = cards[idx];
+  const wasLegend = c.rarity === 'legendary';
+  if(wasLegend){ veil.classList.remove('on'); rays.classList.remove('on'); }
+  hit(side);
+
+  // La pile revient face au joueur en ressort. Après un simple clic : petit « coup d'œil » sur les cartes restantes.
+  if(Math.abs(curTilt) < 2 && !RM){ setTilt(side * PEEK.kickOnClick); }
+  springTilt(curTilt);
+
+  idx++;                                   // la carte suivante du tableau devient la carte du dessus
+  const last = idx >= cards.length;
+  updateDots();
+  if(!last){
+    updateStack();                         // la pile avance en profondeur : la suivante est déjà visible dessous
+    setTimeout(() => { busy = false; if(state === 'stack') activateTop(); }, RM ? 0 : TIMING.unlockAfterExit);
+  }
+
+  const X = side * Math.max(innerWidth, 700);
+  await play(el, [
+    {transform: stackTransform(0), opacity:1},
+    {transform:`translateZ(0px) translate(${X}px,-30px) rotate(${side*24}deg)`, opacity:.2}
+  ], {duration: RM ? 150 : TIMING.exit, easing:'cubic-bezier(.5,0,.85,.45)'});
+  el.remove();
+  if(wasLegend){ stackEl.classList.remove('lift'); clearLegendFx(); }
+  if(last) await showSummary();
+}
+
+// Clic simple : moitié gauche de l'écran = gauche, moitié droite = droite (inchangé)
+let suppressClick = false;
+screenEl.addEventListener('click', e => {
+  if(state !== 'stack' || busy || suppressClick) return;
+  if(e.target.closest('button, a, input, footer, .tabs')) return;
+  dismissTop(e.clientX < innerWidth / 2 ? -1 : 1);
+});
+
+/* ---------- Peek : maintenir + glisser = la pile pivote, la carte du dessus reste FIXE ----------
+   pointerdown : on commence à suivre le doigt
+   pointermove : on ne fait QUE pivoter la pile (setTilt) ; aucun déplacement de la carte du dessus
+   pointerup   : la carte part seulement si le geste se termine par un balayage rapide ;
+                 sinon la pile revient face au joueur en ressort */
+let dg = null;
+screenEl.addEventListener('pointerdown', e => {
+  if(state !== 'stack' || busy) return;
+  if(e.target.closest('button, a, input, footer, .tabs')) return;
+  cancelAnimationFrame(springRaf);                       // on reprend la main sur un ressort en cours
+  dg = {id:e.pointerId, x:e.clientX, y:e.clientY, base:curTilt, active:false, dx:0, samples:[{x:e.clientX, t:performance.now()}]};
+});
+screenEl.addEventListener('pointermove', e => {
+  if(!dg || e.pointerId !== dg.id) return;
+  const dx = e.clientX - dg.x, dy = e.clientY - dg.y;
+  if(!dg.active){
+    if(Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)){
+      dg.active = true;
+      try{ screenEl.setPointerCapture(e.pointerId); }catch(err){}
+    }else return;
+  }
+  dg.dx = dx;
+  dg.samples.push({x:e.clientX, t:performance.now()});
+  if(dg.samples.length > 12) dg.samples.shift();
+  setTilt(clamp(dg.base + dx * PEEK.tiltPerPx, -PEEK.maxTilt, PEEK.maxTilt));   // toute la pile pivote, la carte du dessus reste collée à la pile
+});
+
+// Vitesse (px/ms) sur les derniers ms AVANT le relâchement : si le doigt s'est arrêté avant de lâcher, elle vaut 0.
+function releaseVelocity(samples){
+  const now = performance.now();
+  const recent = samples.filter(s => now - s.t <= PEEK.velWindow);
+  if(recent.length < 2) return 0;
+  const a = recent[0], b = recent[recent.length - 1];
+  return (b.x - a.x) / Math.max(1, b.t - a.t);
+}
+
+function endDrag(e){
+  if(!dg || e.pointerId !== dg.id) return;
+  const d = dg; dg = null;
+  if(!d.active) return;                                  // simple toucher : géré par le "click"
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 60);
+  const v = releaseVelocity(d.samples);
+  const swiped = e.type !== 'pointercancel' && Math.abs(v) >= PEEK.flickSpeed && Math.abs(d.dx) >= PEEK.minDx;
+  if(swiped){
+    dismissTop(v < 0 ? -1 : 1);                          // le sens du balayage décide de la sortie
+  }else{
+    springTilt(curTilt);                                 // pas d'impulsion franche : retour en ressort, face au joueur
+  }
+}
+screenEl.addEventListener('pointerup', endDrag);
+screenEl.addEventListener('pointercancel', endDrag);
+
+// Clavier : flèche gauche = gauche ; flèche droite, Entrée ou Espace = droite
+document.addEventListener('keydown', e => {
+  if(state !== 'stack' || busy) return;
+  if(e.target.closest && e.target.closest('button, input')) return;
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); dismissTop(-1); }
+  else if(['ArrowRight','Enter',' '].includes(e.key)){ e.preventDefault(); dismissTop(1); }
+});
+
+/* =====================================================================
+   12. ÉCRAN DE RÉSUMÉ
+   ===================================================================== */
+async function showSummary(){
+  state = 'summary'; busy = true;
+  arena.classList.remove('can-next');
+  skipBtn.hidden = true; dotsEl.hidden = true;
+  await sleep(RM ? 0 : 200);
+  await play(arena, [{opacity:1}, {opacity:0}], {duration: RM ? 1 : 320});
+  arena.classList.add('hidden');
+
+  $('#recap').innerHTML = cards.map((c, i) =>
+    cardHTML(c, {isNew:c.isNew, hi:true}).replace('<div class="card', `<div style="--i:${i}" class="card`)).join('');
+  const counts = TIERS.map(t => ({t, n: cards.filter(c => c.rarity === t.id).length})).filter(x => x.n);
+  $('#tally').textContent = counts.map(x => `${x.n} ${x.t.label.toLowerCase()}${x.n > 1 ? 's' : ''}`).join(', ');
+  recapWrap.classList.remove('hidden');
+
+  setCaption(demoOn() ? 'Mode démo : ces cartes ne sont pas ajoutées à ta collection.' : '');
+  srEl.textContent = 'Résumé de ton booster affiché.';
+  againBtn.hidden = false; toColBtn.hidden = false;
+  busy = false; setBusyTabs(false);
+}
+
+skipBtn.addEventListener('click', () => {
+  if(state !== 'stack' || busy) return;
+  clearLegendFx(); stackEl.classList.remove('lift');
+  cancelAnimationFrame(springRaf); setTilt(0);
+  idx = cards.length; updateDots();
+  showSummary();
+});
+
+/* =====================================================================
+   13. NOUVEAU BOOSTER
+   ===================================================================== */
+function resetPackVisuals(){
+  cancelWaapi(pack);
+  pack.classList.remove('zoomed', 'opened', 'gone');
+  pack.setAttribute('tabindex', '0');
+  applyTear(makeTear());                                  // nouveau bord déchiré pour le prochain booster
+}
+againBtn.addEventListener('click', () => {
+  againBtn.hidden = true; toColBtn.hidden = true;
+  recapWrap.classList.add('hidden'); $('#recap').innerHTML = '';
+  arena.getAnimations().forEach(a => a.cancel()); arena.classList.remove('hidden');
+  clearStack(); clearLegendFx(); resetPackVisuals();
+  state = 'idle'; busy = false; pending = null; cards = []; idx = 0;
+  setCaption('');
+  play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});
+  play(packZoom, [{opacity:0, transform:'translateY(40px) scale(.94)'}, {opacity:1, transform:'translateY(0) scale(1)'}],
+       {duration: RM ? 1 : 600, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
+});
+toColBtn.addEventListener('click', () => showTab('col'));
+
+/* =====================================================================
+   14. COLLECTION, NAVIGATION, CLÉ TMDB
+   ===================================================================== */
+let filter = 'all';
+function renderCollection(){
+  const all = Object.values(getCol());
+  const total = all.reduce((a,c) => a + c.count, 0);
+  $('#summary').textContent = all.length ? `${all.length} films différents, ${total} cartes au total.` : '';
+  $('#empty').classList.toggle('hidden', all.length > 0);
+  const chips = [{id:'all', label:'Toutes', n:all.length}]
+    .concat(TIERS.map(t => ({id:t.id, label:t.label, n:all.filter(c => c.rarity === t.id).length})));
+  $('#chips').innerHTML = chips.map(c =>
+    `<button class="chip ${c.id !== 'all' ? 'r-' + c.id : ''}" data-f="${c.id}" aria-pressed="${filter === c.id}">${c.label} ${c.n}</button>`).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; renderCollection(); }));
+  const shown = all.filter(c => filter === 'all' || c.rarity === filter)
+    .sort((a,b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
+  $('#colGrid').innerHTML = shown.map(c => cardHTML(c, {count:c.count, lazy:true})).join('');
+}
+
+function showTab(name){
+  if(state === 'opening' || state === 'stack') return;
+  const open = name === 'open';
+  $('#view-open').classList.toggle('hidden', !open);
+  $('#view-col').classList.toggle('hidden', open);
+  $('#tab-open').setAttribute('aria-selected', open);
+  $('#tab-col').setAttribute('aria-selected', !open);
+  if(!open) renderCollection();
+}
+$('#tab-open').addEventListener('click', () => showTab('open'));
+$('#tab-col').addEventListener('click', () => showTab('col'));
+
+function updateDemoBtn(){ $('#demoBtn').textContent = demoOn() ? 'Mode démo activé : cotes élevées, collection protégée (désactiver)' : 'Activer le mode démo (cotes élevées pour tester les effets)'; }
+function refreshKeyState(){
+  const has = !!store.get('tmdb_key','');
+  $('#setup').classList.toggle('hidden', has);
+  $('#app').classList.toggle('hidden', !has);
+  ['#changeKey', '#resetCol', '#demoBtn'].forEach(s => $(s).classList.toggle('hidden', !has));
+  updateDemoBtn();
+}
+
+$('#keyForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const key = $('#keyInput').value.trim(), st = $('#keyStatus');
+  st.textContent = 'Vérification…';
+  try{
+    await tmdb('/configuration', {}, key);
+    store.set('tmdb_key', key); $('#keyInput').value = ''; st.textContent = '';
+    refreshKeyState();
+  }catch(err){
+    st.textContent = err.name === 'TypeError' ? 'Impossible de joindre TMDB. Vérifie ta connexion.' : err.message;
+  }
+});
+$('#changeKey').addEventListener('click', () => { store.del('tmdb_key'); pageCache.clear(); refreshKeyState(); });
+$('#resetCol').addEventListener('click', () => {
+  if(confirm('Supprimer toutes les cartes de ta collection ?')){ store.del('collection'); renderCollection(); }
+});
+$('#demoBtn').addEventListener('click', () => { store.set('demo', !demoOn()); updateDemoBtn(); });
+
+refreshKeyState();
+</script>
+</body>
+</html>
