@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12070b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#12070b; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
+  --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
   --gold:#e8c46a; --gold-hi:#fff2c2; --gold-lo:#a9792b;
   --common:#aaa4a8; --uncommon:#4db38a; --rare:#5b97f0; --epic:#b65cf2; --legendary:#f6c453;
   box-sizing:border-box;
@@ -17,50 +21,56 @@
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none !important}
 .hidden{display:none !important}
+html{height:100%;-webkit-text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--text)}
+/* Application plein écran : le document ne défile jamais, seules les vues internes défilent */
 body{
-  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:500;line-height:1.45;min-height:100vh;
-  background:
-    radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
-    radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%);
-  background-attachment:fixed;
+  position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:500;line-height:1.45;
   -webkit-tap-highlight-color:transparent;
 }
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
-button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outline-offset:4px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-#screen{position:relative;overflow:hidden;min-height:100vh;touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.wrap{max-width:860px;margin:0 auto;padding:20px 16px 56px} /* pas de z-index ici : les effets plein écran doivent rester au-dessus des cartes */
+/* #screen = plein écran (les effets de la légendaire couvrent tout) ; .app = colonne type téléphone */
+#screen{position:fixed;inset:0;overflow:hidden;touch-action:pan-y;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.app{--bar:calc(62px + env(safe-area-inset-bottom,0px));position:relative;height:100%;max-width:560px;margin:0 auto;overflow:hidden}
+.view{position:absolute;left:0;right:0;top:0;bottom:var(--bar)}
 
-header.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
-h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
-  background:linear-gradient(var(--gold-hi),var(--gold) 55%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;color:transparent}
-.tabs{display:flex;gap:6px;background:rgba(0,0,0,.35);padding:4px;border-radius:12px;margin-bottom:18px;box-shadow:inset 0 0 0 1px var(--line)}
-.tabs button{flex:1;border:0;background:transparent;padding:10px 12px;border-radius:9px;color:var(--muted);font-weight:800}
-.tabs button[aria-selected="true"]{background:var(--surface);color:var(--text)}
-.tabs button:disabled{opacity:.45;cursor:not-allowed}
+/* ================= BARRE DE NAVIGATION ================= */
+.bottombar{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;height:var(--bar);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:rgba(14,6,10,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-top:1px solid rgba(255,255,255,.07)}
+.tabbtn{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:0;color:var(--muted);font-weight:800;font-size:.72rem;letter-spacing:.01em;transition:color .2s}
+.tabbtn svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabbtn[aria-current="page"]{color:var(--gold-hi)}
+.tabbtn[aria-current="page"]::before{content:'';position:absolute;top:0;left:32%;right:32%;height:2px;border-radius:0 0 3px 3px;
+  background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.tabbtn:disabled{opacity:.4;cursor:not-allowed}
 
-.btn{border:0;border-radius:12px;padding:13px 22px;font-weight:800;color:#2b1403;
+.btn{min-height:46px;border:0;border-radius:12px;padding:0 22px;font-weight:800;color:#2b1403;
   background:linear-gradient(#fbeab0,#e8c46a 55%,#c89a3e);box-shadow:0 6px 18px -6px rgba(232,196,106,.6)}
 .btn.ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 2px var(--line)}
-.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;min-height:48px}
-.caption{text-align:center;color:var(--muted);margin:10px auto 0;max-width:46ch}
+.caption{text-align:center;color:var(--muted);margin:0 auto;max-width:46ch;padding:0 16px}
 .caption:empty{display:none}
 .caption .err{color:#ff9b9b}
 
-.setup{background:var(--surface);border-radius:16px;padding:20px;margin-bottom:22px;box-shadow:inset 0 0 0 1px var(--line)}
+/* ================= CLÉ TMDB (écran initial) ================= */
+.setup{position:absolute;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:var(--bg)}
+.setup-card{width:100%;max-width:420px;background:var(--surface);border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px var(--line)}
 .setup h2{margin:0 0 6px;font-size:1.15rem}
-.setup p{margin:0 0 12px;color:var(--muted);max-width:60ch}
+.setup p{margin:0 0 12px;color:var(--muted)}
 .setup form{display:flex;gap:8px;flex-wrap:wrap}
-.setup input{flex:1;min-width:220px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:11px 12px;-webkit-user-select:text;user-select:text}
+.setup input{flex:1;min-width:200px;min-height:46px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:0 12px;
+  font-size:16px;-webkit-user-select:text;user-select:text}   /* 16 px : évite le zoom automatique d'iOS */
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
 /* ================= CARTES ================= */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px}
-/* Contour de rareté AFFINÉ : 2 px (au lieu de 3 px), tracé à l'extérieur de la carte via box-shadow,
-   donc il ne mord jamais sur l'affiche. */
 .card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 2px var(--rc)}
 .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
 .card.r-epic{box-shadow:0 0 0 2px var(--rc),0 0 14px -2px var(--rc)}
@@ -73,34 +83,35 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 .badge{position:absolute;top:7px;right:7px;background:var(--text);color:#12070b;font-weight:800;font-size:.68rem;padding:2px 7px;border-radius:99px}
 .badge.new{background:var(--legendary);left:7px;right:auto}
 
-/* Balayage de lumière unique quand une carte épique/légendaire arrive au-dessus de la pile */
 .card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
 .scard.fx .card.r-epic::after{animation:shine 1s .15s ease-out 1}
 .scard.fx .card.r-legendary::after{animation:shine 1.4s .25s ease-out 1}
 @keyframes shine{to{transform:translateX(110%)}}
 
-/* Épique : reflet holographique */
 .holo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:color-dodge;opacity:.8;
   background:
     repeating-linear-gradient(115deg,rgba(255,0,140,.18) 0 6px,rgba(0,220,255,.18) 6px 12px,rgba(255,230,0,.16) 12px 18px,rgba(150,60,255,.18) 18px 24px),
     linear-gradient(115deg,transparent 12%,rgba(255,255,255,.55) 28%,rgba(120,255,240,.5) 40%,rgba(255,120,220,.5) 52%,rgba(255,240,120,.45) 64%,transparent 80%);
   background-size:auto,280% 100%;background-position:0 0,110% 0;animation:holo 3.8s ease-in-out infinite}
 @keyframes holo{0%,100%{background-position:0 0,110% 0}50%{background-position:24px 0,-10% 0}}
-/* Légendaire : feuille d'or */
 .gold{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
   background:linear-gradient(120deg,transparent 22%,rgba(255,240,190,.85) 44%,rgba(255,200,90,.6) 56%,transparent 78%);
   background-size:260% 100%;background-position:110% 0;animation:goldsweep 4.2s ease-in-out infinite}
 @keyframes goldsweep{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
-.scard.under .holo,.scard.under .gold,.grid .holo,.grid .gold{animation-play-state:paused}
-.grid .card:hover .holo,.grid .card:hover .gold{animation-play-state:running}
+.scard.under .holo,.scard.under .gold,.slot .holo,.slot .gold{animation-play-state:paused}
 
-/* ================= SCÈNE ================= */
+/* ================= VUE ACCUEIL ================= */
+.view-home{display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px);
+  background:
+    radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
+    radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
-  --pw:min(62vw,250px,37svh);      /* largeur du booster */
-  --cw:min(68vw,280px,41svh);      /* largeur d'une carte de la pile */
-  position:relative;height:clamp(440px,70svh,680px);
-}
+  --pw:min(62vw,250px,36dvh);      /* largeur du booster : tient dans l'écran même zoomé ×1,17 */
+  --cw:min(70vw,300px,40dvh);      /* largeur d'une carte de la pile (la légendaire grossit ×1,2) */
+  position:relative;flex:1;min-height:0}
+.homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
 
 /* Flèches latérales (pas de texte) */
 .edge{position:absolute;top:0;bottom:0;width:18%;display:grid;place-items:center;color:var(--gold-hi);pointer-events:none;opacity:0;transition:opacity .35s}
@@ -117,9 +128,7 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 @keyframes nudgeL{50%{transform:translateX(-7px)}}
 @keyframes nudgeR{50%{transform:scaleX(-1) translateX(-7px)}}
 
-/* ================= PILE ================= */
-/* Cartes 2D posées à translateZ(-d × écart) dans un conteneur 3D : quand le .deck pivote en rotateY,
-   les cartes du dessous dépassent légèrement sur le côté, chacune avec sa couleur de rareté. */
+/* ---------- Pile (cartes 2D espacées en profondeur) ---------- */
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
 .stack.show{visibility:visible}
@@ -129,15 +138,11 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
   background:radial-gradient(ellipse closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));filter:blur(8px)}
 .scard{position:absolute;inset:0;transition:transform .5s cubic-bezier(.2,.9,.2,1);
   filter:drop-shadow(0 5px 7px rgba(0,0,0,.5))}
-/* MASQUAGE STRICT : pendant l'ouverture du booster, seules les cartes sans .hold existent à l'écran
-   (la 1re). Les autres sont invisibles et non cliquables jusqu'à la fin de la disparition du booster. */
 .scard.hold{visibility:hidden;opacity:0;pointer-events:none}
 .stack.lift .scard.under{filter:drop-shadow(0 5px 7px rgba(0,0,0,.5)) brightness(.45)}
 .lifter,.shaker{position:absolute;inset:0}
 .shaker .card{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 
-/* Fin liseré de rareté DANS la carte (≈ 3 px) : juste assez pour que la couleur se lise sur la tranche
-   quand la pile s'incline, sans rogner l'affiche. Il est plus fin que l'écart visible entre deux cartes. */
 .scard .card{--fw:calc(var(--cw)*.011)}
 .scard .card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:var(--fw);z-index:3;pointer-events:none;
   background:var(--frame,linear-gradient(160deg,#ece7e1,#aaa39c));
@@ -145,17 +150,16 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .scard .card.r-uncommon{--frame:linear-gradient(160deg,#7fe0b8,#2c8a68)}
 .scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
-.scard .card.r-epic{                                   /* épique : liseré holographique */
+.scard .card.r-epic{
   --frame:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dffb8,#4db8ff,#b04dff,#ff4d9d);
   box-shadow:0 0 0 2px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
 .scard .card.r-epic::before{background-size:300% 300%;animation:framemove 2.4s linear infinite}
-.scard .card.r-legendary{                              /* légendaire : liseré d'or lumineux */
+.scard .card.r-legendary{
   --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
   box-shadow:0 0 0 2px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
 .scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
 @keyframes framemove{to{background-position:300% 300%}}
 
-/* Halo derrière une carte légendaire */
 .aura{position:absolute;inset:-38%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .6s;
   background:radial-gradient(circle closest-side,rgba(255,214,110,.95) 0,rgba(255,150,40,.45) 52%,rgba(255,150,40,0) 100%)}
 .scard.charging .aura{opacity:.6}
@@ -167,13 +171,23 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
   50%{transform:translate(1px,-1px) rotate(-.5deg)}75%{transform:translate(-1px,0) rotate(.6deg)}100%{transform:translate(1.5px,0) rotate(-.8deg)}
 }
 
-/* Progression */
-.dots{display:flex;gap:8px;justify-content:center;margin-top:10px;height:10px}
+.dots{display:flex;gap:8px;justify-content:center;height:10px}
 .dots i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:background .3s,transform .3s}
 .dots i.done{background:var(--gold-lo)}
 .dots i.cur{background:var(--gold-hi);transform:scale(1.45)}
 
-/* Effets plein écran */
+/* ---------- Résumé ---------- */
+.recapwrap{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;
+  padding:12px 16px;text-align:center;overscroll-behavior:contain}
+.recapwrap h2{margin:0 0 2px;font-size:1.4rem;letter-spacing:-.01em}
+.recapwrap .tally{margin:0 0 14px;color:var(--muted)}
+.recap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.recap .card{width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
+@keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
+.recap .card.r-epic::after{animation:shine 1s calc(var(--i)*110ms + 600ms) ease-out 1}
+.recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
+
+/* ---------- Effets plein écran ---------- */
 #fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #fxBack{z-index:40}
 #fxFront{z-index:60}
@@ -198,19 +212,17 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
   30%,50%,70%{transform:translate(-8px,4px)}40%,60%{transform:translate(8px,-4px) rotate(-.2deg)}
 }
 
-/* ================= BOOSTER (plat, mécanique d'ouverture de la v4) ================= */
+/* ---------- Booster (plat) ---------- */
 .pack-pos{position:absolute;left:50%;top:50%;width:var(--pw);aspect-ratio:5/8;transform:translate(-50%,-50%);z-index:5;
   cursor:pointer;outline:none}
 .pack-pos.opened{cursor:default}
 .pack-pos.gone{display:none}
-
 .pack-halo{position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .7s;
   background:radial-gradient(ellipse closest-side,rgba(255,196,90,.5) 0,rgba(200,20,40,.22) 55%,rgba(200,20,40,0) 100%)}
 .pack-pos.zoomed .pack-halo,.pack-pos:focus-visible .pack-halo{opacity:1}
 .pack-pos.opened .pack-halo{opacity:0;transition:opacity .3s}
 .pack-shadow{position:absolute;left:4%;right:4%;bottom:-6%;height:10%;pointer-events:none;
   background:radial-gradient(ellipse closest-side,rgba(0,0,0,.6),rgba(0,0,0,0));filter:blur(8px)}
-
 .pack-zoom{position:absolute;inset:0;transition:transform .75s cubic-bezier(.2,.9,.2,1)}
 .pack-pos.zoomed .pack-zoom{transform:scale(1.17)}
 .pack-float{position:absolute;inset:0;animation:float 5s ease-in-out infinite}
@@ -222,8 +234,6 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;outline:1px solid transparent}
 .part.top{clip-path:var(--clipTop);transform-origin:15% 15%}
 .part.bottom{clip-path:var(--clipBottom)}
-
-/* Ligne de déchirure DROITE (comme en v4), rognée aux bords du booster */
 .linebox{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
 .cutline{position:absolute;left:0;right:0;top:15%;height:3px;margin-top:-1.5px;opacity:0;transform:scaleX(0);transform-origin:0 50%;
   background:linear-gradient(90deg,transparent,#fff6d6 12%,#ffd36b 50%,#fff6d6 88%,transparent);
@@ -265,26 +275,82 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 .grain{inset:0;opacity:.18;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* ================= RÉSUMÉ ================= */
-.recapwrap{max-width:820px;margin:0 auto;text-align:center}
-.recapwrap h2{margin:6px 0 2px;font-size:1.5rem;letter-spacing:-.01em}
-.recapwrap .tally{margin:0 0 18px;color:var(--muted)}
-.recap{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
-.recap .card{width:calc((100% - 28px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
-@media (min-width:720px){.recap .card{width:calc((100% - 56px)/5)}}
-@keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
-.recap .card.r-epic::after{animation:shine 1s calc(var(--i)*110ms + 600ms) ease-out 1}
-.recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
+/* =====================================================================
+   VUE COLLECTION : l'étagère de vidéothèque
+   Chaque .srow est une rangée COMPLÈTE et autonome (fond, LED, montants, 3 cartes, planche).
+   Ajouter des films = ajouter des rangées : l'étagère ne peut pas se désynchroniser au scroll.
+   ===================================================================== */
+.view-col{
+  --post:14px;      /* largeur des montants métalliques */
+  --ptop:18px;      /* profondeur de la planche (face supérieure, vue légèrement de dessus) */
+  --pedge:10px;     /* épaisseur du chant avant de la planche */
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  background:radial-gradient(130% 50% at 50% 0%,#232b60 0%,#10153a 45%,#070919 100%)}
 
-/* ================= COLLECTION ================= */
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.chip{border:0;border-radius:99px;padding:7px 13px;background:var(--surface);color:var(--text);font-weight:800;font-size:.85rem;box-shadow:inset 0 0 0 2px var(--line)}
-.chip[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--rc,var(--text));background:var(--bg)}
-.summary{color:var(--muted);margin:0 0 12px}
-.empty{text-align:center;color:var(--muted);padding:40px 12px}
+/* En-tête collant */
+.shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px;
+  background:rgba(7,9,25,.84);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(120,160,255,.14)}
+.shead h2{margin:0;font-size:1.15rem;letter-spacing:-.01em}
+.shead .count{color:#8f9bd1;font-size:.85rem;font-weight:500;margin-left:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:10px -14px 0;padding:0 14px;scrollbar-width:none;touch-action:pan-x}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:34px;border:0;border-radius:99px;padding:0 13px;background:rgba(255,255,255,.06);color:#c9d2ff;font-weight:800;font-size:.8rem;
+  box-shadow:inset 0 0 0 1.5px rgba(140,170,255,.2)}
+.chip[aria-pressed="true"]{background:rgba(110,160,255,.18);color:#fff;box-shadow:inset 0 0 0 1.5px var(--rc,#8cb4ff)}
 
-footer{margin-top:36px;color:var(--muted);font-size:.78rem;display:flex;flex-direction:column;gap:6px}
-footer button{align-self:flex-start;background:none;border:0;color:var(--muted);text-decoration:underline;padding:0;font-size:.78rem}
+.cabinet{position:relative;max-width:560px;margin:10px auto 0}
+/* Traverse haute du meuble */
+.scap{position:relative;height:16px;z-index:3;
+  background:linear-gradient(180deg,#323a58,#0b0d18);box-shadow:inset 0 1px 0 rgba(150,190,255,.3),0 4px 12px rgba(0,0,0,.5)}
+
+.srow{position:relative}
+/* Fond du casier + lumière de la LED qui retombe depuis le haut */
+.sback{position:absolute;inset:0;
+  background:linear-gradient(180deg,#0b1132,#070a1c);
+  box-shadow:inset 16px 0 18px -10px #000,inset -16px 0 18px -10px #000}
+.sback::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(64,120,255,.46),rgba(64,120,255,.16) 38%,rgba(64,120,255,0) 72%)}
+/* Ruban LED sous la planche du dessus */
+.led{position:absolute;top:0;left:var(--post);right:var(--post);height:3px;z-index:1;
+  background:linear-gradient(90deg,rgba(140,190,255,0),#a9d0ff 10%,#e3f0ff 50%,#a9d0ff 90%,rgba(140,190,255,0));
+  box-shadow:0 0 12px 3px rgba(80,150,255,.9),0 8px 30px 8px rgba(50,110,255,.42)}
+/* Montants métalliques */
+.spost{position:absolute;top:0;bottom:0;width:var(--post);z-index:4;
+  background:linear-gradient(90deg,#03040a,#2a3046 38%,#12151f 70%,#05060c);
+  box-shadow:inset 0 0 0 1px rgba(130,170,255,.08)}
+.spost.l{left:0}
+.spost.r{right:0;background:linear-gradient(270deg,#03040a,#2a3046 38%,#12151f 70%,#05060c)}
+/* Planche : face supérieure éclairée + chant avant sombre */
+.plank{position:absolute;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ptop) + var(--pedge))}
+.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:var(--ptop);
+  background:
+    radial-gradient(75% 160% at 50% 0%,rgba(95,155,255,.32),rgba(95,155,255,0) 70%),
+    linear-gradient(180deg,#27315a 0%,#1b2243 60%,#121834 100%);
+  box-shadow:inset 0 1px 0 rgba(160,200,255,.4)}
+.plank::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--pedge);
+  background:linear-gradient(180deg,#1a1f33,#05060d);box-shadow:0 1px 0 rgba(120,170,255,.2)}
+
+/* Les 3 cartes : posées sur la ligne de contact au milieu de la planche */
+.slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  padding:24px calc(var(--post) + 12px) calc(var(--pedge) + var(--ptop)*.5)}
+.slot{position:relative;transform-origin:50% 100%;
+  transform:translateX(var(--dx,0)) perspective(700px) rotateX(-2.5deg) rotate(var(--rot,0deg));
+  filter:drop-shadow(0 7px 8px rgba(0,0,0,.65))}
+.slot.empty{visibility:hidden}
+.slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;   /* ombre de contact sur la planche */
+  background:radial-gradient(ellipse closest-side,rgba(0,0,0,.75),rgba(0,0,0,0));filter:blur(2px)}
+.slot .card{width:100%}
+.slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;   /* lumière bleue de la LED qui tombe sur le haut de la carte */
+  background:linear-gradient(180deg,rgba(120,175,255,.32),rgba(120,175,255,0) 40%)}
+.slot .card .meta{font-size:.62rem;padding:20px 6px 5px}
+.slot .card .meta b{font-size:.7rem}
+.slot .badge{font-size:.6rem;top:5px;right:5px;padding:1px 6px}
+.slot .badge.new{left:5px}
+
+/* Pied de page (réglages) */
+.sfoot{max-width:560px;margin:0 auto;padding:26px 16px 22px;color:#7f8ab8;font-size:.76rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.sfoot button{background:none;border:0;color:#7f8ab8;text-decoration:underline;padding:8px;min-height:36px;font-size:.76rem}
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
@@ -317,10 +383,10 @@ footer button{align-self:flex-start;background:none;border:0;color:var(--muted);
 </svg>
 
 <main id="screen">
-  <div class="wrap">
-    <header class="top"><h1>Boosters ciné</h1></header>
 
-    <section class="setup hidden" id="setup">
+  <!-- Écran initial : clé TMDB -->
+  <section class="setup hidden" id="setup">
+    <div class="setup-card">
       <h2>Colle ta clé TMDB pour commencer</h2>
       <p>Crée un compte gratuit sur themoviedb.org, puis demande une clé dans Paramètres, API. La clé v3 et le jeton v4 fonctionnent tous les deux. Elle reste dans ton navigateur.</p>
       <form id="keyForm">
@@ -328,72 +394,81 @@ footer button{align-self:flex-start;background:none;border:0;color:var(--muted);
         <button class="btn" type="submit">Enregistrer</button>
       </form>
       <p class="err" id="keyStatus" role="status"></p>
-    </section>
+    </div>
+  </section>
 
-    <div id="app" class="hidden">
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tab-open" aria-selected="true">Ouvrir un booster</button>
-        <button role="tab" id="tab-col" aria-selected="false">Ma collection</button>
-      </div>
+  <div class="app hidden" id="app">
 
-      <section id="view-open">
-        <div class="arena" id="arena">
-          <div class="edge l" id="edgeL" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="edge r" id="edgeR" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <!-- ============ VUE ACCUEIL : booster ============ -->
+    <section class="view view-home" id="view-home">
+      <div class="arena" id="arena">
+        <div class="edge l" id="edgeL" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="edge r" id="edgeR" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 
-          <!-- Pile de cartes -->
-          <div class="stack" id="stack">
-            <div class="deck-shadow"></div>
-            <div class="deck" id="deck"></div>
-          </div>
+        <div class="stack" id="stack">
+          <div class="deck-shadow"></div>
+          <div class="deck" id="deck"></div>
+        </div>
 
-          <!-- Booster -->
-          <div class="pack-pos" id="pack" role="button" tabindex="0" aria-label="Booster">
-            <div class="pack-halo"></div>
-            <div class="pack-zoom" id="packZoom">
-              <div class="pack-shadow"></div>
-              <div class="pack-float">
-                <div class="pack-tilt" id="tilt">
-                  <div class="part bottom" id="partBottom"></div>
-                  <div class="part top" id="partTop"></div>
-                  <div class="linebox"><div class="cutline" id="cutline"></div><div class="glint"></div></div>
-                </div>
-                <div class="burst" id="burst"></div>
+        <div class="pack-pos" id="pack" role="button" tabindex="0" aria-label="Booster">
+          <div class="pack-halo"></div>
+          <div class="pack-zoom" id="packZoom">
+            <div class="pack-shadow"></div>
+            <div class="pack-float">
+              <div class="pack-tilt" id="tilt">
+                <div class="part bottom" id="partBottom"></div>
+                <div class="part top" id="partTop"></div>
+                <div class="linebox"><div class="cutline" id="cutline"></div><div class="glint"></div></div>
               </div>
+              <div class="burst" id="burst"></div>
             </div>
           </div>
         </div>
+      </div>
 
+      <div class="recapwrap hidden" id="recapWrap">
+        <h2>Ton pull</h2>
+        <p class="tally" id="tally"></p>
+        <div class="recap" id="recap"></div>
+      </div>
+
+      <div class="homefoot">
         <div class="dots" id="dots" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i></div>
-
-        <div class="recapwrap hidden" id="recapWrap">
-          <h2>Ton pull</h2>
-          <p class="tally" id="tally"></p>
-          <div class="recap" id="recap"></div>
-        </div>
-
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
           <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
-          <button class="btn ghost" id="toColBtn" hidden>Voir ma collection</button>
+          <button class="btn ghost" id="toColBtn" hidden>Ma collection</button>
           <button class="btn ghost" id="skipBtn" hidden>Passer au résumé</button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section id="view-col" class="hidden">
-        <p class="summary" id="summary"></p>
-        <div class="stats" id="chips"></div>
-        <div class="grid" id="colGrid"></div>
-        <p class="empty hidden" id="empty">Ta collection est vide. Ouvre ton premier booster pour la commencer.</p>
-      </section>
-    </div>
+    <!-- ============ VUE COLLECTION : étagère ============ -->
+    <section class="view view-col hidden" id="view-col">
+      <header class="shead">
+        <h2>Ma collection<span class="count" id="count"></span></h2>
+        <div class="chips" id="chips"></div>
+      </header>
+      <div class="cabinet" id="cabinet"></div>
+      <footer class="sfoot">
+        <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+        <button id="demoBtn"></button>
+        <button id="changeKey">Changer de clé TMDB</button>
+        <button id="resetCol">Vider ma collection</button>
+      </footer>
+    </section>
 
-    <footer>
-      <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
-      <button id="demoBtn" class="hidden"></button>
-      <button id="changeKey" class="hidden">Changer de clé TMDB</button>
-      <button id="resetCol" class="hidden">Vider ma collection</button>
-    </footer>
+    <!-- ============ BARRE DE NAVIGATION ============ -->
+    <nav class="bottombar" aria-label="Navigation principale">
+      <button class="tabbtn" id="tab-home" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"/></svg>
+        <span>Accueil</span>
+      </button>
+      <button class="tabbtn" id="tab-col">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="4" height="12" rx="1"/><rect x="9.5" y="3.5" width="4" height="14.5" rx="1"/><path d="m15.8 7 3.6 1-2.9 10-3.6-1z"/><path d="M3 21h18"/></svg>
+        <span>Collection</span>
+      </button>
+    </nav>
   </div>
 
   <div id="fxBack" aria-hidden="true"><div class="veil" id="veil"></div><div class="rays" id="rays"></div></div>
@@ -414,31 +489,22 @@ const TIERS = [
 ];
 const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
 
-// Rythme de l'ouverture (millisecondes) : mécanique de la v4, beaucoup plus rapide
 const TIMING = {
-  cutSweep:90,         // la ligne de déchirure traverse le booster (320 en v4)
-  topFlight:240,       // le haut du booster est arraché (520 en v4)
-  slideStartAt:.3,     // le glissement démarre quand le haut a fait 30 % de son vol (45 % en v4)
-  packSlide:300,       // glissement du booster vers le bas (380 en v4)
-  stackRise:320,       // la 1re carte sort de l'ouverture
-  legendCharge:800,    // suspense (tremblement) avant l'explosion de la légendaire
-  legendGrow:520,      // agrandissement de la légendaire à l'impact
-  legendAfter:800,     // temps avant de pouvoir faire partir la légendaire
-  exit:520,            // sortie d'une carte sur le côté
-  unlockAfterExit:240  // délai avant de pouvoir toucher la carte suivante
+  cutSweep:90, topFlight:240, slideStartAt:.3, packSlide:300, stackRise:320,
+  legendCharge:800, legendGrow:520, legendAfter:800, exit:520, unlockAfterExit:240
 };
 
-// Peek (inclinaison 3D de la pile)
 const PEEK = {
-  maxTilt:40,          // inclinaison maximale (degrés)
-  tiltPerPx:.26,       // degrés d'inclinaison par pixel de glissement
-  gap:.03,             // écart entre deux cartes, en fraction de la largeur d'une carte (.05 en v6) : plus petit = cartes plus serrées
-  minDx:40,            // glissement minimal (px) pour qu'un balayage puisse être validé
-  flickSpeed:.5,       // vitesse minimale au relâchement (px/ms) pour valider le balayage
-  velWindow:100,       // la vitesse est mesurée sur les 100 derniers ms avant le relâchement
-  kickOnClick:16,      // petite inclinaison « coup d'œil » quand on passe une carte d'un simple clic
-  springK:190,         // raideur du ressort de retour
-  springC:15           // amortissement (plus bas = plus de rebond)
+  maxTilt:40, tiltPerPx:.26, gap:.03, minDx:40, flickSpeed:.5, velWindow:100,
+  kickOnClick:16, springK:190, springC:15
+};
+
+// Étagère : 3 cartes par rangée, rangées ajoutées par lots au fil du défilement
+const SHELF = {
+  perRow:3,
+  chunkRows:6,        // rangées ajoutées à chaque lot
+  minRows:4,          // l'étagère est visible même vide
+  preload:900         // on ajoute des rangées quand le bas est à moins de 900 px
 };
 
 const TIER = Object.fromEntries(TIERS.map(t => [t.id, t]));
@@ -463,12 +529,13 @@ function play(el, keyframes, opts = {}){
   const a = el.animate(keyframes, {fill:'both', ...opts});
   return a.finished.catch(() => {}).then(() => a);
 }
-// Annule seulement les animations WAAPI (pas les animations CSS en boucle : float, sheen…)
 function cancelWaapi(root){
   root.getAnimations({subtree:true})
     .filter(a => !('animationName' in a) && !('transitionProperty' in a))
     .forEach(a => a.cancel());
 }
+// Petite vibration sur mobile (Android) : déchirure et légendaire
+const buzz = p => { if(!RM && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } };
 
 /* =====================================================================
    3. API TMDB ET TIRAGE
@@ -516,7 +583,6 @@ async function drawBooster(){
     used.add(m.id);
     return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count};
   });
-  // Les cartes les plus rares sont au fond de la pile : elles apparaissent en dernier
   return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));
 }
 
@@ -530,7 +596,7 @@ function prefetchBooster(){
 }
 
 /* =====================================================================
-   4. COLLECTION
+   4. COLLECTION (données)
    ===================================================================== */
 const getCol = () => store.get('collection', {});
 function addToCol(cards){
@@ -565,21 +631,22 @@ const partTop = $('#partTop'), partBottom = $('#partBottom'), cutline = $('#cutl
 const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), rays = $('#rays'), flashEl = $('#flash'), fxFront = $('#fxFront');
 const againBtn = $('#againBtn'), skipBtn = $('#skipBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), edgeL = $('#edgeL'), edgeR = $('#edgeR'), recapWrap = $('#recapWrap');
+const tabHome = $('#tab-home'), tabCol = $('#tab-col');
 
 /*  idle → zoomed → opening → stack → summary  */
 let state = 'idle';
-let busy = false;          // une animation de carte est en cours : on ignore les clics et les glissements
-let idx = 0;               // index de la carte du dessus dans `cards`
-let cards = [];            // les 5 cartes du booster
-let els = [];              // les 5 éléments .scard
-let pending = null;        // promesse du tirage (lancée au 1er clic)
-let G = 8;                 // écart en profondeur entre deux cartes (px), calculé depuis la largeur de la pile
+let busy = false;
+let idx = 0;
+let cards = [];
+let els = [];
+let pending = null;
+let G = 8;
 
-function setCaption(html){ capEl.innerHTML = html; }   // uniquement pour les erreurs et la note du mode démo
-function setBusyTabs(b){ document.querySelectorAll('.tabs button').forEach(x => x.disabled = b); }
+function setCaption(html){ capEl.innerHTML = html; }
+function setBusyTabs(b){ [tabHome, tabCol].forEach(x => x.disabled = b); }
 
 /* =====================================================================
-   6. BOOSTER : dessin plat, bord de déchirure droit (zigzag régulier de la v4), inclinaison
+   6. BOOSTER : dessin plat, bord de déchirure, inclinaison
    ===================================================================== */
 const packArt = () => `<div class="art">
   <div class="curtain"></div><div class="film l"></div><div class="film r"></div><div class="frame"></div>
@@ -589,18 +656,18 @@ const packArt = () => `<div class="art">
   <div class="irid"></div><div class="sheen"></div><div class="spot"></div><div class="grain"></div></div>`;
 partTop.innerHTML = partBottom.innerHTML = packArt();
 
-(function buildClips(){   // bords crénelés haut/bas + ligne de déchirure à 15 % (zigzag régulier, comme en v4)
+(function buildClips(){
   const fmt = p => 'polygon(' + p.map(([x,y]) => x.toFixed(2) + '% ' + y.toFixed(2) + '%').join(',') + ')';
   const topEdge = [], bottomEdge = [], cut = [];
   const n = 24; for(let i=0; i<=n; i++){ const x = i*100/n; topEdge.push([x, i%2 ? 0 : 1.4]); bottomEdge.push([x, i%2 ? 98.6 : 100]); }
   const m = 20; for(let i=0; i<=m; i++){ cut.push([i*100/m, 15 + (i%2 ? 1.3 : 0)]); }
-  const cutOverlap = cut.map(([x,y]) => [x, y - 1.8]);   // la partie basse passe sous la haute : pas de couture
+  const cutOverlap = cut.map(([x,y]) => [x, y - 1.8]);
   const root = document.documentElement.style;
   root.setProperty('--clipTop', fmt([...topEdge, ...[...cut].reverse()]));
   root.setProperty('--clipBottom', fmt([...cutOverlap, ...[...bottomEdge].reverse()]));
 })();
 
-// Inclinaison et reflet foil qui suivent le pointeur (tant que le booster est fermé)
+// Inclinaison et reflet foil du booster : suit le doigt ou la souris (tant que le booster est fermé)
 arena.addEventListener('pointermove', e => {
   if(state !== 'idle' && state !== 'zoomed') return;
   const r = pack.getBoundingClientRect();
@@ -612,10 +679,11 @@ arena.addEventListener('pointermove', e => {
   tilt.style.setProperty('--sy', (y*100) + '%');
   tilt.style.setProperty('--bx', (20 + x*60) + '%');
 });
-arena.addEventListener('pointerleave', () => ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg')));
+['pointerleave','pointerup','pointercancel'].forEach(ev =>
+  arena.addEventListener(ev, () => { if(state === 'idle' || state === 'zoomed') ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg')); }));
 
 /* =====================================================================
-   7. CLIC 1 : ZOOM  /  CLIC 2 : OUVERTURE (mécanique de la v4, accélérée)
+   7. CLIC 1 : ZOOM  /  CLIC 2 : OUVERTURE
    ===================================================================== */
 pack.addEventListener('click', onPackClick);
 pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
@@ -639,12 +707,11 @@ async function openPack(){
     const res = await pending;
     if(res.error) throw res.error;
     cards = demoOn() ? res.cards.map(c => ({...c, isNew: !getCol()[c.id]})) : addToCol(res.cards);
-    buildStack();                                          // les cartes 2 à 5 sont créées MASQUÉES (.hold)
+    buildStack();
 
-    // a) la ligne de déchirure droite traverse le haut du booster (très rapide)
     await play(cutline, [{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(1)', opacity:1}], {duration: RM ? 30 : TIMING.cutSweep, easing:'ease-out'});
 
-    // b) éclat de lumière + le haut s'arrache ; SEULE la 1re carte apparaît dans l'ouverture
+    buzz(14);
     play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 380, easing:'ease-out'});
     play(cutline, [{opacity:1}, {opacity:0}], {duration:150});
     showStack();
@@ -655,7 +722,6 @@ async function openPack(){
       {transform:'translate(36%,-150%) rotate(-24deg)', opacity:0}
     ], {duration:fly, easing:'cubic-bezier(.15,.75,.35,1)'});
 
-    // c) le booster glisse vers le bas, presque sans attendre la fin du vol du haut
     await sleep(RM ? 0 : fly * TIMING.slideStartAt);
     const dist = innerHeight - pack.getBoundingClientRect().top + 80;
     await play(packZoom, [
@@ -666,8 +732,6 @@ async function openPack(){
     pack.classList.add('gone');
     await topFlight;
 
-    // d) le booster a FINI de disparaître : seulement maintenant les cartes du dessous passent en « présentes »
-    //    (elles sont derrière la 1re carte, donc rien ne se voit)
     releaseStack();
     startStack();
   }catch(err){
@@ -682,10 +746,8 @@ function failOpen(msg){
 }
 
 /* =====================================================================
-   8. LA PILE : cartes 2D espacées (un peu) en profondeur
+   8. LA PILE
    ===================================================================== */
-// d = profondeur dans la pile (0 = dessus). Toujours la même liste de fonctions CSS (translateZ translate rotate)
-// pour que transitions et sorties s'interpolent proprement.
 const stackTransform = d => `translateZ(${-d*G}px) translate(0px,0px) rotate(0deg)`;
 
 function layoutStack(){
@@ -701,7 +763,7 @@ function buildStack(){
   G = Math.max(4, stackEl.offsetWidth * PEEK.gap);
   els = cards.map((c, i) => {
     const el = document.createElement('div');
-    el.className = 'scard' + (i > 0 ? ' under hold' : '');   // .hold = invisible tant que le booster n'a pas disparu
+    el.className = 'scard' + (i > 0 ? ' under hold' : '');
     el.style.transform = stackTransform(i);
     el.innerHTML = `<div class="aura"></div>
       <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}</div></div>`;
@@ -709,7 +771,6 @@ function buildStack(){
     return el;
   });
 }
-// Pendant l'ouverture : on ne montre QUE la 1re carte (les autres restent en .hold)
 function showStack(){
   stackEl.classList.add('show');
   play(els[0].querySelector('.lifter'),
@@ -733,20 +794,19 @@ function updateStack(){
   els.forEach((el, k) => {
     if(k < idx) return;
     el.classList.toggle('under', k > idx);
-    el.style.transform = stackTransform(k - idx);       // les cartes du dessous avancent en profondeur (transition CSS)
+    el.style.transform = stackTransform(k - idx);
   });
 }
 
 /* =====================================================================
-   9. PEEK : INCLINAISON DE LA PILE + RETOUR EN RESSORT
+   9. PEEK : inclinaison de la pile + ressort
    ===================================================================== */
 let curTilt = 0, springRaf = 0;
 function setTilt(deg){
   curTilt = deg;
   deck.style.setProperty('--ry', deg + 'deg');
-  deck.style.setProperty('--peek', Math.min(1, Math.abs(deg) / PEEK.maxTilt));   // intensité du halo des liserés épique/légendaire
+  deck.style.setProperty('--peek', Math.min(1, Math.abs(deg) / PEEK.maxTilt));
 }
-// Ressort amorti réel : la pile revient face au joueur avec un léger rebond
 function springTilt(from, v0 = 0){
   cancelAnimationFrame(springRaf);
   if(RM){ setTilt(0); return; }
@@ -763,7 +823,7 @@ function springTilt(from, v0 = 0){
 }
 
 /* =====================================================================
-   10. EFFETS DE RARETÉ (quand une carte arrive au-dessus de la pile)
+   10. EFFETS DE RARETÉ
    ===================================================================== */
 async function activateTop(){
   const el = els[idx], c = cards[idx];
@@ -797,6 +857,7 @@ async function legendaryMoment(el){
   await sleep(RM ? 200 : TIMING.legendCharge);
 
   el.classList.remove('charging'); el.classList.add('blast', 'fx');
+  buzz([20, 40, 60]);
   play(lifter, [{transform:'scale(1)'}, {transform:'scale(1.2)'}], {duration: RM ? 150 : TIMING.legendGrow, easing:'cubic-bezier(.2,1.3,.3,1)'});
   rays.classList.add('on');
   if(!RM){ flash(fxX, fxY); shake(); rings(fxX, fxY); sparks(fxX, fxY); }
@@ -838,14 +899,13 @@ function sparks(x, y){
 }
 
 /* =====================================================================
-   11. PASSER LA CARTE
+   11. PASSER LA CARTE (tactile et souris)
    ===================================================================== */
 function hit(side){
   const e = side < 0 ? edgeL : edgeR;
   e.classList.add('hit'); setTimeout(() => e.classList.remove('hit'), 260);
 }
 
-// side = -1 (gauche) ou +1 (droite)
 async function dismissTop(side){
   if(state !== 'stack' || busy) return;
   busy = true;
@@ -855,15 +915,14 @@ async function dismissTop(side){
   if(wasLegend){ veil.classList.remove('on'); rays.classList.remove('on'); }
   hit(side);
 
-  // La pile revient face au joueur en ressort. Après un simple clic : petit « coup d'œil » sur les cartes restantes.
   if(Math.abs(curTilt) < 2 && !RM){ setTilt(side * PEEK.kickOnClick); }
   springTilt(curTilt);
 
-  idx++;                                   // la carte suivante du tableau devient la carte du dessus
+  idx++;
   const last = idx >= cards.length;
   updateDots();
   if(!last){
-    updateStack();                         // la pile avance en profondeur : la suivante est déjà visible dessous
+    updateStack();
     setTimeout(() => { busy = false; if(state === 'stack') activateTop(); }, RM ? 0 : TIMING.unlockAfterExit);
   }
 
@@ -877,23 +936,24 @@ async function dismissTop(side){
   if(last) await showSummary();
 }
 
-// Clic simple : moitié gauche de l'écran = gauche, moitié droite = droite
+const IGNORE = 'button, a, input, .bottombar';   // zones qui ne déclenchent ni passage de carte ni peek
+
+// Tape : moitié gauche / droite de la colonne de jeu
 let suppressClick = false;
 screenEl.addEventListener('click', e => {
   if(state !== 'stack' || busy || suppressClick) return;
-  if(e.target.closest('button, a, input, footer, .tabs')) return;
-  dismissTop(e.clientX < innerWidth / 2 ? -1 : 1);
+  if(e.target.closest(IGNORE)) return;
+  const r = arena.getBoundingClientRect();
+  dismissTop(e.clientX < r.left + r.width / 2 ? -1 : 1);
 });
 
-/* ---------- Peek : maintenir + glisser = la pile pivote, la carte du dessus reste FIXE ----------
-   pointermove : on ne fait QUE pivoter la pile (setTilt) ; aucun déplacement de la carte du dessus
-   pointerup   : la carte part seulement si le geste se termine par un balayage rapide ;
-                 sinon la pile revient face au joueur en ressort */
+// Peek : maintenir + glisser = la pile pivote, la carte du dessus reste FIXE ;
+// la carte ne part que sur un balayage rapide au relâchement, sinon la pile revient en ressort
 let dg = null;
 screenEl.addEventListener('pointerdown', e => {
   if(state !== 'stack' || busy) return;
-  if(e.target.closest('button, a, input, footer, .tabs')) return;
-  cancelAnimationFrame(springRaf);                       // on reprend la main sur un ressort en cours
+  if(e.target.closest(IGNORE)) return;
+  cancelAnimationFrame(springRaf);
   dg = {id:e.pointerId, x:e.clientX, y:e.clientY, base:curTilt, active:false, dx:0, samples:[{x:e.clientX, t:performance.now()}]};
 });
 screenEl.addEventListener('pointermove', e => {
@@ -908,10 +968,9 @@ screenEl.addEventListener('pointermove', e => {
   dg.dx = dx;
   dg.samples.push({x:e.clientX, t:performance.now()});
   if(dg.samples.length > 12) dg.samples.shift();
-  setTilt(clamp(dg.base + dx * PEEK.tiltPerPx, -PEEK.maxTilt, PEEK.maxTilt));   // toute la pile pivote, la carte du dessus reste collée à la pile
+  setTilt(clamp(dg.base + dx * PEEK.tiltPerPx, -PEEK.maxTilt, PEEK.maxTilt));
 });
 
-// Vitesse (px/ms) sur les derniers ms AVANT le relâchement : si le doigt s'est arrêté avant de lâcher, elle vaut 0.
 function releaseVelocity(samples){
   const now = performance.now();
   const recent = samples.filter(s => now - s.t <= PEEK.velWindow);
@@ -923,20 +982,19 @@ function releaseVelocity(samples){
 function endDrag(e){
   if(!dg || e.pointerId !== dg.id) return;
   const d = dg; dg = null;
-  if(!d.active) return;                                  // simple toucher : géré par le "click"
+  if(!d.active) return;
   suppressClick = true; setTimeout(() => { suppressClick = false; }, 60);
   const v = releaseVelocity(d.samples);
   const swiped = e.type !== 'pointercancel' && Math.abs(v) >= PEEK.flickSpeed && Math.abs(d.dx) >= PEEK.minDx;
-  if(swiped){
-    dismissTop(v < 0 ? -1 : 1);                          // le sens du balayage décide de la sortie
-  }else{
-    springTilt(curTilt);                                 // pas d'impulsion franche : retour en ressort, face au joueur
-  }
+  if(swiped) dismissTop(v < 0 ? -1 : 1);
+  else springTilt(curTilt);
 }
 screenEl.addEventListener('pointerup', endDrag);
 screenEl.addEventListener('pointercancel', endDrag);
 
-// Clavier : flèche gauche = gauche ; flèche droite, Entrée ou Espace = droite
+// Un appui long ne doit pas ouvrir le menu contextuel du navigateur pendant le peek
+screenEl.addEventListener('contextmenu', e => { if(state === 'stack') e.preventDefault(); });
+
 document.addEventListener('keydown', e => {
   if(state !== 'stack' || busy) return;
   if(e.target.closest && e.target.closest('button, input')) return;
@@ -994,45 +1052,104 @@ againBtn.addEventListener('click', () => {
   play(packZoom, [{opacity:0, transform:'translateY(40px) scale(.94)'}, {opacity:1, transform:'translateY(0) scale(1)'}],
        {duration: RM ? 1 : 600, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
 });
-toColBtn.addEventListener('click', () => showTab('col'));
+toColBtn.addEventListener('click', () => showView('col'));
 
 /* =====================================================================
-   14. COLLECTION, NAVIGATION, CLÉ TMDB
+   14. NAVIGATION (barre du bas) : bascule entre les vues sans recharger
    ===================================================================== */
-let filter = 'all';
-function renderCollection(){
+const viewHome = $('#view-home'), viewCol = $('#view-col');
+function showView(name){
+  if(state === 'opening' || state === 'stack') return;          // pas de changement de vue pendant la séquence d'ouverture
+  const home = name === 'home';
+  viewHome.classList.toggle('hidden', !home);
+  viewCol.classList.toggle('hidden', home);
+  tabHome.toggleAttribute('aria-current', home); if(home) tabHome.setAttribute('aria-current', 'page');
+  tabCol.toggleAttribute('aria-current', !home); if(!home) tabCol.setAttribute('aria-current', 'page');
+  if(!home) renderShelf();
+}
+tabHome.addEventListener('click', () => showView('home'));
+tabCol.addEventListener('click', () => showView('col'));
+
+/* =====================================================================
+   15. COLLECTION : L'ÉTAGÈRE INFINIE
+   Une « rangée » (.srow) = fond + LED + montants + planche + 3 cartes.
+   On ajoute des rangées entières par lots quand on approche du bas : le meuble s'étend sans fin
+   et reste parfaitement synchronisé avec les cartes puisque tout défile dans la même rangée.
+   ===================================================================== */
+const cabinet = $('#cabinet');
+let filter = 'all', shelfList = [], shelfTotalRows = 0, shelfShown = 0;
+
+function shelfData(){
+  return Object.values(getCol())
+    .filter(c => filter === 'all' || c.rarity === filter)
+    .sort((a,b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
+}
+
+function rowHTML(i){
+  let slots = '';
+  for(let k=0; k<SHELF.perRow; k++){
+    const c = shelfList[i * SHELF.perRow + k];
+    if(!c){ slots += '<div class="slot empty"><div class="card"></div></div>'; continue; }
+    // petite variation stable par carte : elles ne sont pas parfaitement alignées, comme posées à la main
+    const rot = ((c.id % 7) - 3) * .45, dx = ((c.id % 5) - 2) * 1.5;
+    slots += `<div class="slot" style="--rot:${rot}deg;--dx:${dx}px">${cardHTML(c, {count:c.count, lazy:true})}</div>`;
+  }
+  return `<div class="srow"><div class="sback"></div><i class="led"></i><div class="plank"></div><div class="slots">${slots}</div><div class="spost l"></div><div class="spost r"></div></div>`;
+}
+
+function appendRows(n){
+  const end = Math.min(shelfShown + n, shelfTotalRows);
+  let html = '';
+  for(let i = shelfShown; i < end; i++) html += rowHTML(i);
+  cabinet.insertAdjacentHTML('beforeend', html);
+  shelfShown = end;
+}
+
+// Ajoute des rangées tant que le bas du meuble est proche de l'écran
+function fillShelf(){
+  let guard = 0;
+  while(shelfShown < shelfTotalRows && guard++ < 20 &&
+        viewCol.scrollTop + viewCol.clientHeight > viewCol.scrollHeight - SHELF.preload){
+    appendRows(SHELF.chunkRows);
+  }
+}
+
+function renderShelf(){
   const all = Object.values(getCol());
-  const total = all.reduce((a,c) => a + c.count, 0);
-  $('#summary').textContent = all.length ? `${all.length} films différents, ${total} cartes au total.` : '';
-  $('#empty').classList.toggle('hidden', all.length > 0);
-  const chips = [{id:'all', label:'Toutes', n:all.length}]
+  const total = all.length;
+  $('#count').textContent = total ? `${total} film${total > 1 ? 's' : ''}` : '';
+
+  const chips = [{id:'all', label:'Toutes', n:total}]
     .concat(TIERS.map(t => ({id:t.id, label:t.label, n:all.filter(c => c.rarity === t.id).length})));
   $('#chips').innerHTML = chips.map(c =>
     `<button class="chip ${c.id !== 'all' ? 'r-' + c.id : ''}" data-f="${c.id}" aria-pressed="${filter === c.id}">${c.label} ${c.n}</button>`).join('');
-  $('#chips').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; renderCollection(); }));
-  const shown = all.filter(c => filter === 'all' || c.rarity === filter)
-    .sort((a,b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
-  $('#colGrid').innerHTML = shown.map(c => cardHTML(c, {count:c.count, lazy:true})).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; renderShelf(); }));
+
+  shelfList = shelfData();
+  // toujours une rangée vide en plus du dernier lot : le meuble « attend » les prochaines cartes
+  shelfTotalRows = Math.max(SHELF.minRows, Math.ceil(shelfList.length / SHELF.perRow) + 1);
+  cabinet.innerHTML = '<div class="scap"></div>';
+  shelfShown = 0;
+  viewCol.scrollTop = 0;
+  appendRows(SHELF.chunkRows);
+  fillShelf();
 }
 
-function showTab(name){
-  if(state === 'opening' || state === 'stack') return;
-  const open = name === 'open';
-  $('#view-open').classList.toggle('hidden', !open);
-  $('#view-col').classList.toggle('hidden', open);
-  $('#tab-open').setAttribute('aria-selected', open);
-  $('#tab-col').setAttribute('aria-selected', !open);
-  if(!open) renderCollection();
-}
-$('#tab-open').addEventListener('click', () => showTab('open'));
-$('#tab-col').addEventListener('click', () => showTab('col'));
+let shelfTick = false;
+viewCol.addEventListener('scroll', () => {
+  if(shelfTick) return;
+  shelfTick = true;
+  requestAnimationFrame(() => { shelfTick = false; fillShelf(); });
+}, {passive:true});
 
+/* =====================================================================
+   16. CLÉ TMDB ET RÉGLAGES
+   ===================================================================== */
 function updateDemoBtn(){ $('#demoBtn').textContent = demoOn() ? 'Mode démo activé : cotes élevées, collection protégée (désactiver)' : 'Activer le mode démo (cotes élevées pour tester les effets)'; }
 function refreshKeyState(){
   const has = !!store.get('tmdb_key','');
   $('#setup').classList.toggle('hidden', has);
   $('#app').classList.toggle('hidden', !has);
-  ['#changeKey', '#resetCol', '#demoBtn'].forEach(s => $(s).classList.toggle('hidden', !has));
   updateDemoBtn();
 }
 
@@ -1048,9 +1165,9 @@ $('#keyForm').addEventListener('submit', async e => {
     st.textContent = err.name === 'TypeError' ? 'Impossible de joindre TMDB. Vérifie ta connexion.' : err.message;
   }
 });
-$('#changeKey').addEventListener('click', () => { store.del('tmdb_key'); pageCache.clear(); refreshKeyState(); });
+$('#changeKey').addEventListener('click', () => { store.del('tmdb_key'); pageCache.clear(); showView('home'); refreshKeyState(); });
 $('#resetCol').addEventListener('click', () => {
-  if(confirm('Supprimer toutes les cartes de ta collection ?')){ store.del('collection'); renderCollection(); }
+  if(confirm('Supprimer toutes les cartes de ta collection ?')){ store.del('collection'); renderShelf(); }
 });
 $('#demoBtn').addEventListener('click', () => { store.set('demo', !demoOn()); updateDemoBtn(); });
 
