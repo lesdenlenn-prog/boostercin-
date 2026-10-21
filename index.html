@@ -59,10 +59,12 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 
 /* ================= CARTES ================= */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px}
-.card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 3px var(--rc)}
+/* Contour de rareté AFFINÉ : 2 px (au lieu de 3 px), tracé à l'extérieur de la carte via box-shadow,
+   donc il ne mord jamais sur l'affiche. */
+.card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 2px var(--rc)}
 .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
-.card.r-epic{box-shadow:0 0 0 3px var(--rc),0 0 16px -2px var(--rc)}
-.card.r-legendary{box-shadow:0 0 0 3px var(--rc),0 0 28px 2px rgba(246,196,83,.65)}
+.card.r-epic{box-shadow:0 0 0 2px var(--rc),0 0 14px -2px var(--rc)}
+.card.r-legendary{box-shadow:0 0 0 2px var(--rc),0 0 24px 2px rgba(246,196,83,.65)}
 .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
 .card .meta{position:absolute;left:0;right:0;bottom:0;padding:26px 8px 7px;background:linear-gradient(to top,rgba(10,4,6,.96) 35%,rgba(10,4,6,0));font-size:.72rem;line-height:1.25}
 .card .meta b{font-weight:800;font-size:.8rem;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -116,8 +118,8 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 @keyframes nudgeR{50%{transform:scaleX(-1) translateX(-7px)}}
 
 /* ================= PILE ================= */
-/* Cartes 2D (plans) posées à translateZ(-d × écart) dans un conteneur 3D : quand le .deck pivote en rotateY,
-   on voit les cartes du dessous dépasser sur le côté, chacune avec son cadre de rareté. */
+/* Cartes 2D posées à translateZ(-d × écart) dans un conteneur 3D : quand le .deck pivote en rotateY,
+   les cartes du dessous dépassent légèrement sur le côté, chacune avec sa couleur de rareté. */
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
 .stack.show{visibility:visible}
@@ -126,31 +128,32 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 .deck-shadow{position:absolute;left:6%;right:6%;bottom:-5%;height:8%;pointer-events:none;
   background:radial-gradient(ellipse closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));filter:blur(8px)}
 .scard{position:absolute;inset:0;transition:transform .5s cubic-bezier(.2,.9,.2,1);
-  filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}                        /* l'ombre sépare visuellement chaque couche */
-.stack.lift .scard.under{filter:drop-shadow(0 6px 8px rgba(0,0,0,.5)) brightness(.45)}
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.5))}
+/* MASQUAGE STRICT : pendant l'ouverture du booster, seules les cartes sans .hold existent à l'écran
+   (la 1re). Les autres sont invisibles et non cliquables jusqu'à la fin de la disparition du booster. */
+.scard.hold{visibility:hidden;opacity:0;pointer-events:none}
+.stack.lift .scard.under{filter:drop-shadow(0 5px 7px rgba(0,0,0,.5)) brightness(.45)}
 .lifter,.shaker{position:absolute;inset:0}
 .shaker .card{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 
-/* Cadre de rareté : c'est lui qu'on voit dépasser sur le côté quand la pile s'incline.
-   Largeur ≥ décalage visible entre deux cartes (écart × sin de l'inclinaison). */
-.scard .card{--fw:calc(var(--cw)*.032)}
+/* Fin liseré de rareté DANS la carte (≈ 3 px) : juste assez pour que la couleur se lise sur la tranche
+   quand la pile s'incline, sans rogner l'affiche. Il est plus fin que l'écart visible entre deux cartes. */
+.scard .card{--fw:calc(var(--cw)*.011)}
 .scard .card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:var(--fw);z-index:3;pointer-events:none;
   background:var(--frame,linear-gradient(160deg,#ece7e1,#aaa39c));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
-.scard .card .meta{padding-left:calc(var(--fw) + 4px);padding-right:calc(var(--fw) + 4px);padding-bottom:calc(var(--fw) + 2px)}
 .scard .card.r-uncommon{--frame:linear-gradient(160deg,#7fe0b8,#2c8a68)}
 .scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
-.scard .card.r-epic{                                   /* épique : cadre holographique */
+.scard .card.r-epic{                                   /* épique : liseré holographique */
   --frame:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dffb8,#4db8ff,#b04dff,#ff4d9d);
-  box-shadow:0 0 0 3px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
+  box-shadow:0 0 0 2px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
 .scard .card.r-epic::before{background-size:300% 300%;animation:framemove 2.4s linear infinite}
-.scard .card.r-legendary{                              /* légendaire : cadre d'or lumineux */
+.scard .card.r-legendary{                              /* légendaire : liseré d'or lumineux */
   --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
-  box-shadow:0 0 0 3px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
+  box-shadow:0 0 0 2px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
 .scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
 @keyframes framemove{to{background-position:300% 300%}}
-.scard.under .card::before{animation-play-state:running}
 
 /* Halo derrière une carte légendaire */
 .aura{position:absolute;inset:-38%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .6s;
@@ -189,19 +192,13 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 .ring{position:absolute;width:140px;height:140px;border-radius:50%;border:3px solid #ffe08a;opacity:0;
   box-shadow:0 0 24px 4px rgba(255,200,80,.8),inset 0 0 20px rgba(255,200,80,.6)}
 .spark{position:absolute;border-radius:50%;background:#fff3c4;box-shadow:0 0 8px 2px rgba(255,200,80,.95);opacity:0}
-.shard{position:absolute;opacity:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
 #screen.shake{animation:shake .75s cubic-bezier(.36,.07,.19,.97) both}
 @keyframes shake{
   10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-3px) rotate(.2deg)}
   30%,50%,70%{transform:translate(-8px,4px)}40%,60%{transform:translate(8px,-4px) rotate(-.2deg)}
 }
-#screen.jolt{animation:jolt .22s linear both}
-@keyframes jolt{
-  0%{transform:translate(0,0)}15%{transform:translate(-4px,2px)}30%{transform:translate(4px,-3px)}
-  50%{transform:translate(-3px,-1px)}70%{transform:translate(2px,2px)}100%{transform:translate(0,0)}
-}
 
-/* ================= BOOSTER (plat, classique) ================= */
+/* ================= BOOSTER (plat, mécanique d'ouverture de la v4) ================= */
 .pack-pos{position:absolute;left:50%;top:50%;width:var(--pw);aspect-ratio:5/8;transform:translate(-50%,-50%);z-index:5;
   cursor:pointer;outline:none}
 .pack-pos.opened{cursor:default}
@@ -226,15 +223,15 @@ h1{margin:0;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;
 .part.top{clip-path:var(--clipTop);transform-origin:15% 15%}
 .part.bottom{clip-path:var(--clipBottom)}
 
-/* Fissure : suit exactement le bord déchiré (SVG) */
-.crack{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
-.crack path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
-.crack-glow{stroke:rgba(255,196,80,.85);stroke-width:8;stroke-dasharray:100;stroke-dashoffset:100}
-.crack-core{stroke:#fffbe8;stroke-width:2.5;stroke-dasharray:100;stroke-dashoffset:100}
-.crack-hint{stroke:#fff4c8;stroke-width:3;stroke-dasharray:14 86;stroke-dashoffset:14;opacity:0}
-.pack-pos.zoomed:not(.opened) .crack-hint{opacity:1;animation:hint 2.2s linear infinite}
-@keyframes hint{from{stroke-dashoffset:14}to{stroke-dashoffset:-86}}
-
+/* Ligne de déchirure DROITE (comme en v4), rognée aux bords du booster */
+.linebox{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
+.cutline{position:absolute;left:0;right:0;top:15%;height:3px;margin-top:-1.5px;opacity:0;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(90deg,transparent,#fff6d6 12%,#ffd36b 50%,#fff6d6 88%,transparent);
+  box-shadow:0 0 12px 2px rgba(255,200,90,.9)}
+.glint{position:absolute;top:15%;left:0;width:34%;height:3px;margin-top:-1.5px;display:none;
+  background:linear-gradient(90deg,transparent,rgba(255,244,200,.95),transparent);animation:glint 2.4s ease-in-out infinite}
+.pack-pos.zoomed:not(.opened) .glint{display:block}
+@keyframes glint{0%{transform:translateX(-60%);opacity:0}20%,80%{opacity:1}100%{transform:translateX(290%);opacity:0}}
 .burst{position:absolute;left:-25%;right:-25%;top:15%;height:90px;margin-top:-45px;z-index:4;pointer-events:none;opacity:0;
   background:radial-gradient(ellipse closest-side,rgba(255,238,175,.98),rgba(255,170,60,.55) 55%,rgba(255,170,60,0) 100%)}
 
@@ -291,7 +288,7 @@ footer button{align-self:flex-start;background:none;border:0;color:var(--muted);
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
-  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.edge svg,.crack-hint,.scard .card::before{animation:none !important}
+  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.edge svg,.glint,.scard .card::before{animation:none !important}
   .scard.fx .card::after,.recap .card{animation:none !important}
 }
 </style>
@@ -359,11 +356,7 @@ footer button{align-self:flex-start;background:none;border:0;color:var(--muted);
                 <div class="pack-tilt" id="tilt">
                   <div class="part bottom" id="partBottom"></div>
                   <div class="part top" id="partTop"></div>
-                  <svg class="crack" id="crack" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <path class="crack-glow" id="crackGlow" pathLength="100"/>
-                    <path class="crack-core" id="crackCore" pathLength="100"/>
-                    <path class="crack-hint" id="crackHint" pathLength="100"/>
-                  </svg>
+                  <div class="linebox"><div class="cutline" id="cutline"></div><div class="glint"></div></div>
                 </div>
                 <div class="burst" id="burst"></div>
               </div>
@@ -421,14 +414,13 @@ const TIERS = [
 ];
 const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
 
-// Rythme de l'ouverture (millisecondes)
+// Rythme de l'ouverture (millisecondes) : mécanique de la v4, beaucoup plus rapide
 const TIMING = {
-  crackDraw:70,        // la fissure court le long du bord (était 140 ; 320 en v4)
-  topFlight:230,       // le haut du booster est arraché (était 380 ; 520 en v4)
-  slideDelay:40,       // délai entre le snap et le glissement du booster
-  packSlide:320,       // glissement du booster vers le bas
-  stackRise:340,       // apparition de chaque carte de la pile
-  stackStagger:45,     // décalage entre les cartes de la pile
+  cutSweep:90,         // la ligne de déchirure traverse le booster (320 en v4)
+  topFlight:240,       // le haut du booster est arraché (520 en v4)
+  slideStartAt:.3,     // le glissement démarre quand le haut a fait 30 % de son vol (45 % en v4)
+  packSlide:300,       // glissement du booster vers le bas (380 en v4)
+  stackRise:320,       // la 1re carte sort de l'ouverture
   legendCharge:800,    // suspense (tremblement) avant l'explosion de la légendaire
   legendGrow:520,      // agrandissement de la légendaire à l'impact
   legendAfter:800,     // temps avant de pouvoir faire partir la légendaire
@@ -440,7 +432,7 @@ const TIMING = {
 const PEEK = {
   maxTilt:40,          // inclinaison maximale (degrés)
   tiltPerPx:.26,       // degrés d'inclinaison par pixel de glissement
-  gap:.05,             // écart entre deux cartes de la pile, en fraction de la largeur d'une carte (translateZ)
+  gap:.03,             // écart entre deux cartes, en fraction de la largeur d'une carte (.05 en v6) : plus petit = cartes plus serrées
   minDx:40,            // glissement minimal (px) pour qu'un balayage puisse être validé
   flickSpeed:.5,       // vitesse minimale au relâchement (px/ms) pour valider le balayage
   velWindow:100,       // la vitesse est mesurée sur les 100 derniers ms avant le relâchement
@@ -569,8 +561,7 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
    5. ÉTAT ET ÉLÉMENTS
    ===================================================================== */
 const screenEl = $('#screen'), arena = $('#arena'), stackEl = $('#stack'), deck = $('#deck'), pack = $('#pack'), packZoom = $('#packZoom'), tilt = $('#tilt');
-const partTop = $('#partTop'), partBottom = $('#partBottom'), burst = $('#burst'), crack = $('#crack');
-const crackGlow = $('#crackGlow'), crackCore = $('#crackCore'), crackHint = $('#crackHint');
+const partTop = $('#partTop'), partBottom = $('#partBottom'), cutline = $('#cutline'), burst = $('#burst');
 const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), rays = $('#rays'), flashEl = $('#flash'), fxFront = $('#fxFront');
 const againBtn = $('#againBtn'), skipBtn = $('#skipBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), edgeL = $('#edgeL'), edgeR = $('#edgeR'), recapWrap = $('#recapWrap');
@@ -582,13 +573,13 @@ let idx = 0;               // index de la carte du dessus dans `cards`
 let cards = [];            // les 5 cartes du booster
 let els = [];              // les 5 éléments .scard
 let pending = null;        // promesse du tirage (lancée au 1er clic)
-let G = 14;                // écart en profondeur entre deux cartes (px), calculé depuis la largeur de la pile
+let G = 8;                 // écart en profondeur entre deux cartes (px), calculé depuis la largeur de la pile
 
 function setCaption(html){ capEl.innerHTML = html; }   // uniquement pour les erreurs et la note du mode démo
 function setBusyTabs(b){ document.querySelectorAll('.tabs button').forEach(x => x.disabled = b); }
 
 /* =====================================================================
-   6. BOOSTER : dessin plat, bord déchiré organique, inclinaison
+   6. BOOSTER : dessin plat, bord de déchirure droit (zigzag régulier de la v4), inclinaison
    ===================================================================== */
 const packArt = () => `<div class="art">
   <div class="curtain"></div><div class="film l"></div><div class="film r"></div><div class="frame"></div>
@@ -598,30 +589,16 @@ const packArt = () => `<div class="art">
   <div class="irid"></div><div class="sheen"></div><div class="spot"></div><div class="grain"></div></div>`;
 partTop.innerHTML = partBottom.innerHTML = packArt();
 
-// Bord déchiré : globalement horizontal à 15 %, avec pente légère, ondulation, dents de scie subtiles et bruit.
-function makeTear(){
-  const n = 44, slope = (Math.random() - .5) * 1.2, ph = Math.random() * 6, pts = [];
-  for(let i=0; i<=n; i++){
-    const x = i * 100 / n;
-    const wave = Math.sin(i * .55 + ph) * .5;
-    const saw = i % 2 ? .35 : -.35;
-    const jit = (Math.random() - .5) * 1.1;
-    pts.push([x, 15 + slope * (x/100 - .5) + wave + saw + jit]);
-  }
-  return pts;
-}
-function applyTear(tear){
+(function buildClips(){   // bords crénelés haut/bas + ligne de déchirure à 15 % (zigzag régulier, comme en v4)
   const fmt = p => 'polygon(' + p.map(([x,y]) => x.toFixed(2) + '% ' + y.toFixed(2) + '%').join(',') + ')';
-  const topEdge = [], bottomEdge = [];
+  const topEdge = [], bottomEdge = [], cut = [];
   const n = 24; for(let i=0; i<=n; i++){ const x = i*100/n; topEdge.push([x, i%2 ? 0 : 1.4]); bottomEdge.push([x, i%2 ? 98.6 : 100]); }
-  const overlap = tear.map(([x,y]) => [x, y - 2]);      // la partie basse passe SOUS la partie haute : pas de couture
+  const m = 20; for(let i=0; i<=m; i++){ cut.push([i*100/m, 15 + (i%2 ? 1.3 : 0)]); }
+  const cutOverlap = cut.map(([x,y]) => [x, y - 1.8]);   // la partie basse passe sous la haute : pas de couture
   const root = document.documentElement.style;
-  root.setProperty('--clipTop', fmt([...topEdge, ...[...tear].reverse()]));
-  root.setProperty('--clipBottom', fmt([...overlap, ...[...bottomEdge].reverse()]));
-  const d = 'M' + tear.map(([x,y]) => x.toFixed(2) + ' ' + y.toFixed(2)).join(' L');
-  [crackGlow, crackCore, crackHint].forEach(p => p.setAttribute('d', d));
-}
-applyTear(makeTear());
+  root.setProperty('--clipTop', fmt([...topEdge, ...[...cut].reverse()]));
+  root.setProperty('--clipBottom', fmt([...cutOverlap, ...[...bottomEdge].reverse()]));
+})();
 
 // Inclinaison et reflet foil qui suivent le pointeur (tant que le booster est fermé)
 arena.addEventListener('pointermove', e => {
@@ -638,7 +615,7 @@ arena.addEventListener('pointermove', e => {
 arena.addEventListener('pointerleave', () => ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg')));
 
 /* =====================================================================
-   7. CLIC 1 : ZOOM  /  CLIC 2 : DÉCHIRURE ULTRA RAPIDE + DESCENTE
+   7. CLIC 1 : ZOOM  /  CLIC 2 : OUVERTURE (mécanique de la v4, accélérée)
    ===================================================================== */
 pack.addEventListener('click', onPackClick);
 pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
@@ -654,29 +631,6 @@ function zoomIn(){
   pending = prefetchBooster();
 }
 
-function microShake(){
-  if(RM) return;
-  screenEl.classList.remove('jolt'); void screenEl.offsetWidth; screenEl.classList.add('jolt');
-  setTimeout(() => screenEl.classList.remove('jolt'), 260);
-}
-function tearShards(){
-  if(RM) return;
-  const r = packZoom.getBoundingClientRect(), s = screenEl.getBoundingClientRect();
-  const y = r.top + r.height*.15 - s.top;
-  for(let k=0; k<14; k++){
-    const el = document.createElement('i'); el.className = 'shard';
-    el.style.width = (5 + Math.random()*9) + 'px'; el.style.height = (6 + Math.random()*10) + 'px';
-    el.style.background = Math.random() < .5 ? '#f6e3a1' : '#d01d30';
-    el.style.left = (r.left - s.left + Math.random()*r.width) + 'px'; el.style.top = y + 'px';
-    fxFront.appendChild(el);
-    const ang = -Math.PI/2 + (Math.random() - .5)*2.2, dist = 90 + Math.random()*200;
-    play(el, [
-      {transform:'translate(-50%,-50%) rotate(0deg)', opacity:1},
-      {transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),calc(-50% + ${Math.sin(ang)*dist + 60}px)) rotate(${(Math.random()-.5)*720}deg)`, opacity:0}
-    ], {duration:380 + Math.random()*280, easing:'cubic-bezier(.1,.8,.3,1)', fill:'forwards'}).then(() => el.remove());
-  }
-}
-
 async function openPack(){
   state = 'opening'; setBusyTabs(true);
   pack.classList.add('opened'); pack.setAttribute('tabindex', '-1');
@@ -685,29 +639,24 @@ async function openPack(){
     const res = await pending;
     if(res.error) throw res.error;
     cards = demoOn() ? res.cards.map(c => ({...c, isNew: !getCol()[c.id]})) : addToCol(res.cards);
-    buildStack();
+    buildStack();                                          // les cartes 2 à 5 sont créées MASQUÉES (.hold)
 
-    // 1. La fissure court le long du bord déchiré (70 ms)
-    const draw = {duration: RM ? 30 : TIMING.crackDraw, easing:'cubic-bezier(.3,0,.2,1)'};
-    await Promise.all([
-      play(crackGlow, [{strokeDashoffset:100}, {strokeDashoffset:0}], draw),
-      play(crackCore, [{strokeDashoffset:100}, {strokeDashoffset:0}], draw)
-    ]);
+    // a) la ligne de déchirure droite traverse le haut du booster (très rapide)
+    await play(cutline, [{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(1)', opacity:1}], {duration: RM ? 30 : TIMING.cutSweep, easing:'ease-out'});
 
-    // 2. SNAP : rupture nette, secousse, éclats ; le haut est arraché, les cartes apparaissent dans l'ouverture
-    microShake(); tearShards();
-    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.25}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 360, easing:'ease-out'});
-    play(crack, [{opacity:1}, {opacity:0}], {duration:140});
+    // b) éclat de lumière + le haut s'arrache ; SEULE la 1re carte apparaît dans l'ouverture
+    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 380, easing:'ease-out'});
+    play(cutline, [{opacity:1}, {opacity:0}], {duration:150});
     showStack();
+    const fly = RM ? 100 : TIMING.topFlight;
     const topFlight = play(partTop, [
       {transform:'none', opacity:1},
-      {transform:'rotate(-9deg) translateY(-6%)', opacity:1, offset:.25},
-      {transform:'translate(40%,-170%) rotate(-30deg)', opacity:0}
-    ], {duration: RM ? 100 : TIMING.topFlight, easing:'cubic-bezier(.1,.8,.3,1)'});
-    play(partBottom, [{transform:'none'}, {transform:'translateY(8px)', offset:.35}, {transform:'none'}], {duration: RM ? 50 : 160});
+      {transform:'rotate(-9deg) translateY(-6%)', opacity:1, offset:.3},
+      {transform:'translate(36%,-150%) rotate(-24deg)', opacity:0}
+    ], {duration:fly, easing:'cubic-bezier(.15,.75,.35,1)'});
 
-    // 3. Le booster glisse vers le bas
-    await sleep(RM ? 0 : TIMING.slideDelay);
+    // c) le booster glisse vers le bas, presque sans attendre la fin du vol du haut
+    await sleep(RM ? 0 : fly * TIMING.slideStartAt);
     const dist = innerHeight - pack.getBoundingClientRect().top + 80;
     await play(packZoom, [
       {transform:'translateY(0px) scale(1.17)', opacity:1},
@@ -716,6 +665,10 @@ async function openPack(){
     ], {duration: RM ? 100 : TIMING.packSlide, easing:'cubic-bezier(.6,0,.9,.45)'});
     pack.classList.add('gone');
     await topFlight;
+
+    // d) le booster a FINI de disparaître : seulement maintenant les cartes du dessous passent en « présentes »
+    //    (elles sont derrière la 1re carte, donc rien ne se voit)
+    releaseStack();
     startStack();
   }catch(err){
     failOpen(err && err.message ? err.message : 'Une erreur est survenue.');
@@ -729,14 +682,14 @@ function failOpen(msg){
 }
 
 /* =====================================================================
-   8. LA PILE : cartes 2D espacées en profondeur
+   8. LA PILE : cartes 2D espacées (un peu) en profondeur
    ===================================================================== */
 // d = profondeur dans la pile (0 = dessus). Toujours la même liste de fonctions CSS (translateZ translate rotate)
 // pour que transitions et sorties s'interpolent proprement.
 const stackTransform = d => `translateZ(${-d*G}px) translate(0px,0px) rotate(0deg)`;
 
 function layoutStack(){
-  G = Math.max(6, stackEl.offsetWidth * PEEK.gap);
+  G = Math.max(4, stackEl.offsetWidth * PEEK.gap);
   els.forEach((el, k) => { if(k >= idx) el.style.transform = stackTransform(k - idx); });
 }
 window.addEventListener('resize', () => { if(els.length) layoutStack(); });
@@ -745,10 +698,10 @@ function buildStack(){
   deck.innerHTML = '';
   setTilt(0);
   idx = 0; busy = true;
-  G = Math.max(6, stackEl.offsetWidth * PEEK.gap);
+  G = Math.max(4, stackEl.offsetWidth * PEEK.gap);
   els = cards.map((c, i) => {
     const el = document.createElement('div');
-    el.className = 'scard' + (i > 0 ? ' under' : '');
+    el.className = 'scard' + (i > 0 ? ' under hold' : '');   // .hold = invisible tant que le booster n'a pas disparu
     el.style.transform = stackTransform(i);
     el.innerHTML = `<div class="aura"></div>
       <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}</div></div>`;
@@ -756,12 +709,14 @@ function buildStack(){
     return el;
   });
 }
-function showStack(){   // les cartes apparaissent là où était le booster
+// Pendant l'ouverture : on ne montre QUE la 1re carte (les autres restent en .hold)
+function showStack(){
   stackEl.classList.add('show');
-  els.forEach((el, i) => play(el.querySelector('.lifter'),
+  play(els[0].querySelector('.lifter'),
     [{transform:'translateY(26px) scale(.94)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1}],
-    {duration: RM ? 1 : TIMING.stackRise, delay: RM ? 0 : (els.length - 1 - i) * TIMING.stackStagger, easing:'cubic-bezier(.2,.9,.2,1)', fill:'backwards'}));
+    {duration: RM ? 1 : TIMING.stackRise, easing:'cubic-bezier(.2,.9,.2,1)', fill:'backwards'});
 }
+function releaseStack(){ els.forEach(el => el.classList.remove('hold')); }
 function clearStack(){
   deck.innerHTML = ''; stackEl.classList.remove('show', 'lift'); els = []; cancelAnimationFrame(springRaf); setTilt(0);
 }
@@ -789,7 +744,7 @@ let curTilt = 0, springRaf = 0;
 function setTilt(deg){
   curTilt = deg;
   deck.style.setProperty('--ry', deg + 'deg');
-  deck.style.setProperty('--peek', Math.min(1, Math.abs(deg) / PEEK.maxTilt));   // intensité du halo des cadres épique/légendaire
+  deck.style.setProperty('--peek', Math.min(1, Math.abs(deg) / PEEK.maxTilt));   // intensité du halo des liserés épique/légendaire
 }
 // Ressort amorti réel : la pile revient face au joueur avec un léger rebond
 function springTilt(from, v0 = 0){
@@ -922,7 +877,7 @@ async function dismissTop(side){
   if(last) await showSummary();
 }
 
-// Clic simple : moitié gauche de l'écran = gauche, moitié droite = droite (inchangé)
+// Clic simple : moitié gauche de l'écran = gauche, moitié droite = droite
 let suppressClick = false;
 screenEl.addEventListener('click', e => {
   if(state !== 'stack' || busy || suppressClick) return;
@@ -931,7 +886,6 @@ screenEl.addEventListener('click', e => {
 });
 
 /* ---------- Peek : maintenir + glisser = la pile pivote, la carte du dessus reste FIXE ----------
-   pointerdown : on commence à suivre le doigt
    pointermove : on ne fait QUE pivoter la pile (setTilt) ; aucun déplacement de la carte du dessus
    pointerup   : la carte part seulement si le geste se termine par un balayage rapide ;
                  sinon la pile revient face au joueur en ressort */
@@ -1028,7 +982,6 @@ function resetPackVisuals(){
   cancelWaapi(pack);
   pack.classList.remove('zoomed', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
-  applyTear(makeTear());                                  // nouveau bord déchiré pour le prochain booster
 }
 againBtn.addEventListener('click', () => {
   againBtn.hidden = true; toColBtn.hidden = true;
