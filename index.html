@@ -270,9 +270,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* =====================================================================
-   VUE COLLECTION : meuble à niches bleu intense (d'après la photo)
-   Une rangée (.srow) = UNE niche complète : cadre noir, fond texturé, parois latérales,
-   planche en trapèze (vue de dessus), séparation noire, et ses cartes posées.
+   VUE COLLECTION : meuble à niches, feutre de billard bleu
+   Une rangée (.srow) = UNE niche complète (cadre, fond, parois, planche, LED, 3 emplacements).
    Ajouter des cartes = ajouter des rangées entières : tout défile ensemble, sans décalage possible.
    ===================================================================== */
 .view-col{
@@ -280,10 +279,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   --wall:18px;      /* parois latérales de la niche */
   --board:26px;     /* profondeur de la planche vue de dessus */
   --sep:12px;       /* bande noire entre deux étagères */
-  --gap:12px;       /* espace régulier entre deux cartes */
-  --cardscale:.94;  /* taille des cartes par rapport à un tiers de la niche (réduit les cartes) */
+  --gap:8px;        /* espace entre deux emplacements */
+  --cardscale:.94;  /* largeur d'une carte par rapport à son emplacement */
+
+  /* ----- Textures « tapis de billard » en CSS pur ----- */
+  /* Grain fin du tissu : bruit gris opaque, utilisé en mode « overlay » (éclaircit et assombrit) */
+  --felt:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='2.4 0 0 0 -.7 2.4 0 0 0 -.7 2.4 0 0 0 -.7 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  /* Marbrures à grande échelle : zones de poil plus ou moins couché, comme sur un vrai tapis */
+  --nap:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1.9 0 0 0 -.4 1.9 0 0 0 -.4 1.9 0 0 0 -.4 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Trame du tissu : fines lignes croisées, très discrètes */
+  --weave:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,rgba(0,0,0,.05) 1px 3px),
+          repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,.045) 1px 3px);
+
   overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  background:radial-gradient(130% 36% at 50% 0%,#0c2270 0%,#050b2b 55%,#02040f 100%)}
+  background:radial-gradient(130% 36% at 50% 0%,#0b1f68 0%,#050b2b 55%,#02040f 100%)}
 
 .shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px;
   background:rgba(3,6,22,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
@@ -296,44 +305,71 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   box-shadow:inset 0 0 0 1.5px rgba(110,160,255,.25)}
 .chip[aria-pressed="true"]{background:rgba(70,130,255,.25);color:#fff;box-shadow:inset 0 0 0 1.5px var(--rc,#6fa2ff)}
 
-.cabinet{width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#020309;
-  box-shadow:0 0 0 1px #000,0 0 44px 4px rgba(30,100,255,.45)}
+/* Meuble : coins légèrement adoucis, halo bleu plus diffus */
+.cabinet{width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#020309;border-radius:4px;overflow:hidden;
+  box-shadow:0 0 0 1px #000,0 0 56px 8px rgba(30,100,255,.38)}
 .scap{height:12px;background:#020309}
 
 .srow{position:relative;background:#020309;padding:0 var(--frame) var(--sep)}      /* le noir du fond = cadre + séparation */
-.niche{position:relative}
 
-/* Fond de la niche : bleu intense texturé (feutrine) */
-.sback{position:absolute;left:var(--wall);right:var(--wall);top:0;bottom:var(--board);
+/* La niche : coins arrondis (3 px), le décor est rogné à l'intérieur */
+.niche{position:relative;overflow:hidden;border-radius:3px}
+
+/* Fond de niche : du bleu lumineux près du rebord LED vers un bleu presque noir au fond.
+   Ombres internes prononcées + vignette centrale = profondeur. */
+.sback{position:absolute;left:var(--wall);right:var(--wall);top:0;bottom:var(--board);isolation:isolate;
   background:
-    linear-gradient(180deg,rgba(160,200,255,.14),rgba(160,200,255,0) 32%),
-    linear-gradient(180deg,#0a38ac 0%,#0f49cf 58%,#1a5ce8 100%);
-  box-shadow:inset 12px 0 16px -8px rgba(0,12,72,.8),inset -12px 0 16px -8px rgba(0,12,72,.8),inset 0 8px 14px -8px rgba(0,10,60,.7)}
-.sback::after{content:'';position:absolute;inset:0;opacity:.3;mix-blend-mode:soft-light;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-/* Parois latérales : plus claires que le fond, elles descendent jusqu'en bas pour border la planche */
-.swall{position:absolute;top:0;bottom:0;width:var(--wall)}
-.swall.l{left:0;background:linear-gradient(90deg,#1550d8,#2f7bff 58%,#1d62f0);box-shadow:inset -1px 0 0 rgba(0,10,60,.55)}
-.swall.r{right:0;background:linear-gradient(270deg,#1550d8,#2f7bff 58%,#1d62f0);box-shadow:inset 1px 0 0 rgba(0,10,60,.55)}
-/* Planche vue de dessus : trapèze (étroit au fond, large devant), liseré clair sur le chant avant */
+    var(--nap),
+    var(--weave),
+    radial-gradient(78% 88% at 50% 60%,rgba(0,3,22,.62),rgba(0,3,22,0) 80%),
+    linear-gradient(180deg,#1f5ce8 0%,#0f3cbd 20%,#082a8c 50%,#041a62 78%,#020c3c 100%);
+  background-blend-mode:soft-light,normal,normal,normal,normal;
+  box-shadow:
+    inset 0 22px 26px -12px rgba(100,170,255,.7),          /* lueur de la LED du dessus */
+    inset 16px 0 26px -14px rgba(60,120,255,.5),
+    inset -16px 0 26px -14px rgba(60,120,255,.5),
+    inset 0 -18px 24px -8px rgba(0,5,32,.88),               /* le fond s'assombrit vers la planche */
+    inset 0 0 44px 8px rgba(0,4,28,.55)}
+.sback::after{content:'';position:absolute;inset:0;background-image:var(--felt);mix-blend-mode:overlay;opacity:.6;pointer-events:none}
+
+/* Parois latérales : claires près du rebord, qui s'assombrissent vers le fond et vers le bas */
+.swall{position:absolute;top:0;bottom:0;width:var(--wall);isolation:isolate}
+.swall.l{left:0;
+  background:var(--weave),linear-gradient(180deg,rgba(0,5,40,0) 50%,rgba(0,5,40,.6)),linear-gradient(90deg,#2b6eff,#1a4ccb 52%,#0a2584);
+  box-shadow:inset 6px 0 10px -4px rgba(160,205,255,.35),inset -9px 0 14px -4px rgba(0,8,50,.75)}
+.swall.r{right:0;
+  background:var(--weave),linear-gradient(180deg,rgba(0,5,40,0) 50%,rgba(0,5,40,.6)),linear-gradient(270deg,#2b6eff,#1a4ccb 52%,#0a2584);
+  box-shadow:inset -6px 0 10px -4px rgba(160,205,255,.35),inset 9px 0 14px -4px rgba(0,8,50,.75)}
+.swall::after{content:'';position:absolute;inset:0;background-image:var(--felt);mix-blend-mode:overlay;opacity:.5;pointer-events:none}
+
+/* Planche : trapèze vu de dessus, même feutre, lisière avant éclairée en douceur */
 .plank{position:absolute;left:0;right:0;bottom:0;height:var(--board);
   clip-path:polygon(var(--wall) 0,calc(100% - var(--wall)) 0,100% 100%,0 100%);
-  background:linear-gradient(180deg,#1a50d2 0%,#2c6ef0 55%,#418aff 100%);
-  box-shadow:inset 0 -2px 0 rgba(180,215,255,.9)}
-.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:rgba(0,12,70,.55)}
+  background:var(--weave),linear-gradient(180deg,#0e33a4 0%,#1d56d8 55%,#3677f5 100%);
+  box-shadow:inset 0 -2px 3px -1px rgba(170,205,255,.7)}
+.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:9px;      /* ombre portée du fond sur la planche (diffuse) */
+  background:linear-gradient(180deg,rgba(0,6,40,.75),rgba(0,6,40,0))}
+.plank::after{content:'';position:absolute;inset:0;background-image:var(--felt);mix-blend-mode:overlay;opacity:.55;pointer-events:none}
 
-/* Cartes : droites, plus petites, espacement régulier ; centrées dans la niche (rangées de 1, 2 ou 3) */
-.slots{position:relative;z-index:2;display:flex;justify-content:flex-start;align-items:flex-end;gap:var(--gap);
-  padding:22px calc(var(--wall) + 2px) calc(var(--board)*.5)}      /* le bas des cartes pose sur la ligne médiane de la planche */
-.cabinet.center .slots{justify-content:center}
-.slot{position:relative;flex:0 0 calc((100% - 2*var(--gap))/3*var(--cardscale));
-  filter:drop-shadow(0 6px 7px rgba(0,12,70,.7))}
+/* LED sous la planche du dessus : filet lumineux fin + lueur qui retombe en douceur */
+.niche::before{content:'';position:absolute;z-index:1;left:var(--wall);right:var(--wall);top:0;height:54px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(100,170,255,.42),rgba(100,170,255,.12) 55%,rgba(100,170,255,0))}
+.niche::after{content:'';position:absolute;z-index:1;left:var(--wall);right:var(--wall);top:0;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,rgba(150,200,255,0),rgba(195,226,255,.9) 12%,rgba(195,226,255,.9) 88%,rgba(150,200,255,0));
+  box-shadow:0 0 9px 1px rgba(100,165,255,.7)}
+
+/* GRILLE STRICTE : 3 emplacements invisibles par rangée. Les cartes occupent les emplacements
+   de gauche à droite ; une carte seule se place donc dans l'emplacement de gauche. */
+.slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:var(--gap);
+  padding:22px calc(var(--wall) + 4px) calc(var(--board)*.5)}      /* le bas des cartes pose sur la ligne médiane de la planche */
+.slot{position:relative;width:calc(100% * var(--cardscale));justify-self:center;
+  filter:drop-shadow(0 9px 11px rgba(0,5,35,.7))}
 .slot.empty{visibility:hidden}
 .slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;       /* ombre de contact sur la planche */
-  background:radial-gradient(ellipse closest-side,rgba(0,10,60,.8),rgba(0,10,60,0));filter:blur(2px)}
+  background:radial-gradient(ellipse closest-side,rgba(0,8,50,.8),rgba(0,8,50,0));filter:blur(2px)}
 .slot .card{width:100%}
 .slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,rgba(130,190,255,.2),rgba(130,190,255,0) 36%)}
+  background:linear-gradient(180deg,rgba(130,190,255,.2),rgba(130,190,255,0) 36%),linear-gradient(0deg,rgba(0,5,30,.2),rgba(0,5,30,0) 30%)}
 .slot .card .meta{font-size:.6rem;padding:18px 5px 4px}
 .slot .card .meta b{font-size:.68rem}
 .slot .badge{font-size:.58rem;top:5px;right:5px;padding:1px 6px}
@@ -486,8 +522,7 @@ const PEEK = {
 
 // Étagère
 const SHELF = {
-  perRow:3,           // 3 cartes maximum par rangée
-  centerPartial:true, // les rangées de 1 ou 2 cartes sont centrées (false = alignées à gauche)
+  perRow:3,           // 3 emplacements par rangée (grille CSS stricte, alignement à gauche)
   chunkRows:6,        // rangées ajoutées à chaque lot
   minRows:4,          // l'étagère est visible même vide
   extraRows:1,        // rangée(s) vide(s) en plus : le meuble « attend » les prochaines cartes
@@ -1051,12 +1086,11 @@ tabHome.addEventListener('click', () => showView('home'));
 tabCol.addEventListener('click', () => showView('col'));
 
 /* =====================================================================
-   15. COLLECTION : ÉTAGÈRE INFINIE, RANGÉES SÉPARÉES PAR RARETÉ
+   15. COLLECTION : ÉTAGÈRE INFINIE, RANGÉES SÉPARÉES PAR RARETÉ, GRILLE DE 3 EMPLACEMENTS
    ===================================================================== */
 const cabinet = $('#cabinet');
 let filter = 'all', shelfRows = [], shelfTotalRows = 0, shelfShown = 0;
 
-// Cartes de la collection, filtrées, triées : raretés les plus hautes d'abord, puis films les plus connus d'abord
 function shelfData(){
   return Object.values(getCol())
     .filter(c => filter === 'all' || c.rarity === filter)
@@ -1064,8 +1098,7 @@ function shelfData(){
 }
 
 // Regroupement par rareté (reduce), puis découpe de chaque groupe en rangées de 3.
-// Une rangée ne contient JAMAIS deux raretés : quand la rareté change, on passe à la rangée suivante,
-// ce qui donne parfois des rangées de 1 ou 2 cartes en fin de groupe.
+// Une rangée ne contient JAMAIS deux raretés.
 function buildRows(list){
   const groups = list.reduce((acc, c) => { (acc[c.rarity] = acc[c.rarity] || []).push(c); return acc; }, {});
   const rows = [];
@@ -1077,7 +1110,8 @@ function buildRows(list){
   return rows;
 }
 
-// Une rangée = une niche complète (fond, parois, planche) + ses cartes
+// Une rangée = une niche complète. La grille CSS (3 colonnes égales) place les cartes de gauche à droite :
+// une carte seule occupe l'emplacement de gauche, deux cartes occupent les deux premiers, etc.
 function rowHTML(i){
   const row = shelfRows[i] || [];
   const slots = row.length
@@ -1117,7 +1151,6 @@ function renderShelf(){
 
   shelfRows = buildRows(shelfData());
   shelfTotalRows = Math.max(SHELF.minRows, shelfRows.length + SHELF.extraRows);
-  cabinet.classList.toggle('center', SHELF.centerPartial);
   cabinet.innerHTML = '<div class="scap"></div>';
   shelfShown = 0;
   viewCol.scrollTop = 0;
