@@ -23,7 +23,6 @@
 .hidden{display:none !important}
 html{height:100%;-webkit-text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--text)}
-/* Application plein écran : le document ne défile jamais, seules les vues internes défilent */
 body{
   position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;
   font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:500;line-height:1.45;
@@ -34,7 +33,6 @@ button{cursor:pointer;touch-action:manipulation}
 button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* #screen = plein écran (les effets de la légendaire couvrent tout) ; .app = colonne type téléphone */
 #screen{position:fixed;inset:0;overflow:hidden;touch-action:pan-y;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .app{--bar:calc(62px + env(safe-area-inset-bottom,0px));position:relative;height:100%;max-width:560px;margin:0 auto;overflow:hidden}
@@ -67,7 +65,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .setup p{margin:0 0 12px;color:var(--muted)}
 .setup form{display:flex;gap:8px;flex-wrap:wrap}
 .setup input{flex:1;min-width:200px;min-height:46px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:0 12px;
-  font-size:16px;-webkit-user-select:text;user-select:text}   /* 16 px : évite le zoom automatique d'iOS */
+  font-size:16px;-webkit-user-select:text;user-select:text}
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
 /* ================= CARTES ================= */
@@ -107,13 +105,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
     radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
-  --pw:min(62vw,250px,36dvh);      /* largeur du booster : tient dans l'écran même zoomé ×1,17 */
-  --cw:min(70vw,300px,40dvh);      /* largeur d'une carte de la pile (la légendaire grossit ×1,2) */
+  --pw:min(62vw,250px,36dvh);
+  --cw:min(70vw,300px,40dvh);
   position:relative;flex:1;min-height:0}
 .homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
 
-/* Flèches latérales (pas de texte) */
 .edge{position:absolute;top:0;bottom:0;width:18%;display:grid;place-items:center;color:var(--gold-hi);pointer-events:none;opacity:0;transition:opacity .35s}
 .edge.l{left:0}.edge.r{right:0}
 .edge svg{width:36px;height:36px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
@@ -128,7 +125,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 @keyframes nudgeL{50%{transform:translateX(-7px)}}
 @keyframes nudgeR{50%{transform:scaleX(-1) translateX(-7px)}}
 
-/* ---------- Pile (cartes 2D espacées en profondeur) ---------- */
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
 .stack.show{visibility:visible}
@@ -176,7 +172,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .dots i.done{background:var(--gold-lo)}
 .dots i.cur{background:var(--gold-hi);transform:scale(1.45)}
 
-/* ---------- Résumé ---------- */
 .recapwrap{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;
   padding:12px 16px;text-align:center;overscroll-behavior:contain}
 .recapwrap h2{margin:0 0 2px;font-size:1.4rem;letter-spacing:-.01em}
@@ -187,7 +182,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .recap .card.r-epic::after{animation:shine 1s calc(var(--i)*110ms + 600ms) ease-out 1}
 .recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
-/* ---------- Effets plein écran ---------- */
 #fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #fxBack{z-index:40}
 #fxFront{z-index:60}
@@ -276,81 +270,77 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* =====================================================================
-   VUE COLLECTION : l'étagère de vidéothèque
-   Chaque .srow est une rangée COMPLÈTE et autonome (fond, LED, montants, 3 cartes, planche).
-   Ajouter des films = ajouter des rangées : l'étagère ne peut pas se désynchroniser au scroll.
+   VUE COLLECTION : meuble à niches bleu intense (d'après la photo)
+   Une rangée (.srow) = UNE niche complète : cadre noir, fond texturé, parois latérales,
+   planche en trapèze (vue de dessus), séparation noire, et ses cartes posées.
+   Ajouter des cartes = ajouter des rangées entières : tout défile ensemble, sans décalage possible.
    ===================================================================== */
 .view-col{
-  --post:14px;      /* largeur des montants métalliques */
-  --ptop:18px;      /* profondeur de la planche (face supérieure, vue légèrement de dessus) */
-  --pedge:10px;     /* épaisseur du chant avant de la planche */
+  --frame:8px;      /* cadre noir autour du meuble (côtés) */
+  --wall:18px;      /* parois latérales de la niche */
+  --board:26px;     /* profondeur de la planche vue de dessus */
+  --sep:12px;       /* bande noire entre deux étagères */
+  --gap:12px;       /* espace régulier entre deux cartes */
+  --cardscale:.94;  /* taille des cartes par rapport à un tiers de la niche (réduit les cartes) */
   overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  background:radial-gradient(130% 50% at 50% 0%,#232b60 0%,#10153a 45%,#070919 100%)}
+  background:radial-gradient(130% 36% at 50% 0%,#0c2270 0%,#050b2b 55%,#02040f 100%)}
 
-/* En-tête collant */
 .shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px;
-  background:rgba(7,9,25,.84);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(120,160,255,.14)}
+  background:rgba(3,6,22,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(70,130,255,.22)}
 .shead h2{margin:0;font-size:1.15rem;letter-spacing:-.01em}
-.shead .count{color:#8f9bd1;font-size:.85rem;font-weight:500;margin-left:8px}
+.shead .count{color:#7f9ae0;font-size:.85rem;font-weight:500;margin-left:8px}
 .chips{display:flex;gap:8px;overflow-x:auto;margin:10px -14px 0;padding:0 14px;scrollbar-width:none;touch-action:pan-x}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;min-height:34px;border:0;border-radius:99px;padding:0 13px;background:rgba(255,255,255,.06);color:#c9d2ff;font-weight:800;font-size:.8rem;
-  box-shadow:inset 0 0 0 1.5px rgba(140,170,255,.2)}
-.chip[aria-pressed="true"]{background:rgba(110,160,255,.18);color:#fff;box-shadow:inset 0 0 0 1.5px var(--rc,#8cb4ff)}
+.chip{flex:none;min-height:34px;border:0;border-radius:99px;padding:0 13px;background:rgba(255,255,255,.06);color:#c9d6ff;font-weight:800;font-size:.8rem;
+  box-shadow:inset 0 0 0 1.5px rgba(110,160,255,.25)}
+.chip[aria-pressed="true"]{background:rgba(70,130,255,.25);color:#fff;box-shadow:inset 0 0 0 1.5px var(--rc,#6fa2ff)}
 
-.cabinet{position:relative;max-width:560px;margin:10px auto 0}
-/* Traverse haute du meuble */
-.scap{position:relative;height:16px;z-index:3;
-  background:linear-gradient(180deg,#323a58,#0b0d18);box-shadow:inset 0 1px 0 rgba(150,190,255,.3),0 4px 12px rgba(0,0,0,.5)}
+.cabinet{width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#020309;
+  box-shadow:0 0 0 1px #000,0 0 44px 4px rgba(30,100,255,.45)}
+.scap{height:12px;background:#020309}
 
-.srow{position:relative}
-/* Fond du casier + lumière de la LED qui retombe depuis le haut */
-.sback{position:absolute;inset:0;
-  background:linear-gradient(180deg,#0b1132,#070a1c);
-  box-shadow:inset 16px 0 18px -10px #000,inset -16px 0 18px -10px #000}
-.sback::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(64,120,255,.46),rgba(64,120,255,.16) 38%,rgba(64,120,255,0) 72%)}
-/* Ruban LED sous la planche du dessus */
-.led{position:absolute;top:0;left:var(--post);right:var(--post);height:3px;z-index:1;
-  background:linear-gradient(90deg,rgba(140,190,255,0),#a9d0ff 10%,#e3f0ff 50%,#a9d0ff 90%,rgba(140,190,255,0));
-  box-shadow:0 0 12px 3px rgba(80,150,255,.9),0 8px 30px 8px rgba(50,110,255,.42)}
-/* Montants métalliques */
-.spost{position:absolute;top:0;bottom:0;width:var(--post);z-index:4;
-  background:linear-gradient(90deg,#03040a,#2a3046 38%,#12151f 70%,#05060c);
-  box-shadow:inset 0 0 0 1px rgba(130,170,255,.08)}
-.spost.l{left:0}
-.spost.r{right:0;background:linear-gradient(270deg,#03040a,#2a3046 38%,#12151f 70%,#05060c)}
-/* Planche : face supérieure éclairée + chant avant sombre */
-.plank{position:absolute;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ptop) + var(--pedge))}
-.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:var(--ptop);
+.srow{position:relative;background:#020309;padding:0 var(--frame) var(--sep)}      /* le noir du fond = cadre + séparation */
+.niche{position:relative}
+
+/* Fond de la niche : bleu intense texturé (feutrine) */
+.sback{position:absolute;left:var(--wall);right:var(--wall);top:0;bottom:var(--board);
   background:
-    radial-gradient(75% 160% at 50% 0%,rgba(95,155,255,.32),rgba(95,155,255,0) 70%),
-    linear-gradient(180deg,#27315a 0%,#1b2243 60%,#121834 100%);
-  box-shadow:inset 0 1px 0 rgba(160,200,255,.4)}
-.plank::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--pedge);
-  background:linear-gradient(180deg,#1a1f33,#05060d);box-shadow:0 1px 0 rgba(120,170,255,.2)}
+    linear-gradient(180deg,rgba(160,200,255,.14),rgba(160,200,255,0) 32%),
+    linear-gradient(180deg,#0a38ac 0%,#0f49cf 58%,#1a5ce8 100%);
+  box-shadow:inset 12px 0 16px -8px rgba(0,12,72,.8),inset -12px 0 16px -8px rgba(0,12,72,.8),inset 0 8px 14px -8px rgba(0,10,60,.7)}
+.sback::after{content:'';position:absolute;inset:0;opacity:.3;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* Parois latérales : plus claires que le fond, elles descendent jusqu'en bas pour border la planche */
+.swall{position:absolute;top:0;bottom:0;width:var(--wall)}
+.swall.l{left:0;background:linear-gradient(90deg,#1550d8,#2f7bff 58%,#1d62f0);box-shadow:inset -1px 0 0 rgba(0,10,60,.55)}
+.swall.r{right:0;background:linear-gradient(270deg,#1550d8,#2f7bff 58%,#1d62f0);box-shadow:inset 1px 0 0 rgba(0,10,60,.55)}
+/* Planche vue de dessus : trapèze (étroit au fond, large devant), liseré clair sur le chant avant */
+.plank{position:absolute;left:0;right:0;bottom:0;height:var(--board);
+  clip-path:polygon(var(--wall) 0,calc(100% - var(--wall)) 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,#1a50d2 0%,#2c6ef0 55%,#418aff 100%);
+  box-shadow:inset 0 -2px 0 rgba(180,215,255,.9)}
+.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:rgba(0,12,70,.55)}
 
-/* Les 3 cartes : posées sur la ligne de contact au milieu de la planche */
-.slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-  padding:24px calc(var(--post) + 12px) calc(var(--pedge) + var(--ptop)*.5)}
-.slot{position:relative;transform-origin:50% 100%;
-  transform:translateX(var(--dx,0)) perspective(700px) rotateX(-2.5deg) rotate(var(--rot,0deg));
-  filter:drop-shadow(0 7px 8px rgba(0,0,0,.65))}
+/* Cartes : droites, plus petites, espacement régulier ; centrées dans la niche (rangées de 1, 2 ou 3) */
+.slots{position:relative;z-index:2;display:flex;justify-content:flex-start;align-items:flex-end;gap:var(--gap);
+  padding:22px calc(var(--wall) + 2px) calc(var(--board)*.5)}      /* le bas des cartes pose sur la ligne médiane de la planche */
+.cabinet.center .slots{justify-content:center}
+.slot{position:relative;flex:0 0 calc((100% - 2*var(--gap))/3*var(--cardscale));
+  filter:drop-shadow(0 6px 7px rgba(0,12,70,.7))}
 .slot.empty{visibility:hidden}
-.slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;   /* ombre de contact sur la planche */
-  background:radial-gradient(ellipse closest-side,rgba(0,0,0,.75),rgba(0,0,0,0));filter:blur(2px)}
+.slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;       /* ombre de contact sur la planche */
+  background:radial-gradient(ellipse closest-side,rgba(0,10,60,.8),rgba(0,10,60,0));filter:blur(2px)}
 .slot .card{width:100%}
-.slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;   /* lumière bleue de la LED qui tombe sur le haut de la carte */
-  background:linear-gradient(180deg,rgba(120,175,255,.32),rgba(120,175,255,0) 40%)}
-.slot .card .meta{font-size:.62rem;padding:20px 6px 5px}
-.slot .card .meta b{font-size:.7rem}
-.slot .badge{font-size:.6rem;top:5px;right:5px;padding:1px 6px}
+.slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,rgba(130,190,255,.2),rgba(130,190,255,0) 36%)}
+.slot .card .meta{font-size:.6rem;padding:18px 5px 4px}
+.slot .card .meta b{font-size:.68rem}
+.slot .badge{font-size:.58rem;top:5px;right:5px;padding:1px 6px}
 .slot .badge.new{left:5px}
 
-/* Pied de page (réglages) */
-.sfoot{max-width:560px;margin:0 auto;padding:26px 16px 22px;color:#7f8ab8;font-size:.76rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
-.sfoot button{background:none;border:0;color:#7f8ab8;text-decoration:underline;padding:8px;min-height:36px;font-size:.76rem}
+.sfoot{max-width:560px;margin:0 auto;padding:26px 16px 22px;color:#6f84c4;font-size:.76rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.sfoot button{background:none;border:0;color:#6f84c4;text-decoration:underline;padding:8px;min-height:36px;font-size:.76rem}
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
@@ -361,7 +351,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 </head>
 <body>
 
-<!-- Symbole SVG : bobine de film dorée (booster) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
@@ -384,7 +373,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 <main id="screen">
 
-  <!-- Écran initial : clé TMDB -->
   <section class="setup hidden" id="setup">
     <div class="setup-card">
       <h2>Colle ta clé TMDB pour commencer</h2>
@@ -399,7 +387,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
   <div class="app hidden" id="app">
 
-    <!-- ============ VUE ACCUEIL : booster ============ -->
     <section class="view view-home" id="view-home">
       <div class="arena" id="arena">
         <div class="edge l" id="edgeL" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -443,7 +430,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </div>
     </section>
 
-    <!-- ============ VUE COLLECTION : étagère ============ -->
     <section class="view view-col hidden" id="view-col">
       <header class="shead">
         <h2>Ma collection<span class="count" id="count"></span></h2>
@@ -458,7 +444,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </footer>
     </section>
 
-    <!-- ============ BARRE DE NAVIGATION ============ -->
     <nav class="bottombar" aria-label="Navigation principale">
       <button class="tabbtn" id="tab-home" aria-current="page">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"/></svg>
@@ -499,11 +484,13 @@ const PEEK = {
   kickOnClick:16, springK:190, springC:15
 };
 
-// Étagère : 3 cartes par rangée, rangées ajoutées par lots au fil du défilement
+// Étagère
 const SHELF = {
-  perRow:3,
+  perRow:3,           // 3 cartes maximum par rangée
+  centerPartial:true, // les rangées de 1 ou 2 cartes sont centrées (false = alignées à gauche)
   chunkRows:6,        // rangées ajoutées à chaque lot
   minRows:4,          // l'étagère est visible même vide
+  extraRows:1,        // rangée(s) vide(s) en plus : le meuble « attend » les prochaines cartes
   preload:900         // on ajoute des rangées quand le bas est à moins de 900 px
 };
 
@@ -534,7 +521,6 @@ function cancelWaapi(root){
     .filter(a => !('animationName' in a) && !('transitionProperty' in a))
     .forEach(a => a.cancel());
 }
-// Petite vibration sur mobile (Android) : déchirure et légendaire
 const buzz = p => { if(!RM && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } };
 
 /* =====================================================================
@@ -573,7 +559,7 @@ function pickTier(noCommon = false){
 }
 
 async function drawBooster(){
-  const tiers = [pickTier(), pickTier(), pickTier(), pickTier(), pickTier(true)]; // la 5e carte est au moins "Peu commune"
+  const tiers = [pickTier(), pickTier(), pickTier(), pickTier(), pickTier(true)];
   const pages = await Promise.all(tiers.map(t => getPage(randInt(t.pages[0], t.pages[1]))));
   const used = new Set();
   const cards = tiers.map((t,i) => {
@@ -633,7 +619,6 @@ const againBtn = $('#againBtn'), skipBtn = $('#skipBtn'), toColBtn = $('#toColBt
 const dotsEl = $('#dots'), edgeL = $('#edgeL'), edgeR = $('#edgeR'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
 
-/*  idle → zoomed → opening → stack → summary  */
 let state = 'idle';
 let busy = false;
 let idx = 0;
@@ -646,7 +631,7 @@ function setCaption(html){ capEl.innerHTML = html; }
 function setBusyTabs(b){ [tabHome, tabCol].forEach(x => x.disabled = b); }
 
 /* =====================================================================
-   6. BOOSTER : dessin plat, bord de déchirure, inclinaison
+   6. BOOSTER
    ===================================================================== */
 const packArt = () => `<div class="art">
   <div class="curtain"></div><div class="film l"></div><div class="film r"></div><div class="frame"></div>
@@ -667,7 +652,6 @@ partTop.innerHTML = partBottom.innerHTML = packArt();
   root.setProperty('--clipBottom', fmt([...cutOverlap, ...[...bottomEdge].reverse()]));
 })();
 
-// Inclinaison et reflet foil du booster : suit le doigt ou la souris (tant que le booster est fermé)
 arena.addEventListener('pointermove', e => {
   if(state !== 'idle' && state !== 'zoomed') return;
   const r = pack.getBoundingClientRect();
@@ -799,7 +783,7 @@ function updateStack(){
 }
 
 /* =====================================================================
-   9. PEEK : inclinaison de la pile + ressort
+   9. PEEK
    ===================================================================== */
 let curTilt = 0, springRaf = 0;
 function setTilt(deg){
@@ -899,7 +883,7 @@ function sparks(x, y){
 }
 
 /* =====================================================================
-   11. PASSER LA CARTE (tactile et souris)
+   11. PASSER LA CARTE
    ===================================================================== */
 function hit(side){
   const e = side < 0 ? edgeL : edgeR;
@@ -936,9 +920,8 @@ async function dismissTop(side){
   if(last) await showSummary();
 }
 
-const IGNORE = 'button, a, input, .bottombar';   // zones qui ne déclenchent ni passage de carte ni peek
+const IGNORE = 'button, a, input, .bottombar';
 
-// Tape : moitié gauche / droite de la colonne de jeu
 let suppressClick = false;
 screenEl.addEventListener('click', e => {
   if(state !== 'stack' || busy || suppressClick) return;
@@ -947,8 +930,6 @@ screenEl.addEventListener('click', e => {
   dismissTop(e.clientX < r.left + r.width / 2 ? -1 : 1);
 });
 
-// Peek : maintenir + glisser = la pile pivote, la carte du dessus reste FIXE ;
-// la carte ne part que sur un balayage rapide au relâchement, sinon la pile revient en ressort
 let dg = null;
 screenEl.addEventListener('pointerdown', e => {
   if(state !== 'stack' || busy) return;
@@ -992,7 +973,6 @@ function endDrag(e){
 screenEl.addEventListener('pointerup', endDrag);
 screenEl.addEventListener('pointercancel', endDrag);
 
-// Un appui long ne doit pas ouvrir le menu contextuel du navigateur pendant le peek
 screenEl.addEventListener('contextmenu', e => { if(state === 'stack') e.preventDefault(); });
 
 document.addEventListener('keydown', e => {
@@ -1055,11 +1035,11 @@ againBtn.addEventListener('click', () => {
 toColBtn.addEventListener('click', () => showView('col'));
 
 /* =====================================================================
-   14. NAVIGATION (barre du bas) : bascule entre les vues sans recharger
+   14. NAVIGATION (barre du bas)
    ===================================================================== */
 const viewHome = $('#view-home'), viewCol = $('#view-col');
 function showView(name){
-  if(state === 'opening' || state === 'stack') return;          // pas de changement de vue pendant la séquence d'ouverture
+  if(state === 'opening' || state === 'stack') return;
   const home = name === 'home';
   viewHome.classList.toggle('hidden', !home);
   viewCol.classList.toggle('hidden', home);
@@ -1071,30 +1051,41 @@ tabHome.addEventListener('click', () => showView('home'));
 tabCol.addEventListener('click', () => showView('col'));
 
 /* =====================================================================
-   15. COLLECTION : L'ÉTAGÈRE INFINIE
-   Une « rangée » (.srow) = fond + LED + montants + planche + 3 cartes.
-   On ajoute des rangées entières par lots quand on approche du bas : le meuble s'étend sans fin
-   et reste parfaitement synchronisé avec les cartes puisque tout défile dans la même rangée.
+   15. COLLECTION : ÉTAGÈRE INFINIE, RANGÉES SÉPARÉES PAR RARETÉ
    ===================================================================== */
 const cabinet = $('#cabinet');
-let filter = 'all', shelfList = [], shelfTotalRows = 0, shelfShown = 0;
+let filter = 'all', shelfRows = [], shelfTotalRows = 0, shelfShown = 0;
 
+// Cartes de la collection, filtrées, triées : raretés les plus hautes d'abord, puis films les plus connus d'abord
 function shelfData(){
   return Object.values(getCol())
     .filter(c => filter === 'all' || c.rarity === filter)
     .sort((a,b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
 }
 
+// Regroupement par rareté (reduce), puis découpe de chaque groupe en rangées de 3.
+// Une rangée ne contient JAMAIS deux raretés : quand la rareté change, on passe à la rangée suivante,
+// ce qui donne parfois des rangées de 1 ou 2 cartes en fin de groupe.
+function buildRows(list){
+  const groups = list.reduce((acc, c) => { (acc[c.rarity] = acc[c.rarity] || []).push(c); return acc; }, {});
+  const rows = [];
+  TIERS.forEach(t => {
+    const g = groups[t.id];
+    if(!g) return;
+    for(let i = 0; i < g.length; i += SHELF.perRow) rows.push(g.slice(i, i + SHELF.perRow));
+  });
+  return rows;
+}
+
+// Une rangée = une niche complète (fond, parois, planche) + ses cartes
 function rowHTML(i){
-  let slots = '';
-  for(let k=0; k<SHELF.perRow; k++){
-    const c = shelfList[i * SHELF.perRow + k];
-    if(!c){ slots += '<div class="slot empty"><div class="card"></div></div>'; continue; }
-    // petite variation stable par carte : elles ne sont pas parfaitement alignées, comme posées à la main
-    const rot = ((c.id % 7) - 3) * .45, dx = ((c.id % 5) - 2) * 1.5;
-    slots += `<div class="slot" style="--rot:${rot}deg;--dx:${dx}px">${cardHTML(c, {count:c.count, lazy:true})}</div>`;
-  }
-  return `<div class="srow"><div class="sback"></div><i class="led"></i><div class="plank"></div><div class="slots">${slots}</div><div class="spost l"></div><div class="spost r"></div></div>`;
+  const row = shelfRows[i] || [];
+  const slots = row.length
+    ? row.map(c => `<div class="slot">${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
+    : '<div class="slot empty"><div class="card"></div></div>';           // niche vide : un gabarit invisible garde la hauteur
+  return `<div class="srow"><div class="niche">
+    <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
+    <div class="slots">${slots}</div></div></div>`;
 }
 
 function appendRows(n){
@@ -1105,7 +1096,6 @@ function appendRows(n){
   shelfShown = end;
 }
 
-// Ajoute des rangées tant que le bas du meuble est proche de l'écran
 function fillShelf(){
   let guard = 0;
   while(shelfShown < shelfTotalRows && guard++ < 20 &&
@@ -1125,9 +1115,9 @@ function renderShelf(){
     `<button class="chip ${c.id !== 'all' ? 'r-' + c.id : ''}" data-f="${c.id}" aria-pressed="${filter === c.id}">${c.label} ${c.n}</button>`).join('');
   $('#chips').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; renderShelf(); }));
 
-  shelfList = shelfData();
-  // toujours une rangée vide en plus du dernier lot : le meuble « attend » les prochaines cartes
-  shelfTotalRows = Math.max(SHELF.minRows, Math.ceil(shelfList.length / SHELF.perRow) + 1);
+  shelfRows = buildRows(shelfData());
+  shelfTotalRows = Math.max(SHELF.minRows, shelfRows.length + SHELF.extraRows);
+  cabinet.classList.toggle('center', SHELF.centerPartial);
   cabinet.innerHTML = '<div class="scap"></div>';
   shelfShown = 0;
   viewCol.scrollTop = 0;
