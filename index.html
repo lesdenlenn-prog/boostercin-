@@ -108,8 +108,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
   --pw:min(62vw,250px,36dvh);                 /* largeur du booster (au repos) */
-  --cw:calc(var(--pw)*1.17 - 6px);            /* carte = largeur du booster ZOOMÉ (×1,17, c'est lui qu'on ouvre) moins 6 px : elle y tient tout juste */
+  --cw:calc(var(--pw)*1.17 - 14px);           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
   position:relative;flex:1;min-height:0}
+/* Zones de toucher invisibles (moitié gauche / moitié droite), actives seulement pendant la pile de cartes */
+.zone{display:none;position:absolute;top:0;bottom:0;width:50%;z-index:55;background:transparent;opacity:0;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.zone.l{left:0}.zone.r{right:0}
+.arena.nav .zone{display:block}
 .homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
 
@@ -441,6 +446,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
     <section class="view view-home" id="view-home">
       <div class="arena" id="arena">
+        <div class="zone l" data-side="-1" aria-hidden="true"></div>
+        <div class="zone r" data-side="1" aria-hidden="true"></div>
         <div class="stack" id="stack">
           <div class="deck-shadow"></div>
           <div class="deck" id="deck"></div>
@@ -845,10 +852,12 @@ function showStack(){
 }
 function releaseStack(){ els.forEach(el => el.classList.remove('hold')); }
 function clearStack(){
+  arena.classList.remove('nav');
   deck.innerHTML = ''; stackEl.classList.remove('show', 'lift'); els = []; cancelAnimationFrame(springRaf); setTilt(0);
 }
 function startStack(){
   state = 'stack'; busy = false;
+  arena.classList.add('nav');
   dotsEl.hidden = false; updateDots();
   activateTop();
 }
@@ -963,8 +972,8 @@ function sparks(x, y){
 }
 
 /* =====================================================================
-   11. PASSER LA CARTE : UNIQUEMENT AU GLISSEMENT (swipe / drag)
-   Plus de clic gauche/droite, plus de flèches. (Les flèches du clavier restent pour l'accessibilité.)
+   11. PASSER LA CARTE : toucher/clic moitié gauche ou droite (zones invisibles) OU glissement (swipe / drag)
+   Aucune flèche affichée. (Les flèches du clavier restent aussi disponibles.)
    ===================================================================== */
 async function dismissTop(side){
   if(state !== 'stack' || busy) return;
@@ -1003,7 +1012,9 @@ screenEl.addEventListener('pointerdown', e => {
   if(state !== 'stack' || busy) return;
   if(e.target.closest(IGNORE)) return;
   cancelAnimationFrame(springRaf);
-  dg = {id:e.pointerId, x:e.clientX, y:e.clientY, base:curTilt, active:false, dx:0, samples:[{x:e.clientX, t:performance.now()}]};
+  const z = e.target.closest ? e.target.closest('.zone') : null;
+  dg = {id:e.pointerId, x:e.clientX, y:e.clientY, base:curTilt, active:false, dx:0, t0:performance.now(),
+        side: z ? Number(z.dataset.side) : 0, samples:[{x:e.clientX, t:performance.now()}]};
 });
 screenEl.addEventListener('pointermove', e => {
   if(!dg || e.pointerId !== dg.id) return;
@@ -1031,7 +1042,11 @@ function releaseVelocity(samples){
 function endDrag(e){
   if(!dg || e.pointerId !== dg.id) return;
   const d = dg; dg = null;
-  if(!d.active){ return; }                                // simple toucher : rien ne se passe
+  if(!d.active){                                          // simple toucher / clic : zone gauche ou droite (invisibles)
+    const moved = Math.hypot(e.clientX - d.x, e.clientY - d.y);
+    if(e.type === 'pointerup' && d.side && moved < 10 && performance.now() - d.t0 < 500) dismissTop(d.side);
+    return;
+  }
   const v = releaseVelocity(d.samples);
   const swiped = e.type !== 'pointercancel' && Math.abs(v) >= PEEK.flickSpeed && Math.abs(d.dx) >= PEEK.minDx;
   if(swiped) dismissTop(v < 0 ? -1 : 1);
@@ -1054,6 +1069,7 @@ document.addEventListener('keydown', e => {
    ===================================================================== */
 async function showSummary(){
   state = 'summary'; busy = true;
+  arena.classList.remove('nav');
   dotsEl.hidden = true;
   await sleep(RM ? 0 : 200);
   await play(arena, [{opacity:1}, {opacity:0}], {duration: RM ? 1 : 320});
