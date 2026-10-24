@@ -144,15 +144,144 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
 @keyframes framemove{to{background-position:300% 300%}}
 
-.aura{position:absolute;inset:-38%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .6s;
-  background:radial-gradient(circle closest-side,rgba(255,214,110,.95) 0,rgba(255,150,40,.45) 52%,rgba(255,150,40,0) 100%)}
-.scard.charging .aura{opacity:.6}
-.scard.blast .aura{opacity:1;animation:pulse 1.8s ease-in-out infinite}
-@keyframes pulse{50%{transform:scale(1.12);opacity:.75}}
-.scard.charging .shaker{animation:tremble .08s linear infinite}
-@keyframes tremble{
-  0%{transform:translate(1.5px,0) rotate(-.8deg)}25%{transform:translate(-1.5px,1px) rotate(.8deg)}
-  50%{transform:translate(1px,-1px) rotate(-.5deg)}75%{transform:translate(-1px,0) rotate(.6deg)}100%{transform:translate(1.5px,0) rotate(-.8deg)}
+/* =====================================================================
+   RÉVÉLATION LÉGENDAIRE
+   Tout est isolé dans des classes propres aux légendaires : les autres raretés n'ont ni ces éléments ni ces animations.
+   Phases (classes posées sur la .scard par le JS) :
+     .lg-tease          1. anticipation : dos de carte qui se charge, tremblement qui accélère, aura qui s'échappe
+     .lg-revealed       2. impact : le dos disparaît sous le flash
+     .lg-impact         2. impact : « pop » scale(1.2) puis retour
+     .reveal-legendary  3. persistant : aura pulsante, lévitation, éclat métallique + holo sur l'affiche
+   ===================================================================== */
+
+/* ---- Dos de carte (présent uniquement sur les légendaires, jusqu'à la révélation) ---- */
+.lg-back{position:absolute;inset:0;z-index:5;border-radius:12px;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 40%,#3b1f08 0,#1a0c05 45%,#07040a 100%);
+  box-shadow:0 0 0 1.5px var(--legendary),inset 0 0 0 5px #120904,inset 0 0 0 6px rgba(246,196,83,.55),inset 0 0 30px rgba(246,196,83,.18)}
+.lg-back::before{content:'';position:absolute;inset:7%;border-radius:8px;border:1px solid rgba(246,196,83,.35);
+  background:repeating-linear-gradient(45deg,rgba(246,196,83,.06) 0 2px,transparent 2px 12px),
+             repeating-linear-gradient(-45deg,rgba(246,196,83,.06) 0 2px,transparent 2px 12px)}
+.lg-back-emblem{position:absolute;left:26%;width:48%;top:50%;aspect-ratio:1;transform:translateY(-50%);
+  filter:drop-shadow(0 0 10px rgba(246,196,83,.55))}
+.lg-back-emblem svg{width:100%;height:100%;animation:lg-spin 14s linear infinite}
+.lg-back-shine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,240,200,.22) 50%,transparent 60%);
+  background-size:300% 100%;background-repeat:no-repeat;animation:lg-glint 3.4s ease-in-out infinite}
+.scard.lg-revealed .lg-back{display:none}
+
+/* ---- Aura incandescente qui s'échappe de derrière la carte ---- */
+.lg-aura{position:absolute;inset:-45%;z-index:-1;pointer-events:none;opacity:0;transform:scale(.5)}
+.lg-aura::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle closest-side,rgba(255,240,190,.95) 0,rgba(255,186,70,.6) 36%,rgba(255,120,20,.25) 62%,rgba(255,120,20,0) 100%)}
+.lg-aura::after{content:'';position:absolute;inset:-12%;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(255,222,140,0) 0deg,rgba(255,222,140,.6) 3deg,rgba(255,222,140,0) 7deg 18deg);
+  -webkit-mask-image:radial-gradient(circle closest-side,transparent 24%,#000 40%,transparent 74%);
+          mask-image:radial-gradient(circle closest-side,transparent 24%,#000 40%,transparent 74%);
+  animation:lg-spin 7s linear infinite}
+
+/* ---- 1. ANTICIPATION ---- */
+.scard.lg-tease .shaker{animation:lg-rumble var(--tease,1.7s) linear forwards}
+.scard.lg-tease .lg-aura{animation:lg-aura-build var(--tease,1.7s) cubic-bezier(.35,0,.65,1) forwards,lg-flicker .12s steps(2) infinite}
+.scard.lg-tease .lg-back{animation:lg-back-charge var(--tease,1.7s) cubic-bezier(.6,0,.9,.5) forwards}
+.scard.lg-tease .lg-back-emblem{animation:lg-emblem-charge var(--tease,1.7s) ease-in forwards}
+.scard.lg-tease .lg-back-emblem svg{animation-duration:1.2s}
+@keyframes lg-aura-build{0%{opacity:0;transform:scale(.55)}25%{opacity:.55}100%{opacity:1;transform:scale(1.1)}}
+@keyframes lg-flicker{0%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@keyframes lg-back-charge{to{filter:brightness(1.35);
+  box-shadow:0 0 0 1.5px #fff3c4,inset 0 0 0 5px #120904,inset 0 0 0 6px #ffe7a0,inset 0 0 60px rgba(255,214,120,.9)}}
+@keyframes lg-emblem-charge{to{transform:translateY(-50%) scale(1.1);filter:drop-shadow(0 0 22px rgba(255,232,160,1)) brightness(1.6)}}
+/* Tremblement léger dont la fréquence ET l'amplitude augmentent (passages à t = √(k/N)) */
+@keyframes lg-rumble{
+  0%{transform:translate(0,0) rotate(0deg) scale(1)}
+  15.8%{transform:translate(0.64px,0.00px) rotate(0.20deg) scale(1.001)}
+  22.4%{transform:translate(-0.74px,0.33px) rotate(-0.24deg) scale(1.002)}
+  27.4%{transform:translate(0.83px,0.37px) rotate(0.26deg) scale(1.003)}
+  31.6%{transform:translate(-0.91px,0.00px) rotate(-0.29deg) scale(1.004)}
+  35.4%{transform:translate(0.99px,-0.45px) rotate(0.32deg) scale(1.006)}
+  38.7%{transform:translate(-1.07px,-0.48px) rotate(-0.34deg) scale(1.007)}
+  41.8%{transform:translate(1.14px,0.00px) rotate(0.37deg) scale(1.008)}
+  44.7%{transform:translate(-1.22px,0.55px) rotate(-0.39deg) scale(1.009)}
+  47.4%{transform:translate(1.29px,0.58px) rotate(0.41deg) scale(1.010)}
+  50.0%{transform:translate(-1.36px,0.00px) rotate(-0.43deg) scale(1.011)}
+  52.4%{transform:translate(1.43px,-0.64px) rotate(0.46deg) scale(1.012)}
+  54.8%{transform:translate(-1.49px,-0.67px) rotate(-0.48deg) scale(1.014)}
+  57.0%{transform:translate(1.56px,0.00px) rotate(0.50deg) scale(1.015)}
+  59.2%{transform:translate(-1.62px,0.73px) rotate(-0.52deg) scale(1.016)}
+  61.2%{transform:translate(1.69px,0.76px) rotate(0.54deg) scale(1.017)}
+  63.2%{transform:translate(-1.75px,0.00px) rotate(-0.56deg) scale(1.018)}
+  65.2%{transform:translate(1.81px,-0.82px) rotate(0.58deg) scale(1.019)}
+  67.1%{transform:translate(-1.87px,-0.84px) rotate(-0.60deg) scale(1.020)}
+  68.9%{transform:translate(1.93px,0.00px) rotate(0.62deg) scale(1.021)}
+  70.7%{transform:translate(-1.99px,0.90px) rotate(-0.64deg) scale(1.022)}
+  72.5%{transform:translate(2.05px,0.92px) rotate(0.66deg) scale(1.024)}
+  74.2%{transform:translate(-2.11px,0.00px) rotate(-0.68deg) scale(1.025)}
+  75.8%{transform:translate(2.17px,-0.98px) rotate(0.69deg) scale(1.026)}
+  77.5%{transform:translate(-2.23px,-1.00px) rotate(-0.71deg) scale(1.027)}
+  79.1%{transform:translate(2.29px,0.00px) rotate(0.73deg) scale(1.028)}
+  80.6%{transform:translate(-2.34px,1.05px) rotate(-0.75deg) scale(1.029)}
+  82.2%{transform:translate(2.40px,1.08px) rotate(0.77deg) scale(1.030)}
+  83.7%{transform:translate(-2.45px,0.00px) rotate(-0.79deg) scale(1.032)}
+  85.1%{transform:translate(2.51px,-1.13px) rotate(0.80deg) scale(1.033)}
+  86.6%{transform:translate(-2.57px,-1.15px) rotate(-0.82deg) scale(1.034)}
+  88.0%{transform:translate(2.62px,0.00px) rotate(0.84deg) scale(1.035)}
+  89.4%{transform:translate(-2.67px,1.20px) rotate(-0.86deg) scale(1.036)}
+  90.8%{transform:translate(2.73px,1.23px) rotate(0.87deg) scale(1.037)}
+  92.2%{transform:translate(-2.78px,0.00px) rotate(-0.89deg) scale(1.038)}
+  93.5%{transform:translate(2.84px,-1.28px) rotate(0.91deg) scale(1.039)}
+  94.9%{transform:translate(-2.89px,-1.30px) rotate(-0.92deg) scale(1.040)}
+  96.2%{transform:translate(2.94px,0.00px) rotate(0.94deg) scale(1.042)}
+  97.5%{transform:translate(-3.00px,1.35px) rotate(-0.96deg) scale(1.043)}
+  98.7%{transform:translate(3.05px,1.37px) rotate(0.98deg) scale(1.044)}
+  100%{transform:translate(0,0) rotate(0deg) scale(1.045)}
+}
+
+/* ---- 2. IMPACT : pop physique ---- */
+.scard.lg-impact .lifter{animation:lg-pop .62s cubic-bezier(.2,.9,.3,1) both}
+@keyframes lg-pop{0%{transform:scale(1)}22%{transform:scale(1.2)}58%{transform:scale(.97)}100%{transform:scale(1)}}
+
+/* ---- 3. PERSISTANT ---- */
+.scard.reveal-legendary .lg-aura{opacity:1;transform:scale(1.08);animation:lg-aura-pulse 2.6s ease-in-out infinite}
+@keyframes lg-aura-pulse{0%,100%{transform:scale(1.02);opacity:.8}50%{transform:scale(1.14);opacity:1}}
+.scard.reveal-legendary .shaker{animation:lg-hover 3.4s ease-in-out infinite}
+@keyframes lg-hover{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(.5deg)}}
+/* éclat métallique puissant qui traverse l'affiche en diagonale + voile holographique */
+.lg-glint,.lg-holo{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0}
+.reveal-legendary .lg-glint{opacity:1;mix-blend-mode:screen;background-repeat:no-repeat;background-size:300% 100%;
+  background-image:linear-gradient(115deg,transparent 37%,rgba(255,236,170,.15) 42%,rgba(255,252,235,.95) 48%,rgba(255,214,120,.85) 51%,rgba(160,230,255,.6) 54%,transparent 61%);
+  animation:lg-glint 2.6s cubic-bezier(.45,.05,.35,1) .45s infinite}
+.reveal-legendary .lg-holo{opacity:.5;mix-blend-mode:color-dodge;background-size:250% 100%;
+  background-image:linear-gradient(115deg,rgba(255,80,160,0) 20%,rgba(255,120,200,.35) 32%,rgba(120,230,255,.32) 44%,rgba(255,236,140,.4) 56%,rgba(190,120,255,.3) 68%,rgba(255,80,160,0) 80%);
+  animation:lg-holo 4s ease-in-out infinite}
+@keyframes lg-glint{0%{background-position:120% 0}60%,100%{background-position:-20% 0}}
+@keyframes lg-holo{0%,100%{background-position:100% 0}50%{background-position:0 0}}
+@keyframes lg-spin{to{transform:rotate(360deg)}}
+
+/* Faisceaux de projecteur dorés qui tournent lentement derrière la carte (2 couches en sens inverse + cœur lumineux) */
+.lg-beams{position:absolute;left:50%;top:50%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;opacity:0;transition:opacity .9s ease;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.7) 16%,transparent 58%);
+          mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.7) 16%,transparent 58%)}
+.lg-beams.on{opacity:1}
+.lg-beams i{position:absolute;inset:0;border-radius:50%}
+.lg-beams i:nth-child(1){background:repeating-conic-gradient(from 0deg,rgba(255,214,120,0) 0deg,rgba(255,214,120,.45) 4deg,rgba(255,214,120,0) 9deg 30deg);
+  animation:lg-spin 26s linear infinite}
+.lg-beams i:nth-child(2){background:repeating-conic-gradient(from 11deg,rgba(255,244,210,0) 0deg,rgba(255,244,210,.28) 2.5deg,rgba(255,244,210,0) 5deg 22.5deg);
+  animation:lg-spin 40s linear infinite reverse}
+.lg-beams i:nth-child(3){inset:40%;background:radial-gradient(circle closest-side,rgba(255,214,120,.6),rgba(255,160,40,0));
+  animation:lg-breathe 3s ease-in-out infinite}
+@keyframes lg-breathe{50%{transform:scale(1.18);opacity:.75}}
+
+/* Particules dorées qui flottent autour de la carte (une couche derrière, une devant pour la profondeur) */
+.legendary-particles{position:absolute;inset:0;opacity:0;transition:opacity .8s ease}
+.legendary-particles.on{opacity:1}
+.lg-mote{position:absolute;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
+  background:radial-gradient(circle,#fffbe6 0,#ffd977 45%,rgba(255,190,60,0) 72%);
+  box-shadow:0 0 calc(var(--s) * 1.5) calc(var(--s) * .3) rgba(255,196,80,.55);
+  opacity:0;animation:lg-mote var(--d) ease-in-out var(--delay) infinite}
+@keyframes lg-mote{
+  0%{transform:translate(0,0) scale(.4);opacity:0}
+  15%{opacity:var(--o)}
+  50%{transform:translate(calc(var(--dx) * .5 + var(--sw)),calc(var(--dy) * .5)) scale(1)}
+  85%{opacity:var(--o)}
+  100%{transform:translate(var(--dx),var(--dy)) scale(.5);opacity:0}
 }
 
 .dots{display:flex;gap:8px;justify-content:center;height:10px}
@@ -172,18 +301,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 #fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #fxBack{z-index:40}
 #fxFront{z-index:60}
-.veil{position:absolute;inset:0;opacity:0;transition:opacity .5s;
-  background:radial-gradient(ellipse at 50% 45%,rgba(110,8,22,.5) 0,rgba(18,3,7,.9) 55%,rgba(6,1,3,.97) 100%)}
+/* Voile d'anticipation : l'écran s'assombrit fortement, seule la carte reste visible */
+.veil{position:absolute;inset:0;opacity:0;transition:opacity .6s ease;
+  background:radial-gradient(ellipse at 50% 45%,rgba(40,14,4,.82) 0,rgba(6,2,3,.96) 50%,rgba(1,0,1,.99) 100%)}
 .veil.on{opacity:1}
-.rays{position:absolute;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;left:50%;top:50%;border-radius:50%;opacity:0;transition:opacity .7s;
-  background:repeating-conic-gradient(from 0deg,rgba(255,214,120,0) 0 7deg,rgba(255,214,120,.36) 7deg 11deg,rgba(255,214,120,0) 11deg 18deg);
-  -webkit-mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.65) 22%,transparent 62%);
-  mask-image:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.65) 22%,transparent 62%);
-  animation:spin 18s linear infinite}
-.rays.on{opacity:1}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Flash « projecteur qui s'allume » : écran blanc ~1/4 s puis fondu */
 .flash{position:absolute;inset:0;opacity:0;
-  background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),#fff 0,rgba(255,236,170,.95) 22%,rgba(255,170,60,.5) 52%,transparent 82%)}
+  background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),#fff 0,#fff 32%,#fffaf0 58%,#fff0cc 100%)}
+.flash.go{animation:lg-flash .7s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes lg-flash{0%{opacity:0}7%{opacity:1}40%{opacity:1}100%{opacity:0}}
 .ring{position:absolute;width:140px;height:140px;border-radius:50%;border:3px solid #ffe08a;opacity:0;
   box-shadow:0 0 24px 4px rgba(255,200,80,.8),inset 0 0 20px rgba(255,200,80,.6)}
 .spark{position:absolute;border-radius:50%;background:#fff3c4;box-shadow:0 0 8px 2px rgba(255,200,80,.95);opacity:0}
@@ -469,7 +595,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
-  .pack-float,.sheen,.gold,.rays,.scard.blast .aura,.glint,.scard .card::before{animation:none !important}
+  .pack-float,.sheen,.gold,.glint,.scard .card::before,.lg-beams i,.lg-aura::after,.lg-glint,.lg-holo,.lg-back-emblem svg,.lg-back-shine{animation:none !important}
+  .scard.lg-tease .shaker{animation:none}
   .scard.fx .card::after,.recap .card{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
 }
@@ -623,8 +750,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
   </div>
 
-  <div id="fxBack" aria-hidden="true"><div class="veil" id="veil"></div><div class="rays" id="rays"></div></div>
-  <div id="fxFront" aria-hidden="true"><div class="flash" id="flash"></div></div>
+  <div id="fxBack" aria-hidden="true">
+    <div class="veil" id="veil"></div>
+    <div class="lg-beams" id="lgBeams"><i></i><i></i><i></i></div>
+    <div class="legendary-particles" id="lgPartBack"></div>
+  </div>
+  <div id="fxFront" aria-hidden="true">
+    <div class="legendary-particles" id="lgPartFront"></div>
+    <div class="flash" id="flash"></div>
+  </div>
 </main>
 <div class="sr" id="sr" aria-live="polite"></div>
 
@@ -645,7 +779,10 @@ const TIMING = {
   cutSweep:90,         // la ligne de déchirure traverse le haut du booster
   split:420,           // séparation : le haut s'envole vers le haut ET le bas glisse vers le bas, EN MÊME TEMPS
   stackRise:320,
-  legendCharge:800, legendGrow:520, legendAfter:800, exit:520, unlockAfterExit:240
+  legendTease:1700,    // 1. anticipation (écran sombre, tremblement qui accélère, aura)
+  legendFlashPeak:55,  // 2. délai jusqu'à ce que l'écran soit entièrement blanc : on retourne la carte à ce moment-là
+  legendSettle:700,    //    durée du « pop » avant de rendre la main au joueur
+  exit:520, unlockAfterExit:240
 };
 const ZOOM = 1.17;     // échelle du booster zoomé (doit rester égale à .pack-pos.zoomed .pack-zoom en CSS)
 
@@ -779,7 +916,7 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
    ===================================================================== */
 const screenEl = $('#screen'), arena = $('#arena'), stackEl = $('#stack'), deck = $('#deck'), pack = $('#pack'), packZoom = $('#packZoom'), tilt = $('#tilt');
 const partTop = $('#partTop'), partBottom = $('#partBottom'), cutline = $('#cutline'), burst = $('#burst');
-const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), rays = $('#rays'), flashEl = $('#flash'), fxFront = $('#fxFront');
+const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), lgBeams = $('#lgBeams'), lgPartBack = $('#lgPartBack'), lgPartFront = $('#lgPartFront'), flashEl = $('#flash'), fxFront = $('#fxFront');
 const againBtn = $('#againBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
@@ -917,6 +1054,9 @@ function layoutStack(){
 }
 window.addEventListener('resize', () => { if(els.length) layoutStack(); });
 
+// Dos de carte : la légendaire reste « face cachée » jusqu'au flash
+const LG_BACK = `<div class="lg-back"><div class="lg-back-emblem"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg></div><div class="lg-back-shine"></div></div>`;
+
 function buildStack(){
   deck.innerHTML = '';
   setTilt(0);
@@ -924,10 +1064,13 @@ function buildStack(){
   G = Math.max(4, stackEl.offsetWidth * PEEK.gap);
   els = cards.map((c, i) => {
     const el = document.createElement('div');
-    el.className = 'scard' + (i > 0 ? ' under hold' : '');
+    const lg = c.rarity === 'legendary';
+    el.className = 'scard' + (lg ? ' is-legendary' : '') + (i > 0 ? ' under hold' : '');
     el.style.transform = stackTransform(i);
-    el.innerHTML = `<div class="aura"></div>
-      <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}</div></div>`;
+    // Les éléments de la révélation (aura, dos de carte, éclat) ne sont ajoutés QUE pour les légendaires
+    el.innerHTML = `${lg ? '<div class="lg-aura"></div>' : ''}
+      <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}${lg ? LG_BACK : ''}</div></div>`;
+    if(lg) el.querySelector('.card').insertAdjacentHTML('beforeend', '<span class="lg-holo"></span><span class="lg-glint"></span>');
     deck.appendChild(el);
     return el;
   });
@@ -1006,32 +1149,75 @@ function epicMoment(el){
     {duration: RM ? 1 : 800, easing:'ease-in-out'});
 }
 
+/* Révélation d'une LÉGENDAIRE : 3 phases (anticipation → impact → persistant) */
 async function legendaryMoment(el){
-  const lifter = el.querySelector('.lifter');
-  const r = el.getBoundingClientRect(), scr = screenEl.getBoundingClientRect();
-  const fxX = r.left + r.width/2 - scr.left, fxY = r.top + r.height/2 - scr.top;
-  rays.style.left = fxX + 'px'; rays.style.top = fxY + 'px';
+  const r = el.querySelector('.card').getBoundingClientRect(), scr = screenEl.getBoundingClientRect();
+  const fx = {x: r.left + r.width/2 - scr.left, y: r.top + r.height/2 - scr.top, w: r.width, h: r.height};
 
+  // 1. ANTICIPATION : écran très sombre, la carte face cachée tremble de plus en plus vite, l'aura s'échappe
   stackEl.classList.add('lift');
   veil.classList.add('on');
-  el.classList.add('charging');
-  await sleep(RM ? 200 : TIMING.legendCharge);
+  el.style.setProperty('--tease', TIMING.legendTease + 'ms');
+  el.classList.add('lg-tease');
+  buzz([8, 260, 8, 180, 10, 120, 12, 80, 14, 50, 16, 30, 20, 20, 24]);   // pulsations qui se rapprochent
+  await sleep(RM ? 300 : TIMING.legendTease);
 
-  el.classList.remove('charging'); el.classList.add('blast', 'fx');
-  buzz([20, 40, 60]);
-  play(lifter, [{transform:'scale(1)'}, {transform:'scale(1.2)'}], {duration: RM ? 150 : TIMING.legendGrow, easing:'cubic-bezier(.2,1.3,.3,1)'});
-  rays.classList.add('on');
-  if(!RM){ flash(fxX, fxY); shake(); rings(fxX, fxY); sparks(fxX, fxY); }
-  await sleep(RM ? 400 : TIMING.legendAfter);
+  // 2. IMPACT : flash blanc plein écran ; la carte se retourne pendant que l'écran est blanc, puis « pop »
+  flashGo(fx.x, fx.y);
+  await sleep(RM ? 0 : TIMING.legendFlashPeak);
+  el.classList.remove('lg-tease');
+  el.classList.add('lg-revealed', 'lg-impact', 'reveal-legendary', 'fx');
+  buzz([40, 30, 90]);
+  if(!RM){ shake(); rings(fx.x, fx.y); sparks(fx.x, fx.y); }
+
+  // 3. PERSISTANT : faisceaux dorés qui tournent, particules flottantes (+ aura, lévitation, éclat via .reveal-legendary)
+  lgBeams.style.left = fx.x + 'px'; lgBeams.style.top = fx.y + 'px';
+  lgBeams.classList.add('on');
+  spawnMotes(fx);
+
+  await sleep(RM ? 200 : TIMING.legendSettle);
+  el.classList.remove('lg-impact');
+}
+
+// Particules dorées : une couche derrière la carte, une couche devant (sur les bords) pour la profondeur
+function spawnMotes(fx){
+  if(RM) return;
+  [[lgPartBack, 18, .25, .95], [lgPartFront, 9, .62, 1.0]].forEach(([box, n, rMin, rMax]) => {
+    box.innerHTML = '';
+    for(let i = 0; i < n; i++){
+      const m = document.createElement('i');
+      m.className = 'lg-mote';
+      const ang = Math.random() * Math.PI * 2, rad = rMin + Math.random() * (rMax - rMin);
+      m.style.left = (fx.x + Math.cos(ang) * fx.w * rad) + 'px';
+      m.style.top  = (fx.y + Math.sin(ang) * fx.h * rad * .78 + fx.h * .12) + 'px';
+      const s = (box === lgPartFront ? 3 : 2) + Math.random() * 4;
+      m.style.cssText += `--s:${s.toFixed(1)}px;--d:${(3.6 + Math.random()*3).toFixed(2)}s;--delay:${(-Math.random()*6).toFixed(2)}s;` +
+        `--dx:${((Math.random()-.5)*50).toFixed(0)}px;--dy:${(-(50 + Math.random()*110)).toFixed(0)}px;` +
+        `--sw:${((Math.random()-.5)*30).toFixed(0)}px;--o:${(.5 + Math.random()*.5).toFixed(2)}`;
+      box.appendChild(m);
+    }
+    box.classList.add('on');
+  });
+}
+
+// La carte légendaire est passée : les effets persistants s'éteignent en fondu
+function fadeLegendFx(keepVeil = false){
+  if(!keepVeil) veil.classList.remove('on');
+  lgBeams.classList.remove('on');
+  lgPartBack.classList.remove('on'); lgPartFront.classList.remove('on');
 }
 function clearLegendFx(){
-  veil.classList.remove('on'); rays.classList.remove('on');
+  fadeLegendFx();
   screenEl.classList.remove('shake');
+  flashEl.classList.remove('go');
+  // on laisse finir le fondu des particules avant de les retirer du DOM
+  setTimeout(() => [lgPartBack, lgPartFront].forEach(b => { if(!b.classList.contains('on')) b.innerHTML = ''; }), 900);
   fxFront.querySelectorAll('.ring,.spark').forEach(n => n.remove());
 }
-function flash(x, y){
+function flashGo(x, y){
+  if(RM) return;
   flashEl.style.setProperty('--fx', x + 'px'); flashEl.style.setProperty('--fy', y + 'px');
-  play(flashEl, [{opacity:0}, {opacity:.95, offset:.15}, {opacity:0}], {duration:800, easing:'ease-out'});
+  flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
 }
 function shake(){
   screenEl.classList.remove('shake'); void screenEl.offsetWidth; screenEl.classList.add('shake');
@@ -1068,7 +1254,8 @@ async function dismissTop(side){
   busy = true;
   const el = els[idx], c = cards[idx];
   const wasLegend = c.rarity === 'legendary';
-  if(wasLegend){ veil.classList.remove('on'); rays.classList.remove('on'); }
+  const nextIsLegend = idx + 1 < cards.length && cards[idx + 1].rarity === 'legendary';
+  if(wasLegend) fadeLegendFx(nextIsLegend);     // deux légendaires d'affilée : on garde l'écran sombre
 
   if(Math.abs(curTilt) < 2 && !RM){ setTilt(side * PEEK.kickOnClick); }
   springTilt(curTilt);
@@ -1087,7 +1274,8 @@ async function dismissTop(side){
     {transform:`translateZ(0px) translate(${X}px,-30px) rotate(${side*24}deg)`, opacity:.2}
   ], {duration: RM ? 150 : TIMING.exit, easing:'cubic-bezier(.5,0,.85,.45)'});
   el.remove();
-  if(wasLegend){ stackEl.classList.remove('lift'); clearLegendFx(); }
+  // on n'éteint pas les effets si la légendaire suivante a déjà commencé sa propre révélation
+  if(wasLegend && !nextIsLegend){ stackEl.classList.remove('lift'); clearLegendFx(); }
   if(last) await showSummary();
 }
 
