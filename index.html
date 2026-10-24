@@ -72,7 +72,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Contour de rareté fin (1,5 px) pour l'ouverture du booster et le résumé.
    Dans la Vidéothèque il est volontairement plus épais (voir .slot .card). */
 .card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 1.5px var(--rc)}
-.r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
+/* Dictionnaire rareté → couleur : CHAQUE rareté a sa classe, y compris Commune
+   (avant, .r-common n'existait pas : hors d'une .card, --rc restait indéfini → fond transparent) */
+.r-common{--rc:var(--common)} .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
 .card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 14px -2px var(--rc)}
 .card.r-legendary{box-shadow:0 0 0 1.5px var(--rc),0 0 24px 2px rgba(246,196,83,.65)}
 .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
@@ -363,7 +365,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   position:absolute;z-index:0;left:calc(var(--ring) * -1);right:calc(var(--ring) * -1);top:calc(100% - var(--tuck));
   height:calc(var(--tuck) + var(--tab));padding:var(--tuck) 0 0;border:0;
   border-radius:0 0 calc(12px + var(--ring)) calc(12px + var(--ring));
-  background:var(--rc);color:#0a0d1c;font-weight:800;font-size:.8rem;letter-spacing:.04em;
+  background:var(--rc,var(--common));color:#0a0d1c;font-weight:800;font-size:.8rem;   /* repli gris opaque si la rareté manquait */letter-spacing:.04em;
   transform:translateY(-3px);
   animation:infoin .34s cubic-bezier(.2,1.25,.35,1) both}
 .infobtn::before{content:'';position:absolute;inset:0 -4px -8px}   /* zone de toucher élargie, invisible */
@@ -410,7 +412,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .im-orig:empty,.im-tag:empty{display:none}
 .im-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .im-meta span{font-size:.74rem;font-weight:800;color:#c9d6ff;background:rgba(255,255,255,.07);border-radius:99px;padding:3px 9px}
-.im-meta .rar{color:#0a0d1c;background:var(--rc)}
+.im-meta .rar{color:#0a0d1c;background:var(--rc,var(--common))}
 .im-tag{margin:12px 0 0;color:#fff1c4;font-style:italic;font-size:.88rem}
 .im-panel h4{margin:14px 0 6px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#7f9ae0}
 .im-syn{font-size:.93rem;line-height:1.6;color:#dfe6ff}
