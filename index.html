@@ -87,21 +87,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 .card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
-.scard.fx .card.r-epic::after{animation:shine 1s .15s ease-out 1}
+/* Épique : rendu classique, plus d'effet holographique ni de reflet animé (seule la Légendaire garde sa brillance) */
 .scard.fx .card.r-legendary::after{animation:shine 1.4s .25s ease-out 1}
 @keyframes shine{to{transform:translateX(110%)}}
 
-.holo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:color-dodge;opacity:.8;
-  background:
-    repeating-linear-gradient(115deg,rgba(255,0,140,.18) 0 6px,rgba(0,220,255,.18) 6px 12px,rgba(255,230,0,.16) 12px 18px,rgba(150,60,255,.18) 18px 24px),
-    linear-gradient(115deg,transparent 12%,rgba(255,255,255,.55) 28%,rgba(120,255,240,.5) 40%,rgba(255,120,220,.5) 52%,rgba(255,240,120,.45) 64%,transparent 80%);
-  background-size:auto,280% 100%;background-position:0 0,110% 0;animation:holo 3.8s ease-in-out infinite}
-@keyframes holo{0%,100%{background-position:0 0,110% 0}50%{background-position:24px 0,-10% 0}}
 .gold{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
   background:linear-gradient(120deg,transparent 22%,rgba(255,240,190,.85) 44%,rgba(255,200,90,.6) 56%,transparent 78%);
   background-size:260% 100%;background-position:110% 0;animation:goldsweep 4.2s ease-in-out infinite}
 @keyframes goldsweep{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
-.scard.under .holo,.scard.under .gold,.slot .holo,.slot .gold{animation-play-state:paused}
+.scard.under .gold,.slot .gold{animation-play-state:paused}
 
 /* ================= VUE ACCUEIL ================= */
 .view-home{display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px);
@@ -142,9 +136,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .scard .card.r-uncommon{--frame:linear-gradient(160deg,#7fe0b8,#2c8a68)}
 .scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
 .scard .card.r-epic{
-  --frame:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dffb8,#4db8ff,#b04dff,#ff4d9d);
+  --frame:linear-gradient(160deg,#dcb0ff,#7a2fc0);   /* cadre violet uni, sans arc-en-ciel animé */
   box-shadow:0 0 0 1.5px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
-.scard .card.r-epic::before{background-size:300% 300%;animation:framemove 2.4s linear infinite}
 .scard .card.r-legendary{
   --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
   box-shadow:0 0 0 1.5px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
@@ -174,7 +167,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .recap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
 .recap .card{width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
 @keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
-.recap .card.r-epic::after{animation:shine 1s calc(var(--i)*110ms + 600ms) ease-out 1}
 .recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
 #fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -361,7 +353,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Languette « Infos » : prolongement du bas de la carte.
    Même largeur que la carte + son contour, haut caché SOUS la carte (12 px = rayon des coins) → aucune jointure visible,
    coins inférieurs arrondis, fond = couleur exacte de la rareté. */
-.infobtn{--tuck:12px;--tab:27px;
+.infobtn{--tuck:12px;--tab:40px;   /* languette plus haute : plus facile à toucher */
   position:absolute;z-index:0;left:calc(var(--ring) * -1);right:calc(var(--ring) * -1);top:calc(100% - var(--tuck));
   height:calc(var(--tuck) + var(--tab));padding:var(--tuck) 0 0;border:0;
   border-radius:0 0 calc(12px + var(--ring)) calc(12px + var(--ring));
@@ -392,15 +384,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 12px 28px rgba(0,0,0,.4);
   opacity:0;transform:translateY(10px);transition:opacity .3s ease .04s,transform .45s cubic-bezier(.2,.9,.2,1) .04s}
 .infomodal.on .im-rate{opacity:1;transform:none}
-.stars{display:flex;gap:4px}
+.stars{display:flex;gap:3px}
 /* Chaque étoile = une forme d'étoile en masque ; le fond est un dégradé net : doré jusqu'à --f, gris ensuite.
    --f vaut 100 % (pleine), 0 % (vide) ou le pourcentage exact pour l'étoile partielle (ex. 40 %). */
-.star{--f:0%;width:22px;height:21px;
+.star{--f:0%;width:17px;height:16.2px;
   background:linear-gradient(90deg,var(--legendary) var(--f),#3a4466 var(--f));
   -webkit-mask:var(--starshape) center/100% 100% no-repeat;mask:var(--starshape) center/100% 100% no-repeat}
 .im-rate{--starshape:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22.83'%3E%3Cpolygon points='12,0 14.83,8.72 24,8.72 16.58,14.11 19.42,22.83 12,17.44 4.58,22.83 7.42,14.11 0,8.72 9.17,8.72'/%3E%3C/svg%3E")}
-.rate-num{font-weight:800;font-size:.95rem;color:#c9d6ff;white-space:nowrap;font-variant-numeric:tabular-nums}
-.rate-num b{color:var(--legendary);font-size:1.05rem}
+.rate-num{font-weight:800;font-size:.85rem;color:#c9d6ff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rate-num b{color:var(--legendary);font-size:.95rem}
 .rate-num.muted{color:#8ea2d8;font-weight:500;font-size:.85rem}
 .im-panel{flex:none;width:100%;max-width:460px;border-radius:16px;padding:16px 18px 18px;outline:none;
   background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 18px 40px rgba(0,0,0,.45);
@@ -409,11 +401,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .infomodal.on .im-panel{opacity:1;transform:none}
 .im-panel h3{margin:0;font-size:1.2rem;line-height:1.2;font-weight:800;color:#fff}
 .im-orig{margin:3px 0 0;color:#8ea2d8;font-size:.8rem;font-style:italic}
-.im-orig:empty,.im-tag:empty{display:none}
+.im-orig:empty{display:none}
 .im-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .im-meta span{font-size:.74rem;font-weight:800;color:#c9d6ff;background:rgba(255,255,255,.07);border-radius:99px;padding:3px 9px}
 .im-meta .rar{color:#0a0d1c;background:var(--rc,var(--common))}
-.im-tag{margin:12px 0 0;color:#fff1c4;font-style:italic;font-size:.88rem}
 .im-panel h4{margin:14px 0 6px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#7f9ae0}
 .im-syn{font-size:.93rem;line-height:1.6;color:#dfe6ff}
 .im-syn p{margin:0}
@@ -478,7 +469,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
-  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.glint,.scard .card::before{animation:none !important}
+  .pack-float,.sheen,.gold,.rays,.scard.blast .aura,.glint,.scard .card::before{animation:none !important}
   .scard.fx .card::after,.recap .card{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
 }
@@ -626,7 +617,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <h3 id="imTitle"></h3>
         <p class="im-orig" id="imOrig"></p>
         <div class="im-meta" id="imMeta"></div>
-        <p class="im-tag" id="imTag"></p>
         <h4>Synopsis</h4>
         <div class="im-syn" id="imSyn"></div>
       </section>
@@ -776,7 +766,6 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
   const t = TIER[c.rarity];
   return `<div class="card r-${c.rarity}" title="${esc(c.title)}">
     <img src="${imgUrl(c, hi)}" alt="Affiche de ${esc(c.title)}" decoding="async" draggable="false" ${lazy ? 'loading="lazy"' : ''}>
-    ${c.rarity==='epic' ? '<span class="holo"></span>' : ''}
     ${c.rarity==='legendary' ? '<span class="gold"></span>' : ''}
     ${isNew ? '<span class="badge new">Nouvelle</span>' : ''}
     ${count > 1 ? `<span class="badge">×${count}</span>` : ''}
@@ -1417,7 +1406,7 @@ function getDetails(c){
    15 quater. SUR-MENU D'INFORMATIONS
    ===================================================================== */
 const infoModal = $('#infoModal'), imScroll = $('#imScroll'), imCard = $('#imCard'), imPanel = $('#imPanel');
-const imTitle = $('#imTitle'), imOrig = $('#imOrig'), imMeta = $('#imMeta'), imTag = $('#imTag'), imSyn = $('#imSyn');
+const imTitle = $('#imTitle'), imOrig = $('#imOrig'), imMeta = $('#imMeta'), imSyn = $('#imSyn');
 let imOpen = null;      // {slot, c} tant que le sur-menu est ouvert
 let imBusy = false;
 
@@ -1438,7 +1427,6 @@ function fillPanel(c, d){
   if(d && d.director) pills.push(`<span>Réal. ${esc(d.director)}</span>`);
   if(c.count > 1) pills.push(`<span>×${c.count} exemplaires</span>`);
   imMeta.innerHTML = pills.join('');
-  imTag.textContent = d && d.tagline ? d.tagline : '';
   fillRating(d);
 
   const text = (d && !d.error && d.overview) || c.overview;
@@ -1517,8 +1505,7 @@ async function closeInfo(instant = false){
   infoModal.classList.add('hidden');
   imCard.innerHTML = '';
   slot.classList.remove('lifted');
-  const b = slot.querySelector('.infobtn');
-  if(b && !instant) b.focus({preventScroll:true});
+  clearSel();          // retour à l'étagère : plus de halo, plus de languette « Infos », comme avant le 1er appui
   imBusy = false;
 }
 
