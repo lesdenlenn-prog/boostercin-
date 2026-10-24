@@ -10,7 +10,8 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<!-- Bricolage Grotesque (interface) + Limelight (titre « Vidéothèque », style marquise de cinéma rétro) -->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -69,10 +70,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
 /* ================= CARTES ================= */
-.card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 2px var(--rc)}
+/* Contour de rareté encore affiné : 1,5 px (2 px avant), tracé à l'extérieur de la carte */
+.card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 1.5px var(--rc)}
 .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
-.card.r-epic{box-shadow:0 0 0 2px var(--rc),0 0 14px -2px var(--rc)}
-.card.r-legendary{box-shadow:0 0 0 2px var(--rc),0 0 24px 2px rgba(246,196,83,.65)}
+.card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 14px -2px var(--rc)}
+.card.r-legendary{box-shadow:0 0 0 1.5px var(--rc),0 0 24px 2px rgba(246,196,83,.65)}
 .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
 .card .meta{position:absolute;left:0;right:0;bottom:0;padding:26px 8px 7px;background:linear-gradient(to top,rgba(10,4,6,.96) 35%,rgba(10,4,6,0));font-size:.72rem;line-height:1.25}
 .card .meta b{font-weight:800;font-size:.8rem;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -105,8 +107,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
     radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
-  --pw:min(62vw,250px,36dvh);
-  --cw:min(70vw,300px,40dvh);
+  --pw:min(62vw,250px,36dvh);      /* largeur du booster */
+  --cw:calc(var(--pw)*.84);        /* largeur d'une carte = 84 % du booster : elle tient logiquement dedans */
   position:relative;flex:1;min-height:0}
 .homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
@@ -139,7 +141,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .lifter,.shaker{position:absolute;inset:0}
 .shaker .card{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 
-.scard .card{--fw:calc(var(--cw)*.011)}
+/* Liseré de rareté à l'intérieur de la carte : ≈ 1,4 px, il ne rogne plus l'affiche */
+.scard .card{--fw:calc(var(--cw)*.007)}
 .scard .card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:var(--fw);z-index:3;pointer-events:none;
   background:var(--frame,linear-gradient(160deg,#ece7e1,#aaa39c));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
@@ -148,11 +151,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
 .scard .card.r-epic{
   --frame:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dffb8,#4db8ff,#b04dff,#ff4d9d);
-  box-shadow:0 0 0 2px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
+  box-shadow:0 0 0 1.5px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
 .scard .card.r-epic::before{background-size:300% 300%;animation:framemove 2.4s linear infinite}
 .scard .card.r-legendary{
   --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
-  box-shadow:0 0 0 2px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
+  box-shadow:0 0 0 1.5px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
 .scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
 @keyframes framemove{to{background-position:300% 300%}}
 
@@ -228,6 +231,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   backface-visibility:hidden;-webkit-backface-visibility:hidden;outline:1px solid transparent}
 .part.top{clip-path:var(--clipTop);transform-origin:15% 15%}
 .part.bottom{clip-path:var(--clipBottom)}
+/* Le morceau déchiré est jeté vers le haut et vers l'arrière : plus petit, penché, transparent.
+   Transition CSS très rapide (la durée est aussi dans TIMING.topFlight côté JS pour le séquençage). */
+.part.top.torn{
+  transform:translateY(-200px) scale(.5) rotate(10deg);opacity:0;
+  transition:transform .17s cubic-bezier(.2,.8,.3,1),opacity .17s ease-in}
 .linebox{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
 .cutline{position:absolute;left:0;right:0;top:15%;height:3px;margin-top:-1.5px;opacity:0;transform:scaleX(0);transform-origin:0 50%;
   background:linear-gradient(90deg,transparent,#fff6d6 12%,#ffd36b 50%,#fff6d6 88%,transparent);
@@ -270,10 +278,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* =====================================================================
-   VUE COLLECTION : étagère légère (base V9) + texture de tissu bleu
-   Une rangée (.srow) = une niche complète : tout défile ensemble.
-   PERFORMANCES : aucun filtre CSS, aucun mode de fusion, aucun gros flou sur l'étagère.
-   La texture = deux minuscules tuiles SVG répétées en fond (rastérisées une seule fois).
+   VUE COLLECTION : « Vidéothèque » (étagère légère, bleu profond, texture presque lisse)
    ===================================================================== */
 .view-col{
   --frame:8px;      /* cadre noir autour du meuble */
@@ -284,29 +289,33 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   --gap:8px;        /* espace entre deux emplacements */
   --cardscale:.94;  /* largeur d'une carte par rapport à son emplacement */
 
-  /* Tuile 1 : petit grain clair (feTurbulence 1 octave, 96 px, transparence intégrée à l'image) */
-  --cloth-noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.1 -.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  /* Tuile 2 : trame tissée (damier de fils clairs et sombres, 4 px) */
-  --cloth-weave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23fff' fill-opacity='.09'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23fff' fill-opacity='.09'/%3E%3Crect x='2' width='2' height='2' fill='%23000' fill-opacity='.14'/%3E%3Crect y='2' width='2' height='2' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  /* Texture de tissu TRÈS subtile : deux tuiles SVG répétées, quasi transparentes */
+  /* Tuile 1 : fin grain clair (alpha moyen ≈ 0,07) */
+  --cloth-noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Tuile 2 : trame en damier presque invisible (2 à 4 % d'opacité au lieu de 9 à 14 %) */
+  --cloth-weave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23fff' fill-opacity='.022'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23fff' fill-opacity='.022'/%3E%3Crect x='2' width='2' height='2' fill='%23000' fill-opacity='.04'/%3E%3Crect y='2' width='2' height='2' fill='%23000' fill-opacity='.04'/%3E%3C/svg%3E");
 
   overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  background:radial-gradient(130% 36% at 50% 0%,#0c2270 0%,#050b2b 55%,#02040f 100%)}
+  background:radial-gradient(130% 36% at 50% 0%,#081a58 0%,#040920 55%,#020410 100%)}
 
-.shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;
-  background:rgba(3,6,22,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(70,130,255,.22)}
-.shead h2{margin:0;font-size:1.15rem;letter-spacing:-.01em}
-.shead .count{color:#7f9ae0;font-size:.85rem;font-weight:500;margin-left:8px}
-.chips{display:flex;gap:8px;overflow-x:auto;margin:10px -14px 0;padding:0 14px;scrollbar-width:none;touch-action:pan-x}
+/* Titre « Vidéothèque » : centré tout en haut, police de marquise rétro (Limelight), halo bleu comme les LED du meuble */
+.vhead{padding:calc(env(safe-area-inset-top,0px) + 18px) 14px 8px;text-align:center}
+.vtitle{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:2rem;line-height:1.1;letter-spacing:.05em;
+  color:#fff1c4;text-shadow:0 0 8px rgba(120,175,255,.9),0 0 22px rgba(50,120,255,.65),0 2px 0 rgba(0,0,0,.5)}
+
+/* Barre collante : filtres + recherche */
+.shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 12px;
+  background:rgba(2,5,20,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(70,130,255,.2)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -14px;padding:0 14px;scrollbar-width:none;touch-action:pan-x}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:34px;border:0;border-radius:99px;padding:0 13px;background:rgba(255,255,255,.06);color:#c9d6ff;font-weight:800;font-size:.8rem;
   box-shadow:inset 0 0 0 1.5px rgba(110,160,255,.25)}
 .chip[aria-pressed="true"]{background:rgba(70,130,255,.25);color:#fff;box-shadow:inset 0 0 0 1.5px var(--rc,#6fa2ff)}
 
-/* Barre de recherche : mêmes couleurs, bordure et arrondi que les boutons de filtres */
 .search{position:relative;display:block;margin-top:10px}
 .search input{display:block;width:100%;min-height:44px;border:0;border-radius:99px;padding:0 42px;outline:none;
-  background:rgba(255,255,255,.06);color:#c9d6ff;font-weight:800;font-size:16px;     /* 16 px : pas de zoom automatique sur iOS */
+  background:rgba(255,255,255,.06);color:#c9d6ff;font-weight:800;font-size:16px;
   box-shadow:inset 0 0 0 1.5px rgba(110,160,255,.25);
   -webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none}
 .search input::placeholder{color:#7f9ae0;font-weight:500}
@@ -316,60 +325,55 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .search .sclear{position:absolute;right:6px;top:50%;width:34px;height:34px;margin-top:-17px;border:0;border-radius:50%;
   background:rgba(255,255,255,.1);color:#c9d6ff;font-size:1.15rem;line-height:1;font-weight:800}
 
-/* Meuble : coins très légèrement adoucis */
 .cabinet{position:relative;width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#020309;border-radius:4px;
-  box-shadow:0 0 0 1px #000,0 0 44px 4px rgba(30,100,255,.4)}
+  box-shadow:0 0 0 1px #000,0 0 40px 3px rgba(30,90,230,.3)}
 .scap{height:var(--scap);background:#020309;border-radius:4px 4px 0 0}
 
 .srow{position:relative;background:#020309;padding:0 var(--frame) var(--sep)}
 .srow:last-child{border-radius:0 0 4px 4px}
 .niche{position:relative}
 
-/* Fond de niche : bleu + tissu (3 couches de fond, aucun effet coûteux) */
+/* Bleu plus sombre et plus profond (le fond reste plus foncé que les parois et la planche) */
 .sback{position:absolute;left:var(--wall);right:var(--wall);top:0;bottom:var(--board);border-radius:2px 2px 0 0;
-  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#0a38ac 0%,#0f49cf 58%,#1a5ce8 100%);
+  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#041848 0%,#062268 58%,#0a2f86 100%);
   background-size:96px 96px,4px 4px,auto;
-  box-shadow:inset 12px 0 16px -8px rgba(0,12,72,.8),inset -12px 0 16px -8px rgba(0,12,72,.8)}
-/* Parois latérales : plus claires que le fond */
+  box-shadow:inset 12px 0 16px -8px rgba(0,8,50,.85),inset -12px 0 16px -8px rgba(0,8,50,.85)}
 .swall{position:absolute;top:0;bottom:0;width:var(--wall);background-size:96px 96px,4px 4px,auto}
 .swall.l{left:0;border-radius:3px 0 0 3px;
-  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(90deg,#1550d8,#2f7bff 58%,#1d62f0);
-  box-shadow:inset -5px 0 8px -3px rgba(0,10,60,.5)}
+  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(90deg,#0d2f88,#1a48b6 58%,#123c9a);
+  box-shadow:inset -5px 0 8px -3px rgba(0,8,50,.55)}
 .swall.r{right:0;border-radius:0 3px 3px 0;
-  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(270deg,#1550d8,#2f7bff 58%,#1d62f0);
-  box-shadow:inset 5px 0 8px -3px rgba(0,10,60,.5)}
-/* Planche vue de dessus : trapèze aux coins légèrement biseautés, liseré avant adouci */
+  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(270deg,#0d2f88,#1a48b6 58%,#123c9a);
+  box-shadow:inset 5px 0 8px -3px rgba(0,8,50,.55)}
 .plank{position:absolute;left:0;right:0;bottom:0;height:var(--board);
   clip-path:polygon(var(--wall) 0,calc(100% - var(--wall)) 0,100% calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,0 calc(100% - 3px));
-  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#1a50d2 0%,#2c6ef0 55%,#418aff 100%);
+  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#0a2578 0%,#14409f 55%,#2257c8 100%);
   background-size:96px 96px,4px 4px,auto;
-  box-shadow:inset 0 -2px 3px -1px rgba(180,215,255,.75)}
-.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,rgba(0,12,70,.55),rgba(0,12,70,0))}
+  box-shadow:inset 0 -2px 3px -1px rgba(150,190,245,.6)}
+.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,rgba(0,8,50,.6),rgba(0,8,50,0))}
 
-/* GRILLE DE 3 EMPLACEMENTS : les cartes se rangent de gauche à droite ; une carte seule va dans l'emplacement de gauche */
 .slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:var(--gap);
-  padding:22px calc(var(--wall) + 4px) calc(var(--board)*.5)}      /* le bas des cartes pose sur la ligne médiane de la planche */
+  padding:22px calc(var(--wall) + 4px) calc(var(--board)*.5)}
 .slot{position:relative;width:calc(100% * var(--cardscale));justify-self:center}
 .slot.empty{visibility:hidden}
-.slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;                 /* ombre de contact (dégradé, sans flou) */
-  background:radial-gradient(ellipse closest-side,rgba(0,10,60,.8),rgba(0,10,60,0))}
-.slot .card{width:100%;box-shadow:0 0 0 2px var(--rc),0 7px 9px rgba(0,12,70,.6)}                          /* ombre portée sans filter */
-.slot .card.r-epic{box-shadow:0 0 0 2px var(--rc),0 0 12px -2px var(--rc),0 7px 9px rgba(0,12,70,.6)}
-.slot .card.r-legendary{box-shadow:0 0 0 2px var(--rc),0 0 16px 1px rgba(246,196,83,.6),0 7px 9px rgba(0,12,70,.6)}
+.slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;
+  background:radial-gradient(ellipse closest-side,rgba(0,6,44,.85),rgba(0,6,44,0))}
+.slot .card{width:100%;box-shadow:0 0 0 1.5px var(--rc),0 7px 9px rgba(0,8,50,.65)}
+.slot .card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 12px -2px var(--rc),0 7px 9px rgba(0,8,50,.65)}
+.slot .card.r-legendary{box-shadow:0 0 0 1.5px var(--rc),0 0 16px 1px rgba(246,196,83,.55),0 7px 9px rgba(0,8,50,.65)}
 .slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,rgba(130,190,255,.2),rgba(130,190,255,0) 36%)}
+  background:linear-gradient(180deg,rgba(130,190,255,.14),rgba(130,190,255,0) 36%)}
 .slot .card .meta{font-size:.6rem;padding:18px 5px 4px}
 .slot .card .meta b{font-size:.68rem}
 .slot .badge{font-size:.58rem;top:5px;right:5px;padding:1px 6px}
 .slot .badge.new{left:5px}
 
-/* ---------- Film introuvable : le boîtier de pellicule tombe et rebondit d'étagère en étagère ----------
-   Une seule animation « transform » (très légère). --rowh = hauteur d'une rangée, mesurée en JS. */
+/* ---------- Film introuvable : le boîtier de pellicule tombe et rebondit d'étagère en étagère ---------- */
 .faller{
-  --bh:96px;                        /* hauteur du boîtier */
-  --ap:56px;                        /* hauteur du saut entre deux étagères */
+  --bh:96px;
+  --ap:56px;
   --r:var(--rowh,175px);
-  --y0:calc(var(--scap) + var(--r) - var(--sep) - var(--board)*.5 - var(--bh));   /* boîtier posé sur la 1re planche */
+  --y0:calc(var(--scap) + var(--r) - var(--sep) - var(--board)*.5 - var(--bh));
   --y1:calc(var(--y0) + var(--r));
   --y2:calc(var(--y0) + var(--r)*2);
   --y3:calc(var(--y0) + var(--r)*3);
@@ -384,9 +388,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .freel{flex:none;width:36px;height:36px}
 .fbox p{margin:0;font-weight:800;font-size:.84rem;line-height:1.2}
 @keyframes fall{
-  /* chute depuis le haut de l'écran */
   0%  {transform:translate(0px,calc(var(--bh)*-1 - 60px)) rotate(-16deg) scale(1,1);opacity:1;animation-timing-function:cubic-bezier(.5,0,.9,.5)}
-  /* impact écrasé, puis rebonds de plus en plus petits sur l'étagère 1 */
   9%  {transform:translate(0px,var(--y0)) rotate(3deg) scale(1.07,.9);animation-timing-function:ease-out}
   12% {transform:translate(0px,calc(var(--y0) - 30px)) rotate(-4deg) scale(.98,1.03);animation-timing-function:ease-in}
   15% {transform:translate(0px,var(--y0)) rotate(0deg) scale(1.04,.95);animation-timing-function:ease-out}
@@ -394,36 +396,33 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   19% {transform:translate(0px,var(--y0)) rotate(0deg) scale(1.01,.98)}
   21% {transform:translate(0px,var(--y0)) rotate(0deg) scale(1,1)}
   32% {transform:translate(0px,var(--y0)) rotate(0deg) scale(1,1);animation-timing-function:ease-out}
-  /* saut vers l'étagère 2 */
   36% {transform:translate(-18px,calc((var(--y0) + var(--y1))/2 - var(--ap))) rotate(-10deg) scale(.98,1.04);animation-timing-function:ease-in}
   40% {transform:translate(10px,var(--y1)) rotate(2deg) scale(1.07,.9);animation-timing-function:ease-out}
   42% {transform:translate(10px,calc(var(--y1) - 14px)) rotate(-2deg) scale(1,1);animation-timing-function:ease-in}
   44% {transform:translate(10px,var(--y1)) rotate(0deg) scale(1.02,.97)}
   46% {transform:translate(10px,var(--y1)) rotate(0deg) scale(1,1)}
   52% {transform:translate(10px,var(--y1)) rotate(0deg) scale(1,1);animation-timing-function:ease-out}
-  /* saut vers l'étagère 3 */
   56% {transform:translate(26px,calc((var(--y1) + var(--y2))/2 - var(--ap))) rotate(11deg) scale(.98,1.04);animation-timing-function:ease-in}
   60% {transform:translate(-8px,var(--y2)) rotate(-2deg) scale(1.07,.9);animation-timing-function:ease-out}
   62% {transform:translate(-8px,calc(var(--y2) - 14px)) rotate(2deg) scale(1,1);animation-timing-function:ease-in}
   64% {transform:translate(-8px,var(--y2)) rotate(0deg) scale(1.02,.97)}
   66% {transform:translate(-8px,var(--y2)) rotate(0deg) scale(1,1)}
   72% {transform:translate(-8px,var(--y2)) rotate(0deg) scale(1,1);animation-timing-function:ease-out}
-  /* saut vers l'étagère 4 */
   76% {transform:translate(-22px,calc((var(--y2) + var(--y3))/2 - var(--ap))) rotate(-10deg) scale(.98,1.04);animation-timing-function:ease-in}
   80% {transform:translate(6px,var(--y3)) rotate(2deg) scale(1.07,.9);animation-timing-function:ease-out}
   82% {transform:translate(6px,calc(var(--y3) - 14px)) rotate(-2deg) scale(1,1);animation-timing-function:ease-in}
   84% {transform:translate(6px,var(--y3)) rotate(0deg) scale(1.02,.97)}
   88% {transform:translate(6px,var(--y3)) rotate(0deg) scale(1,1);opacity:1;animation-timing-function:cubic-bezier(.5,0,.9,.5)}
-  /* il tombe encore plus bas et disparaît, puis tout recommence */
   97% {transform:translate(30px,calc(var(--y3) + 240px)) rotate(26deg) scale(1,1);opacity:0}
   100%{transform:translate(30px,calc(var(--y3) + 240px)) rotate(26deg) scale(1,1);opacity:0}
 }
 
-.sfoot{max-width:560px;margin:0 auto;padding:26px 16px 22px;color:#6f84c4;font-size:.76rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
-.sfoot button{background:none;border:0;color:#6f84c4;text-decoration:underline;padding:8px;min-height:36px;font-size:.76rem}
+.sfoot{max-width:560px;margin:0 auto;padding:26px 16px 22px;color:#5f74b4;font-size:.76rem;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.sfoot button{background:none;border:0;color:#5f74b4;text-decoration:underline;padding:8px;min-height:36px;font-size:.76rem}
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
+  .part.top.torn{transition-duration:.01s}
   .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.edge svg,.glint,.scard .card::before{animation:none !important}
   .scard.fx .card::after,.recap .card{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
@@ -505,15 +504,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
           <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
-          <button class="btn ghost" id="toColBtn" hidden>Ma collection</button>
+          <button class="btn ghost" id="toColBtn" hidden>Vidéothèque</button>
           <button class="btn ghost" id="skipBtn" hidden>Passer au résumé</button>
         </div>
       </div>
     </section>
 
     <section class="view view-col hidden" id="view-col">
+      <div class="vhead"><h2 class="vtitle">Vidéothèque</h2></div>
+
       <header class="shead">
-        <h2>Ma collection<span class="count" id="count"></span></h2>
         <div class="chips" id="chips"></div>
         <label class="search">
           <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
@@ -525,7 +525,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <div class="cabinet" id="cabinet">
         <div class="scap"></div>
         <div id="rows"></div>
-        <!-- Boîtier de pellicule : visible seulement quand le film cherché n'est pas dans la collection -->
         <div class="faller hidden" id="faller" role="status">
           <div class="fbox">
             <i class="fperf t"></i><i class="fperf b"></i>
@@ -579,7 +578,10 @@ const TIERS = [
 const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
 
 const TIMING = {
-  cutSweep:90, topFlight:240, slideStartAt:.3, packSlide:300, stackRise:320,
+  cutSweep:90,         // la ligne de déchirure traverse le haut du booster
+  topFlight:170,       // le morceau déchiré s'envoie en arrière-plan (doit rester égal à la durée de .part.top.torn en CSS)
+  packSlide:300,       // le bas du paquet glisse vers le bas, APRÈS le départ du morceau du haut
+  stackRise:320,
   legendCharge:800, legendGrow:520, legendAfter:800, exit:520, unlockAfterExit:240
 };
 
@@ -588,13 +590,8 @@ const PEEK = {
   kickOnClick:16, springK:190, springC:15
 };
 
-// Étagère
 const SHELF = {
-  perRow:3,           // 3 emplacements par rangée
-  chunkRows:6,        // rangées ajoutées à chaque lot
-  minRows:4,          // l'étagère est visible même vide
-  extraRows:1,        // rangée vide en plus : le meuble « attend » les prochaines cartes
-  preload:900         // on ajoute des rangées quand le bas est à moins de 900 px
+  perRow:3, chunkRows:6, minRows:4, extraRows:1, preload:900
 };
 
 const TIER = Object.fromEntries(TIERS.map(t => [t.id, t]));
@@ -771,6 +768,7 @@ arena.addEventListener('pointermove', e => {
 
 /* =====================================================================
    7. CLIC 1 : ZOOM  /  CLIC 2 : OUVERTURE
+   Séquence : ligne de déchirure → le haut déchiré est jeté vers l'arrière → ENSUITE le bas glisse vers le bas
    ===================================================================== */
 pack.addEventListener('click', onPackClick);
 pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
@@ -796,20 +794,19 @@ async function openPack(){
     cards = demoOn() ? res.cards.map(c => ({...c, isNew: !getCol()[c.id]})) : addToCol(res.cards);
     buildStack();
 
+    // 1. La ligne de déchirure traverse le haut du booster
     await play(cutline, [{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(1)', opacity:1}], {duration: RM ? 30 : TIMING.cutSweep, easing:'ease-out'});
 
+    // 2. Le haut se déchire : éclat de lumière, et le morceau est jeté à toute vitesse vers l'arrière-plan
+    //    (transition CSS de la classe .torn : translateY(-200px) scale(.5) rotate(10deg), opacity 0)
     buzz(14);
-    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 380, easing:'ease-out'});
-    play(cutline, [{opacity:1}, {opacity:0}], {duration:150});
-    showStack();
-    const fly = RM ? 100 : TIMING.topFlight;
-    const topFlight = play(partTop, [
-      {transform:'none', opacity:1},
-      {transform:'rotate(-9deg) translateY(-6%)', opacity:1, offset:.3},
-      {transform:'translate(36%,-150%) rotate(-24deg)', opacity:0}
-    ], {duration:fly, easing:'cubic-bezier(.15,.75,.35,1)'});
+    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 320, easing:'ease-out'});
+    play(cutline, [{opacity:1}, {opacity:0}], {duration:120});
+    showStack();                                          // la 1re carte se prépare à l'intérieur du paquet (elle est plus étroite que lui)
+    partTop.classList.add('torn');
+    await sleep(RM ? 20 : TIMING.topFlight);              // on attend que le morceau du haut soit parti…
 
-    await sleep(RM ? 0 : fly * TIMING.slideStartAt);
+    // 3. …et SEULEMENT ensuite le reste du paquet glisse vers le bas de l'écran
     const dist = innerHeight - pack.getBoundingClientRect().top + 80;
     await play(packZoom, [
       {transform:'translateY(0px) scale(1.17)', opacity:1},
@@ -817,7 +814,6 @@ async function openPack(){
       {transform:`translateY(${dist}px) scale(1.17)`, opacity:0}
     ], {duration: RM ? 100 : TIMING.packSlide, easing:'cubic-bezier(.6,0,.9,.45)'});
     pack.classList.add('gone');
-    await topFlight;
 
     releaseStack();
     startStack();
@@ -1121,6 +1117,7 @@ skipBtn.addEventListener('click', () => {
    ===================================================================== */
 function resetPackVisuals(){
   cancelWaapi(pack);
+  partTop.classList.remove('torn');                       // le haut du booster revient en place (sans transition)
   pack.classList.remove('zoomed', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
 }
@@ -1154,20 +1151,17 @@ tabHome.addEventListener('click', () => showView('home'));
 tabCol.addEventListener('click', () => showView('col'));
 
 /* =====================================================================
-   15. COLLECTION : étagère, filtres, RECHERCHE DYNAMIQUE
+   15. VIDÉOTHÈQUE : étagère, filtres, recherche dynamique
    ===================================================================== */
 const cabinet = $('#cabinet'), rowsEl = $('#rows'), faller = $('#faller');
 const searchEl = $('#search'), sclear = $('#sclear');
 let filter = 'all', query = '';
 let shelfRows = [], shelfTotalRows = 0, shelfShown = 0;
 
-// Normalisation : sans accents, sans majuscules (« amélie » trouve « Amélie », « Leon » trouve « Léon »)
 const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 const nameCache = new Map();
 const normTitle = c => { let n = nameCache.get(c.id); if(n === undefined){ n = norm(c.title); nameCache.set(c.id, n); } return n; };
 
-// Cartes affichées : filtre de rareté + recherche par titre, puis tri classique
-// (raretés les plus hautes d'abord, puis films les plus connus d'abord). Plus de retour à la ligne forcé.
 function shelfData(){
   const q = norm(query);
   return Object.values(getCol())
@@ -1175,7 +1169,6 @@ function shelfData(){
     .sort((a,b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
 }
 
-// Les cartes remplissent simplement les rangées de 3, de gauche à droite
 function chunk(list, n){
   const rows = [];
   for(let i = 0; i < list.length; i += n) rows.push(list.slice(i, i + n));
@@ -1186,7 +1179,7 @@ function rowHTML(i){
   const row = shelfRows[i] || [];
   const slots = row.length
     ? row.map(c => `<div class="slot">${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
-    : '<div class="slot empty"><div class="card"></div></div>';           // niche vide : un gabarit invisible garde la hauteur
+    : '<div class="slot empty"><div class="card"></div></div>';
   return `<div class="srow"><div class="niche">
     <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
     <div class="slots">${slots}</div></div></div>`;
@@ -1208,28 +1201,23 @@ function fillShelf(){
   }
 }
 
-// Hauteur d'une rangée : sert à l'animation du boîtier (il doit se poser pile sur chaque planche)
 function measureRow(){
   const r = rowsEl.querySelector('.srow');
   if(r && r.offsetHeight) cabinet.style.setProperty('--rowh', r.offsetHeight + 'px');
 }
 window.addEventListener('resize', () => { if(!faller.classList.contains('hidden')) measureRow(); });
 
-// Le boîtier n'apparaît que si AUCUN film de la collection ne correspond au texte cherché
-// (même si le filtre de rareté en cache un : dans ce cas l'étagère est vide mais le film est bien possédé).
 function updateNotFound(){
   const q = norm(query);
   const owned = q ? Object.values(getCol()).some(c => normTitle(c).includes(q)) : true;
   const notFound = !!q && !owned;
-  faller.classList.toggle('hidden', !notFound);   // en rester visible ne relance pas l'animation à chaque lettre
+  faller.classList.toggle('hidden', !notFound);
   if(notFound) measureRow();
 }
 
 function renderChips(){
   const all = Object.values(getCol());
-  const total = all.length;
-  $('#count').textContent = total ? `${total} film${total > 1 ? 's' : ''}` : '';
-  const chips = [{id:'all', label:'Toutes', n:total}]
+  const chips = [{id:'all', label:'Toutes', n:all.length}]
     .concat(TIERS.map(t => ({id:t.id, label:t.label, n:all.filter(c => c.rarity === t.id).length})));
   $('#chips').innerHTML = chips.map(c =>
     `<button class="chip ${c.id !== 'all' ? 'r-' + c.id : ''}" data-f="${c.id}" aria-pressed="${filter === c.id}">${c.label} ${c.n}</button>`).join('');
@@ -1238,7 +1226,6 @@ function renderChips(){
   }));
 }
 
-// Reconstruit les rangées (appelé à chaque lettre tapée et à chaque changement de filtre)
 function renderShelfBody(){
   shelfRows = chunk(shelfData(), SHELF.perRow);
   shelfTotalRows = Math.max(SHELF.minRows, shelfRows.length + SHELF.extraRows);
@@ -1253,7 +1240,6 @@ function renderShelfBody(){
 
 function renderShelf(){ renderChips(); renderShelfBody(); }
 
-// Recherche dynamique : l'étagère se met à jour à chaque caractère saisi
 searchEl.addEventListener('input', () => {
   query = searchEl.value;
   sclear.hidden = !query;
@@ -1263,7 +1249,6 @@ sclear.addEventListener('click', () => {
   searchEl.value = ''; query = ''; sclear.hidden = true;
   renderShelfBody(); searchEl.focus();
 });
-// La touche « Rechercher » du clavier mobile referme simplement le clavier
 searchEl.addEventListener('keydown', e => { if(e.key === 'Enter') searchEl.blur(); });
 
 let shelfTick = false;
