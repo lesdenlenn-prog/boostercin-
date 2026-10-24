@@ -349,17 +349,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* ---------- Sélection d'une carte : halo blanc + bouton « Infos » couleur de rareté ---------- */
 .slot:not(.empty) .card{cursor:pointer;transition:box-shadow .25s ease,transform .25s cubic-bezier(.2,.9,.2,1)}
 .srow.has-sel{z-index:3}                     /* le bouton peut déborder sur l'étagère suivante sans passer dessous */
+/* Le halo blanc est porté par le slot (drop-shadow) : il épouse la silhouette carte + languette « Infos » d'un seul tenant */
+.slot.sel{filter:drop-shadow(0 0 1.5px rgba(255,255,255,.85)) drop-shadow(0 0 10px rgba(255,255,255,.4))}
 .slot.sel .card,.slot.sel .card.r-epic,.slot.sel .card.r-legendary{
+  z-index:1;transform:translateY(-3px);
+  box-shadow:0 0 0 var(--ring) var(--rc)}   /* juste le contour de rareté : il se fond dans la languette de même couleur */
+.slot.lifted .card,.slot.lifted .infobtn{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
+
+/* Languette « Infos » : prolongement du bas de la carte.
+   Même largeur que la carte + son contour, haut caché SOUS la carte (12 px = rayon des coins) → aucune jointure visible,
+   coins inférieurs arrondis, fond = couleur exacte de la rareté. */
+.infobtn{--tuck:12px;--tab:27px;
+  position:absolute;z-index:0;left:calc(var(--ring) * -1);right:calc(var(--ring) * -1);top:calc(100% - var(--tuck));
+  height:calc(var(--tuck) + var(--tab));padding:var(--tuck) 0 0;border:0;
+  border-radius:0 0 calc(12px + var(--ring)) calc(12px + var(--ring));
+  background:var(--rc);color:#0a0d1c;font-weight:800;font-size:.8rem;letter-spacing:.04em;
   transform:translateY(-3px);
-  box-shadow:0 0 0 var(--ring) var(--rc),0 0 0 calc(var(--ring) + 2px) rgba(255,255,255,.6),0 0 22px 5px rgba(255,255,255,.4),0 9px 12px rgba(0,4,36,.7)}
-.slot.lifted .card{visibility:hidden}       /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
-.infobtn{position:absolute;left:50%;top:calc(100% + 7px);z-index:4;transform:translateX(-50%);
-  min-width:66%;height:28px;padding:0 12px;border:0;border-radius:8px;
-  background:var(--rc);color:#0a0d1c;font-weight:800;font-size:.78rem;letter-spacing:.03em;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 12px -2px var(--rc),0 6px 12px rgba(0,4,36,.6);
-  animation:infoin .3s cubic-bezier(.2,1.3,.3,1) both}
-.infobtn::before{content:'';position:absolute;inset:-8px -4px}   /* zone de toucher élargie, invisible */
-@keyframes infoin{from{opacity:0;transform:translate(-50%,-6px) scale(.8)}}
+  animation:infoin .34s cubic-bezier(.2,1.25,.35,1) both}
+.infobtn::before{content:'';position:absolute;inset:0 -4px -8px}   /* zone de toucher élargie, invisible */
+.infobtn:focus-visible{outline-offset:2px}
+@keyframes infoin{from{transform:translateY(calc(var(--tab) * -1 - 3px))}}   /* la languette sort de sous la carte */
 
 /* =====================================================================
    SUR-MENU D'INFORMATIONS (modal)
@@ -376,6 +385,21 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .im-card .card{width:100%;box-shadow:0 0 0 2.5px var(--rc),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-epic{box-shadow:0 0 0 2.5px var(--rc),0 0 26px 0 rgba(182,92,242,.7),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-legendary{box-shadow:0 0 0 2.5px var(--rc),0 0 34px 4px rgba(246,196,83,.65),0 22px 40px rgba(0,0,0,.6)}
+/* Encart de note : 5 étoiles grises, remplies en doré (couleur Légendaire) au dixième près */
+.im-rate{flex:none;display:flex;align-items:center;gap:12px;margin-top:-4px;padding:9px 14px;border-radius:12px;
+  background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 12px 28px rgba(0,0,0,.4);
+  opacity:0;transform:translateY(10px);transition:opacity .3s ease .04s,transform .45s cubic-bezier(.2,.9,.2,1) .04s}
+.infomodal.on .im-rate{opacity:1;transform:none}
+.stars{display:flex;gap:4px}
+/* Chaque étoile = une forme d'étoile en masque ; le fond est un dégradé net : doré jusqu'à --f, gris ensuite.
+   --f vaut 100 % (pleine), 0 % (vide) ou le pourcentage exact pour l'étoile partielle (ex. 40 %). */
+.star{--f:0%;width:22px;height:21px;
+  background:linear-gradient(90deg,var(--legendary) var(--f),#3a4466 var(--f));
+  -webkit-mask:var(--starshape) center/100% 100% no-repeat;mask:var(--starshape) center/100% 100% no-repeat}
+.im-rate{--starshape:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22.83'%3E%3Cpolygon points='12,0 14.83,8.72 24,8.72 16.58,14.11 19.42,22.83 12,17.44 4.58,22.83 7.42,14.11 0,8.72 9.17,8.72'/%3E%3C/svg%3E")}
+.rate-num{font-weight:800;font-size:.95rem;color:#c9d6ff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rate-num b{color:var(--legendary);font-size:1.05rem}
+.rate-num.muted{color:#8ea2d8;font-weight:500;font-size:.85rem}
 .im-panel{flex:none;width:100%;max-width:460px;border-radius:16px;padding:16px 18px 18px;outline:none;
   background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 18px 40px rgba(0,0,0,.45);
   -webkit-user-select:text;user-select:text;
@@ -592,6 +616,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <div class="im-back"></div>
     <div class="im-scroll" id="imScroll">
       <div class="im-card" id="imCard"></div>
+      <div class="im-rate" id="imRate" role="img" aria-label="Note">
+        <div class="stars" id="imStars"><i class="star"></i><i class="star"></i><i class="star"></i><i class="star"></i><i class="star"></i></div>
+        <span class="rate-num" id="imRateNum"></span>
+      </div>
       <section class="im-panel" id="imPanel" tabindex="-1">
         <h3 id="imTitle"></h3>
         <p class="im-orig" id="imOrig"></p>
@@ -1353,7 +1381,7 @@ const detailCache = new Map();
 function mockDetails(c){
   return {
     overview: c.overview || `Synopsis simulé pour « ${c.title} » (${c.year}). Le vrai résumé sera chargé depuis TMDB.`,
-    tagline:'', runtime:0, genres:[], director:'', vote:0, original:''
+    tagline:'', runtime:0, genres:[], director:'', vote:6.8, voteCount:1, original:''   // 6.8/10 → 3.4/5
   };
 }
 
@@ -1373,7 +1401,8 @@ function getDetails(c){
       runtime: d.runtime || 0,
       genres: (d.genres || []).map(g => g.name),
       director: dir ? dir.name : '',
-      vote: d.vote_average || 0,
+      vote: d.vote_average || 0,          // note TMDB sur 10 (convertie sur 5 à l'affichage)
+      voteCount: d.vote_count || 0,
       original: d.original_title || ''
     };
   })();
@@ -1405,16 +1434,39 @@ function fillPanel(c, d){
   if(d && d.runtime) pills.push(`<span>${fmtRuntime(d.runtime)}</span>`);
   if(d && d.genres) d.genres.slice(0,3).forEach(g => pills.push(`<span>${esc(g)}</span>`));
   if(d && d.director) pills.push(`<span>Réal. ${esc(d.director)}</span>`);
-  if(d && d.vote) pills.push(`<span>★ ${d.vote.toFixed(1).replace('.', ',')}</span>`);
   if(c.count > 1) pills.push(`<span>×${c.count} exemplaires</span>`);
   imMeta.innerHTML = pills.join('');
   imTag.textContent = d && d.tagline ? d.tagline : '';
+  fillRating(d);
 
   const text = (d && !d.error && d.overview) || c.overview;
   if(text) imSyn.innerHTML = `<p>${esc(text)}</p>`;
   else if(!d) imSyn.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';
   else if(d.error) imSyn.innerHTML = '<p class="muted">Synopsis indisponible pour le moment. Vérifie ta connexion puis réessaie.</p>';
   else imSyn.innerHTML = '<p class="muted">Aucun synopsis n\'est disponible pour ce film.</p>';
+}
+
+/* Note TMDB (sur 10) → note sur 5, puis remplissage étoile par étoile.
+   Exemple : 6.8/10 → 3.4/5 → étoiles 1 à 3 pleines (100 %), 4e à 40 %, 5e vide (0 %). */
+const imRate = $('#imRate'), imRateNum = $('#imRateNum');
+const imStarEls = [...document.querySelectorAll('#imStars .star')];
+function toFive(vote10){ return Math.round((vote10 / 2) * 10) / 10; }   // arrondi au dixième : ce qui est affiché = ce qui est rempli
+function fillRating(d){
+  const rated = d && !d.error && d.vote > 0 && d.voteCount !== 0;
+  const r = rated ? toFive(d.vote) : 0;
+  imStarEls.forEach((s, i) => {
+    const f = clamp(r - i, 0, 1);                       // part de l'étoile i à colorer (0 → 1)
+    s.style.setProperty('--f', (f * 100).toFixed(1) + '%');
+  });
+  if(rated){
+    imRateNum.className = 'rate-num';
+    imRateNum.innerHTML = `<b>${r.toFixed(1)}</b> / 5`;
+    imRate.setAttribute('aria-label', `Note : ${r.toFixed(1)} sur 5`);
+  }else{
+    imRateNum.className = 'rate-num muted';
+    imRateNum.textContent = !d ? '… / 5' : (d.error ? 'Note indisponible' : 'Pas encore noté');
+    imRate.setAttribute('aria-label', imRateNum.textContent);
+  }
 }
 
 async function openInfo(slot){
@@ -1470,7 +1522,7 @@ async function closeInfo(instant = false){
 
 // Fermeture : un appui n'importe où en dehors de la carte et du bloc synopsis
 infoModal.addEventListener('click', e => {
-  if(e.target.closest('.im-card, .im-panel')) return;
+  if(e.target.closest('.im-card, .im-rate, .im-panel')) return;
   closeInfo();
 });
 document.addEventListener('keydown', e => { if(imOpen && e.key === 'Escape') closeInfo(); });
