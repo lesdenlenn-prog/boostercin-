@@ -346,6 +346,58 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .slot .badge{font-size:.58rem;top:5px;right:5px;padding:1px 6px}
 .slot .badge.new{left:5px}
 
+/* ---------- Sélection d'une carte : halo blanc + bouton « Infos » couleur de rareté ---------- */
+.slot:not(.empty) .card{cursor:pointer;transition:box-shadow .25s ease,transform .25s cubic-bezier(.2,.9,.2,1)}
+.srow.has-sel{z-index:3}                     /* le bouton peut déborder sur l'étagère suivante sans passer dessous */
+.slot.sel .card,.slot.sel .card.r-epic,.slot.sel .card.r-legendary{
+  transform:translateY(-3px);
+  box-shadow:0 0 0 var(--ring) var(--rc),0 0 0 calc(var(--ring) + 2px) rgba(255,255,255,.6),0 0 22px 5px rgba(255,255,255,.4),0 9px 12px rgba(0,4,36,.7)}
+.slot.lifted .card{visibility:hidden}       /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
+.infobtn{position:absolute;left:50%;top:calc(100% + 7px);z-index:4;transform:translateX(-50%);
+  min-width:66%;height:28px;padding:0 12px;border:0;border-radius:8px;
+  background:var(--rc);color:#0a0d1c;font-weight:800;font-size:.78rem;letter-spacing:.03em;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 12px -2px var(--rc),0 6px 12px rgba(0,4,36,.6);
+  animation:infoin .3s cubic-bezier(.2,1.3,.3,1) both}
+.infobtn::before{content:'';position:absolute;inset:-8px -4px}   /* zone de toucher élargie, invisible */
+@keyframes infoin{from{opacity:0;transform:translate(-50%,-6px) scale(.8)}}
+
+/* =====================================================================
+   SUR-MENU D'INFORMATIONS (modal)
+   ===================================================================== */
+.infomodal{position:absolute;inset:0;z-index:80}
+.im-back{position:absolute;inset:0;background:rgba(2,4,14,.5);
+  -webkit-backdrop-filter:blur(12px) saturate(.85);backdrop-filter:blur(12px) saturate(.85);
+  opacity:0;transition:opacity .3s ease}
+.infomodal.on .im-back{opacity:1}
+.im-scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:calc(env(safe-area-inset-top,0px) + 28px) 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.im-card{--mw:min(62vw,270px,calc(46dvh * 2 / 3));flex:none;width:var(--mw);transform-origin:50% 50%}
+.im-card .card{width:100%;box-shadow:0 0 0 2.5px var(--rc),0 22px 40px rgba(0,0,0,.6)}
+.im-card .card.r-epic{box-shadow:0 0 0 2.5px var(--rc),0 0 26px 0 rgba(182,92,242,.7),0 22px 40px rgba(0,0,0,.6)}
+.im-card .card.r-legendary{box-shadow:0 0 0 2.5px var(--rc),0 0 34px 4px rgba(246,196,83,.65),0 22px 40px rgba(0,0,0,.6)}
+.im-panel{flex:none;width:100%;max-width:460px;border-radius:16px;padding:16px 18px 18px;outline:none;
+  background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 18px 40px rgba(0,0,0,.45);
+  -webkit-user-select:text;user-select:text;
+  opacity:0;transform:translateY(16px);transition:opacity .3s ease .08s,transform .45s cubic-bezier(.2,.9,.2,1) .08s}
+.infomodal.on .im-panel{opacity:1;transform:none}
+.im-panel h3{margin:0;font-size:1.2rem;line-height:1.2;font-weight:800;color:#fff}
+.im-orig{margin:3px 0 0;color:#8ea2d8;font-size:.8rem;font-style:italic}
+.im-orig:empty,.im-tag:empty{display:none}
+.im-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.im-meta span{font-size:.74rem;font-weight:800;color:#c9d6ff;background:rgba(255,255,255,.07);border-radius:99px;padding:3px 9px}
+.im-meta .rar{color:#0a0d1c;background:var(--rc)}
+.im-tag{margin:12px 0 0;color:#fff1c4;font-style:italic;font-size:.88rem}
+.im-panel h4{margin:14px 0 6px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#7f9ae0}
+.im-syn{font-size:.93rem;line-height:1.6;color:#dfe6ff}
+.im-syn p{margin:0}
+.im-syn .muted{color:#8ea2d8}
+.sk{height:.8em;border-radius:6px;margin:.6em 0;
+  background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));
+  background-size:200% 100%;animation:sk 1.2s linear infinite}
+.sk:last-child{width:62%}
+@keyframes sk{to{background-position:-200% 0}}
+
 /* ---------- Film introuvable : le boîtier de pellicule tombe et rebondit d'étagère en étagère ---------- */
 .faller{
   --bh:96px;
@@ -535,6 +587,22 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </nav>
   </div>
 
+  <!-- Sur-menu d'informations : on le ferme en touchant n'importe quelle zone floue (hors carte et hors bloc synopsis) -->
+  <div class="infomodal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
+    <div class="im-back"></div>
+    <div class="im-scroll" id="imScroll">
+      <div class="im-card" id="imCard"></div>
+      <section class="im-panel" id="imPanel" tabindex="-1">
+        <h3 id="imTitle"></h3>
+        <p class="im-orig" id="imOrig"></p>
+        <div class="im-meta" id="imMeta"></div>
+        <p class="im-tag" id="imTag"></p>
+        <h4>Synopsis</h4>
+        <div class="im-syn" id="imSyn"></div>
+      </section>
+    </div>
+  </div>
+
   <div id="fxBack" aria-hidden="true"><div class="veil" id="veil"></div><div class="rays" id="rays"></div></div>
   <div id="fxFront" aria-hidden="true"><div class="flash" id="flash"></div></div>
 </main>
@@ -644,7 +712,8 @@ async function drawBooster(){
     if(!pool.length) pool = pages[i].filter(m => m.poster_path);
     const m = pool[randInt(0, pool.length-1)];
     used.add(m.id);
-    return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count};
+    return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count,
+            overview:m.overview || ''};   // synopsis déjà fourni par /discover : affiché instantanément dans le sur-menu
   });
   return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));
 }
@@ -1120,6 +1189,7 @@ function showView(name){
   tabHome.toggleAttribute('aria-current', home); if(home) tabHome.setAttribute('aria-current', 'page');
   tabCol.toggleAttribute('aria-current', !home); if(!home) tabCol.setAttribute('aria-current', 'page');
   if(!home) renderShelf();
+  else { closeInfo(true); clearSel(); }
 }
 tabHome.addEventListener('click', () => showView('home'));
 tabCol.addEventListener('click', () => showView('col'));
@@ -1152,7 +1222,7 @@ function chunk(list, n){
 function rowHTML(i){
   const row = shelfRows[i] || [];
   const slots = row.length
-    ? row.map(c => `<div class="slot">${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
+    ? row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
     : '<div class="slot empty"><div class="card"></div></div>';
   return `<div class="srow"><div class="niche">
     <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
@@ -1201,6 +1271,7 @@ function renderChips(){
 }
 
 function renderShelfBody(){
+  selId = null;
   shelfRows = chunk(shelfData(), SHELF.perRow);
   shelfTotalRows = Math.max(SHELF.minRows, shelfRows.length + SHELF.extraRows);
   rowsEl.innerHTML = '';
@@ -1231,6 +1302,178 @@ viewCol.addEventListener('scroll', () => {
   shelfTick = true;
   requestAnimationFrame(() => { shelfTick = false; fillShelf(); });
 }, {passive:true});
+
+/* =====================================================================
+   15 bis. SÉLECTION D'UNE CARTE + BOUTON « INFOS »
+   ===================================================================== */
+let selId = null;
+
+function clearSel(){
+  const s = rowsEl.querySelector('.slot.sel');
+  if(s){
+    s.classList.remove('sel');
+    s.closest('.srow').classList.remove('has-sel');
+    const b = s.querySelector('.infobtn'); if(b) b.remove();
+  }
+  selId = null;
+}
+
+function selectSlot(slot){
+  const id = slot.dataset.id;
+  if(selId === id){ clearSel(); return; }          // 2e appui sur la même carte : désélection
+  clearSel();
+  selId = id;
+  slot.classList.add('sel');
+  slot.closest('.srow').classList.add('has-sel');
+  // r-<rareté> sur le bouton : il récupère --rc, la couleur exacte de la rareté du film
+  slot.insertAdjacentHTML('beforeend', `<button class="infobtn r-${slot.dataset.r}" type="button">Infos</button>`);
+  // si le bouton tombe sous le bas de la zone visible, on fait défiler juste ce qu'il faut
+  const btn = slot.querySelector('.infobtn');
+  const over = btn.getBoundingClientRect().bottom + 14 - viewCol.getBoundingClientRect().bottom;
+  if(over > 0) viewCol.scrollBy({top: over, behavior: RM ? 'auto' : 'smooth'});
+  buzz(8);
+}
+
+viewCol.addEventListener('click', e => {
+  const btn = e.target.closest('.infobtn');
+  if(btn){ openInfo(btn.closest('.slot')); return; }
+  const slot = e.target.closest('.slot:not(.empty)');
+  if(slot){ selectSlot(slot); return; }
+  if(!e.target.closest('.shead, .sfoot')) clearSel();   // appui dans le vide de l'étagère : désélection
+});
+
+/* =====================================================================
+   15 ter. DÉTAILS TMDB (synopsis, durée, genres, réalisateur, note)
+   Structure prête pour l'API : getDetails() renvoie toujours le même objet normalisé.
+   Passe DETAILS.mock à true pour travailler hors ligne avec des données simulées.
+   ===================================================================== */
+const DETAILS = { mock:false, lang:'fr-FR', fallbackLang:'en-US' };
+const detailCache = new Map();
+
+function mockDetails(c){
+  return {
+    overview: c.overview || `Synopsis simulé pour « ${c.title} » (${c.year}). Le vrai résumé sera chargé depuis TMDB.`,
+    tagline:'', runtime:0, genres:[], director:'', vote:0, original:''
+  };
+}
+
+function getDetails(c){
+  if(DETAILS.mock) return Promise.resolve(mockDetails(c));
+  if(detailCache.has(c.id)) return detailCache.get(c.id);
+  const p = (async () => {
+    const d = await tmdb('/movie/' + c.id, {language:DETAILS.lang, append_to_response:'credits'});
+    let overview = d.overview || '';
+    if(!overview){                                    // pas de synopsis en français : on prend l'anglais
+      try{ overview = (await tmdb('/movie/' + c.id, {language:DETAILS.fallbackLang})).overview || ''; }catch(e){}
+    }
+    const dir = ((d.credits && d.credits.crew) || []).find(p => p.job === 'Director');
+    return {
+      overview,
+      tagline: d.tagline || '',
+      runtime: d.runtime || 0,
+      genres: (d.genres || []).map(g => g.name),
+      director: dir ? dir.name : '',
+      vote: d.vote_average || 0,
+      original: d.original_title || ''
+    };
+  })();
+  detailCache.set(c.id, p);
+  p.catch(() => detailCache.delete(c.id));          // en cas d'erreur, on retentera à la prochaine ouverture
+  return p;
+}
+
+/* =====================================================================
+   15 quater. SUR-MENU D'INFORMATIONS
+   ===================================================================== */
+const infoModal = $('#infoModal'), imScroll = $('#imScroll'), imCard = $('#imCard'), imPanel = $('#imPanel');
+const imTitle = $('#imTitle'), imOrig = $('#imOrig'), imMeta = $('#imMeta'), imTag = $('#imTag'), imSyn = $('#imSyn');
+let imOpen = null;      // {slot, c} tant que le sur-menu est ouvert
+let imBusy = false;
+
+// transformation qui superpose l'élément de rectangle `to` sur le rectangle `from` (technique FLIP)
+const flip = (from, to) =>
+  `translate(${(from.left + from.width/2) - (to.left + to.width/2)}px,${(from.top + from.height/2) - (to.top + to.height/2)}px) scale(${from.width / to.width})`;
+
+const fmtRuntime = m => m >= 60 ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}` : `${m} min`;
+
+function fillPanel(c, d){
+  imPanel.className = 'im-panel r-' + c.rarity;
+  imTitle.textContent = c.title;
+  imOrig.textContent = d && d.original && d.original !== c.title ? d.original : '';
+  const pills = [`<span class="rar">${TIER[c.rarity].label}</span>`];
+  if(c.year) pills.push(`<span>${esc(c.year)}</span>`);
+  if(d && d.runtime) pills.push(`<span>${fmtRuntime(d.runtime)}</span>`);
+  if(d && d.genres) d.genres.slice(0,3).forEach(g => pills.push(`<span>${esc(g)}</span>`));
+  if(d && d.director) pills.push(`<span>Réal. ${esc(d.director)}</span>`);
+  if(d && d.vote) pills.push(`<span>★ ${d.vote.toFixed(1).replace('.', ',')}</span>`);
+  if(c.count > 1) pills.push(`<span>×${c.count} exemplaires</span>`);
+  imMeta.innerHTML = pills.join('');
+  imTag.textContent = d && d.tagline ? d.tagline : '';
+
+  const text = (d && !d.error && d.overview) || c.overview;
+  if(text) imSyn.innerHTML = `<p>${esc(text)}</p>`;
+  else if(!d) imSyn.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';
+  else if(d.error) imSyn.innerHTML = '<p class="muted">Synopsis indisponible pour le moment. Vérifie ta connexion puis réessaie.</p>';
+  else imSyn.innerHTML = '<p class="muted">Aucun synopsis n\'est disponible pour ce film.</p>';
+}
+
+async function openInfo(slot){
+  if(imOpen || imBusy) return;
+  const c = getCol()[slot.dataset.id];
+  if(!c) return;
+  imOpen = {slot, c};
+
+  imCard.innerHTML = cardHTML(c, {count:c.count});
+  fillPanel(c, null);
+  infoModal.classList.remove('hidden');
+  imScroll.scrollTop = 0;
+
+  // la carte « décolle » de l'étagère et vient se placer en grand en haut de l'écran
+  const src = slot.querySelector('.card').getBoundingClientRect();
+  const dst = imCard.getBoundingClientRect();
+  slot.classList.add('lifted');
+  void infoModal.offsetWidth;
+  infoModal.classList.add('on');
+  if(!RM) play(imCard, [{transform:flip(src, dst)}, {transform:'none'}], {duration:460, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
+  imPanel.focus({preventScroll:true});
+  srEl.textContent = `Informations sur ${c.title}. Touchez en dehors pour fermer.`;
+
+  try{
+    const d = await getDetails(c);
+    if(imOpen && imOpen.c.id === c.id) fillPanel(c, d);
+  }catch(err){
+    if(imOpen && imOpen.c.id === c.id) fillPanel(c, {error:true});
+  }
+}
+
+async function closeInfo(instant = false){
+  if(!imOpen || imBusy) return;
+  const {slot} = imOpen;
+  imOpen = null; imBusy = true;
+  infoModal.classList.remove('on');
+  const shelfCard = slot.isConnected && slot.querySelector('.card');
+  if(!instant && !RM && shelfCard){
+    // la carte retourne à sa place sur l'étagère pendant que le flou se dissipe
+    const from = imCard.getBoundingClientRect(), to = shelfCard.getBoundingClientRect();
+    await play(imCard, [{transform:'none'}, {transform:flip(to, from)}], {duration:340, easing:'cubic-bezier(.4,0,.2,1)'});
+  }else if(!instant){
+    await sleep(200);
+  }
+  cancelWaapi(infoModal);
+  infoModal.classList.add('hidden');
+  imCard.innerHTML = '';
+  slot.classList.remove('lifted');
+  const b = slot.querySelector('.infobtn');
+  if(b && !instant) b.focus({preventScroll:true});
+  imBusy = false;
+}
+
+// Fermeture : un appui n'importe où en dehors de la carte et du bloc synopsis
+infoModal.addEventListener('click', e => {
+  if(e.target.closest('.im-card, .im-panel')) return;
+  closeInfo();
+});
+document.addEventListener('keydown', e => { if(imOpen && e.key === 'Escape') closeInfo(); });
 
 /* =====================================================================
    16. CLÉ TMDB ET RÉGLAGES
