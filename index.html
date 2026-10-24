@@ -10,7 +10,6 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Bricolage Grotesque (interface) + Limelight (titre « Vidéothèque », style marquise de cinéma rétro) -->
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -70,7 +69,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
 /* ================= CARTES ================= */
-/* Contour de rareté encore affiné : 1,5 px (2 px avant), tracé à l'extérieur de la carte */
+/* Contour de rareté fin (1,5 px) pour l'ouverture du booster et le résumé.
+   Dans la Vidéothèque il est volontairement plus épais (voir .slot .card). */
 .card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 1.5px var(--rc)}
 .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
 .card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 14px -2px var(--rc)}
@@ -107,25 +107,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
     radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
-  --pw:min(62vw,250px,36dvh);      /* largeur du booster */
-  --cw:calc(var(--pw)*.84);        /* largeur d'une carte = 84 % du booster : elle tient logiquement dedans */
+  --pw:min(62vw,250px,36dvh);                 /* largeur du booster (au repos) */
+  --cw:calc(var(--pw)*1.17 - 6px);            /* carte = largeur du booster ZOOMÉ (×1,17, c'est lui qu'on ouvre) moins 6 px : elle y tient tout juste */
   position:relative;flex:1;min-height:0}
 .homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
-
-.edge{position:absolute;top:0;bottom:0;width:18%;display:grid;place-items:center;color:var(--gold-hi);pointer-events:none;opacity:0;transition:opacity .35s}
-.edge.l{left:0}.edge.r{right:0}
-.edge svg{width:36px;height:36px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
-.edge.r svg{transform:scaleX(-1)}
-.edge::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
-.edge.l::before{background:linear-gradient(90deg,rgba(255,214,110,.32),transparent)}
-.edge.r::before{background:linear-gradient(270deg,rgba(255,214,110,.32),transparent)}
-.edge.hit::before{opacity:1;transition:none}
-.arena.can-next .edge{opacity:.7}
-.arena.can-next .edge.l svg{animation:nudgeL 1.6s ease-in-out infinite}
-.arena.can-next .edge.r svg{animation:nudgeR 1.6s ease-in-out infinite}
-@keyframes nudgeL{50%{transform:translateX(-7px)}}
-@keyframes nudgeR{50%{transform:scaleX(-1) translateX(-7px)}}
 
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
@@ -141,8 +127,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .lifter,.shaker{position:absolute;inset:0}
 .shaker .card{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 
-/* Liseré de rareté à l'intérieur de la carte : ≈ 1,4 px, il ne rogne plus l'affiche */
-.scard .card{--fw:calc(var(--cw)*.007)}
+.scard .card{--fw:calc(var(--cw)*.006)}
 .scard .card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:var(--fw);z-index:3;pointer-events:none;
   background:var(--frame,linear-gradient(160deg,#ece7e1,#aaa39c));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
@@ -209,17 +194,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   30%,50%,70%{transform:translate(-8px,4px)}40%,60%{transform:translate(8px,-4px) rotate(-.2deg)}
 }
 
-/* ---------- Booster (plat) ---------- */
-.pack-pos{position:absolute;left:50%;top:50%;width:var(--pw);aspect-ratio:5/8;transform:translate(-50%,-50%);z-index:5;
+/* ---------- Booster (2 morceaux distincts : .part.top et .part.bottom) ---------- */
+.pack-pos{position:absolute;left:50%;top:50%;width:var(--pw);aspect-ratio:2/3;transform:translate(-50%,-50%);z-index:5;   /* mêmes proportions qu'une carte */
   cursor:pointer;outline:none}
 .pack-pos.opened{cursor:default}
 .pack-pos.gone{display:none}
 .pack-halo{position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:0;transition:opacity .7s;
   background:radial-gradient(ellipse closest-side,rgba(255,196,90,.5) 0,rgba(200,20,40,.22) 55%,rgba(200,20,40,0) 100%)}
 .pack-pos.zoomed .pack-halo,.pack-pos:focus-visible .pack-halo{opacity:1}
-.pack-pos.opened .pack-halo{opacity:0;transition:opacity .3s}
-.pack-shadow{position:absolute;left:4%;right:4%;bottom:-6%;height:10%;pointer-events:none;
+.pack-pos.opened .pack-halo{opacity:0;transition:opacity .2s}
+.pack-shadow{position:absolute;left:4%;right:4%;bottom:-6%;height:10%;pointer-events:none;transition:opacity .15s;
   background:radial-gradient(ellipse closest-side,rgba(0,0,0,.6),rgba(0,0,0,0));filter:blur(8px)}
+.pack-pos.opened .pack-shadow{opacity:0}
 .pack-zoom{position:absolute;inset:0;transition:transform .75s cubic-bezier(.2,.9,.2,1)}
 .pack-pos.zoomed .pack-zoom{transform:scale(1.17)}
 .pack-float{position:absolute;inset:0;animation:float 5s ease-in-out infinite}
@@ -230,12 +216,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .part{position:absolute;inset:0;container-type:inline-size;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;outline:1px solid transparent}
 .part.top{clip-path:var(--clipTop);transform-origin:15% 15%}
-.part.bottom{clip-path:var(--clipBottom)}
-/* Le morceau déchiré est jeté vers le haut et vers l'arrière : plus petit, penché, transparent.
-   Transition CSS très rapide (la durée est aussi dans TIMING.topFlight côté JS pour le séquençage). */
-.part.top.torn{
-  transform:translateY(-200px) scale(.5) rotate(10deg);opacity:0;
-  transition:transform .17s cubic-bezier(.2,.8,.3,1),opacity .17s ease-in}
+.part.bottom{clip-path:var(--clipBottom);transform-origin:50% 100%}
 .linebox{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
 .cutline{position:absolute;left:0;right:0;top:15%;height:3px;margin-top:-1.5px;opacity:0;transform:scaleX(0);transform-origin:0 50%;
   background:linear-gradient(90deg,transparent,#fff6d6 12%,#ffd36b 50%,#fff6d6 88%,transparent);
@@ -262,12 +243,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .crimp{left:0;right:0;height:6.5%;
   background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 .5cqw,rgba(0,0,0,.3) .5cqw 1.6cqw),#781018}
 .crimp.t{top:0}.crimp.b{bottom:0}
-.emblem{left:27%;width:46%;top:22%;aspect-ratio:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+.emblem{left:27%;width:46%;top:20%;aspect-ratio:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
 .emblem svg{width:100%;height:100%}
-.title{left:0;right:0;top:55%;text-align:center;font-weight:800;font-size:21cqw;line-height:1;letter-spacing:.06em;
+.title{left:0;right:0;top:54%;text-align:center;font-weight:800;font-size:21cqw;line-height:1;letter-spacing:.06em;
   background:linear-gradient(#fff6d0,#f0cd78 45%,#a9792b 80%,#e8c46a);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
-.sub{left:0;right:0;top:76%;text-align:center;font-size:6.4cqw;letter-spacing:.14em;color:#f3dfa0}
+.sub{left:0;right:0;top:77%;text-align:center;font-size:6.4cqw;letter-spacing:.14em;color:#f3dfa0}
 .irid{inset:0;mix-blend-mode:color-dodge;opacity:.55;background-size:260% 100%;background-position:var(--bx,50%) 0;
   background-image:linear-gradient(115deg,rgba(255,60,140,0) 20%,rgba(255,120,200,.35) 32%,rgba(120,230,255,.30) 44%,rgba(255,236,140,.35) 56%,rgba(190,120,255,.3) 68%,rgba(255,60,140,0) 80%)}
 .sheen{inset:0;mix-blend-mode:screen;background-size:320% 100%;animation:sheen 5.5s ease-in-out infinite;
@@ -278,7 +259,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* =====================================================================
-   VUE COLLECTION : « Vidéothèque » (étagère légère, bleu profond, texture presque lisse)
+   VUE COLLECTION : « Vidéothèque » (étagère sobre, bleu très sombre, fond quasi uniforme, sans texture)
    ===================================================================== */
 .view-col{
   --frame:8px;      /* cadre noir autour du meuble */
@@ -288,25 +269,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   --scap:12px;      /* traverse haute du meuble */
   --gap:8px;        /* espace entre deux emplacements */
   --cardscale:.94;  /* largeur d'une carte par rapport à son emplacement */
-
-  /* Texture de tissu TRÈS subtile : deux tuiles SVG répétées, quasi transparentes */
-  /* Tuile 1 : fin grain clair (alpha moyen ≈ 0,07) */
-  --cloth-noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  /* Tuile 2 : trame en damier presque invisible (2 à 4 % d'opacité au lieu de 9 à 14 %) */
-  --cloth-weave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23fff' fill-opacity='.022'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23fff' fill-opacity='.022'/%3E%3Crect x='2' width='2' height='2' fill='%23000' fill-opacity='.04'/%3E%3Crect y='2' width='2' height='2' fill='%23000' fill-opacity='.04'/%3E%3C/svg%3E");
+  --ring:2.5px;     /* épaisseur du contour de rareté DANS la Vidéothèque (1,5 px pendant l'ouverture) */
 
   overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  background:radial-gradient(130% 36% at 50% 0%,#081a58 0%,#040920 55%,#020410 100%)}
+  background:#02050f}
 
-/* Titre « Vidéothèque » : centré tout en haut, police de marquise rétro (Limelight), halo bleu comme les LED du meuble */
 .vhead{padding:calc(env(safe-area-inset-top,0px) + 18px) 14px 8px;text-align:center}
 .vtitle{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:2rem;line-height:1.1;letter-spacing:.05em;
   color:#fff1c4;text-shadow:0 0 8px rgba(120,175,255,.9),0 0 22px rgba(50,120,255,.65),0 2px 0 rgba(0,0,0,.5)}
 
-/* Barre collante : filtres + recherche */
 .shead{position:sticky;top:0;z-index:6;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 12px;
-  background:rgba(2,5,20,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(70,130,255,.2)}
+  background:rgba(2,5,16,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(70,130,255,.18)}
 .chips{display:flex;gap:8px;overflow-x:auto;margin:0 -14px;padding:0 14px;scrollbar-width:none;touch-action:pan-x}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:34px;border:0;border-radius:99px;padding:0 13px;background:rgba(255,255,255,.06);color:#c9d6ff;font-weight:800;font-size:.8rem;
@@ -325,44 +299,43 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .search .sclear{position:absolute;right:6px;top:50%;width:34px;height:34px;margin-top:-17px;border:0;border-radius:50%;
   background:rgba(255,255,255,.1);color:#c9d6ff;font-size:1.15rem;line-height:1;font-weight:800}
 
-.cabinet{position:relative;width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#020309;border-radius:4px;
-  box-shadow:0 0 0 1px #000,0 0 40px 3px rgba(30,90,230,.3)}
-.scap{height:var(--scap);background:#020309;border-radius:4px 4px 0 0}
+.cabinet{position:relative;width:calc(100% - 20px);max-width:540px;margin:12px auto 0;background:#010208;border-radius:4px;
+  box-shadow:0 0 0 1px #000,0 0 34px 2px rgba(20,70,190,.22)}
+.scap{height:var(--scap);background:#010208;border-radius:4px 4px 0 0}
 
-.srow{position:relative;background:#020309;padding:0 var(--frame) var(--sep)}
+.srow{position:relative;background:#010208;padding:0 var(--frame) var(--sep)}
 .srow:last-child{border-radius:0 0 4px 4px}
 .niche{position:relative}
 
-/* Bleu plus sombre et plus profond (le fond reste plus foncé que les parois et la planche) */
+/* Fond de niche : bleu très sombre, presque uniforme (dégradé quasi imperceptible), AUCUNE texture */
 .sback{position:absolute;left:var(--wall);right:var(--wall);top:0;bottom:var(--board);border-radius:2px 2px 0 0;
-  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#041848 0%,#062268 58%,#0a2f86 100%);
-  background-size:96px 96px,4px 4px,auto;
-  box-shadow:inset 12px 0 16px -8px rgba(0,8,50,.85),inset -12px 0 16px -8px rgba(0,8,50,.85)}
-.swall{position:absolute;top:0;bottom:0;width:var(--wall);background-size:96px 96px,4px 4px,auto}
+  background:linear-gradient(180deg,#02102e 0%,#031538 100%);
+  box-shadow:inset 10px 0 14px -8px rgba(0,4,28,.8),inset -10px 0 14px -8px rgba(0,4,28,.8)}
+.swall{position:absolute;top:0;bottom:0;width:var(--wall)}
 .swall.l{left:0;border-radius:3px 0 0 3px;
-  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(90deg,#0d2f88,#1a48b6 58%,#123c9a);
-  box-shadow:inset -5px 0 8px -3px rgba(0,8,50,.55)}
+  background:linear-gradient(90deg,#061a50,#0a2670 60%,#08205c);
+  box-shadow:inset -5px 0 8px -3px rgba(0,5,36,.55)}
 .swall.r{right:0;border-radius:0 3px 3px 0;
-  background-image:var(--cloth-noise),var(--cloth-weave),linear-gradient(270deg,#0d2f88,#1a48b6 58%,#123c9a);
-  box-shadow:inset 5px 0 8px -3px rgba(0,8,50,.55)}
+  background:linear-gradient(270deg,#061a50,#0a2670 60%,#08205c);
+  box-shadow:inset 5px 0 8px -3px rgba(0,5,36,.55)}
 .plank{position:absolute;left:0;right:0;bottom:0;height:var(--board);
   clip-path:polygon(var(--wall) 0,calc(100% - var(--wall)) 0,100% calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,0 calc(100% - 3px));
-  background:var(--cloth-noise),var(--cloth-weave),linear-gradient(180deg,#0a2578 0%,#14409f 55%,#2257c8 100%);
-  background-size:96px 96px,4px 4px,auto;
-  box-shadow:inset 0 -2px 3px -1px rgba(150,190,245,.6)}
-.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,rgba(0,8,50,.6),rgba(0,8,50,0))}
+  background:linear-gradient(180deg,#051848 0%,#0a2670 100%);
+  box-shadow:inset 0 -2px 3px -1px rgba(120,160,230,.45)}
+.plank::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,rgba(0,5,36,.55),rgba(0,5,36,0))}
 
 .slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:var(--gap);
   padding:22px calc(var(--wall) + 4px) calc(var(--board)*.5)}
 .slot{position:relative;width:calc(100% * var(--cardscale));justify-self:center}
 .slot.empty{visibility:hidden}
 .slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;
-  background:radial-gradient(ellipse closest-side,rgba(0,6,44,.85),rgba(0,6,44,0))}
-.slot .card{width:100%;box-shadow:0 0 0 1.5px var(--rc),0 7px 9px rgba(0,8,50,.65)}
-.slot .card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 12px -2px var(--rc),0 7px 9px rgba(0,8,50,.65)}
-.slot .card.r-legendary{box-shadow:0 0 0 1.5px var(--rc),0 0 16px 1px rgba(246,196,83,.55),0 7px 9px rgba(0,8,50,.65)}
+  background:radial-gradient(ellipse closest-side,rgba(0,3,28,.85),rgba(0,3,28,0))}
+/* Contour de rareté plus épais ICI uniquement (--ring) : la rareté se lit d'un coup d'œil sur l'étagère */
+.slot .card{width:100%;box-shadow:0 0 0 var(--ring) var(--rc),0 7px 9px rgba(0,4,36,.7)}
+.slot .card.r-epic{box-shadow:0 0 0 var(--ring) var(--rc),0 0 12px -2px var(--rc),0 7px 9px rgba(0,4,36,.7)}
+.slot .card.r-legendary{box-shadow:0 0 0 var(--ring) var(--rc),0 0 16px 1px rgba(246,196,83,.55),0 7px 9px rgba(0,4,36,.7)}
 .slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,rgba(130,190,255,.14),rgba(130,190,255,0) 36%)}
+  background:linear-gradient(180deg,rgba(130,190,255,.1),rgba(130,190,255,0) 36%)}
 .slot .card .meta{font-size:.6rem;padding:18px 5px 4px}
 .slot .card .meta b{font-size:.68rem}
 .slot .badge{font-size:.58rem;top:5px;right:5px;padding:1px 6px}
@@ -422,8 +395,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
-  .part.top.torn{transition-duration:.01s}
-  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.edge svg,.glint,.scard .card::before{animation:none !important}
+  .pack-float,.sheen,.holo,.gold,.rays,.scard.blast .aura,.glint,.scard .card::before{animation:none !important}
   .scard.fx .card::after,.recap .card{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
 }
@@ -469,9 +441,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
     <section class="view view-home" id="view-home">
       <div class="arena" id="arena">
-        <div class="edge l" id="edgeL" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="edge r" id="edgeR" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-
         <div class="stack" id="stack">
           <div class="deck-shadow"></div>
           <div class="deck" id="deck"></div>
@@ -483,6 +452,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
             <div class="pack-shadow"></div>
             <div class="pack-float">
               <div class="pack-tilt" id="tilt">
+                <!-- Deux éléments distincts, animés séparément à l'ouverture -->
                 <div class="part bottom" id="partBottom"></div>
                 <div class="part top" id="partTop"></div>
                 <div class="linebox"><div class="cutline" id="cutline"></div><div class="glint"></div></div>
@@ -505,7 +475,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <div class="actions">
           <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
           <button class="btn ghost" id="toColBtn" hidden>Vidéothèque</button>
-          <button class="btn ghost" id="skipBtn" hidden>Passer au résumé</button>
         </div>
       </div>
     </section>
@@ -579,15 +548,16 @@ const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10
 
 const TIMING = {
   cutSweep:90,         // la ligne de déchirure traverse le haut du booster
-  topFlight:170,       // le morceau déchiré s'envoie en arrière-plan (doit rester égal à la durée de .part.top.torn en CSS)
-  packSlide:300,       // le bas du paquet glisse vers le bas, APRÈS le départ du morceau du haut
+  split:420,           // séparation : le haut s'envole vers le haut ET le bas glisse vers le bas, EN MÊME TEMPS
   stackRise:320,
   legendCharge:800, legendGrow:520, legendAfter:800, exit:520, unlockAfterExit:240
 };
+const ZOOM = 1.17;     // échelle du booster zoomé (doit rester égale à .pack-pos.zoomed .pack-zoom en CSS)
 
 const PEEK = {
   maxTilt:40, tiltPerPx:.26, gap:.03, minDx:40, flickSpeed:.5, velWindow:100,
-  kickOnClick:16, springK:190, springC:15
+  kickOnClick:16,      // petite inclinaison quand on passe une carte au clavier
+  springK:190, springC:15
 };
 
 const SHELF = {
@@ -715,8 +685,8 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
 const screenEl = $('#screen'), arena = $('#arena'), stackEl = $('#stack'), deck = $('#deck'), pack = $('#pack'), packZoom = $('#packZoom'), tilt = $('#tilt');
 const partTop = $('#partTop'), partBottom = $('#partBottom'), cutline = $('#cutline'), burst = $('#burst');
 const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), rays = $('#rays'), flashEl = $('#flash'), fxFront = $('#fxFront');
-const againBtn = $('#againBtn'), skipBtn = $('#skipBtn'), toColBtn = $('#toColBtn');
-const dotsEl = $('#dots'), edgeL = $('#edgeL'), edgeR = $('#edgeR'), recapWrap = $('#recapWrap');
+const againBtn = $('#againBtn'), toColBtn = $('#toColBtn');
+const dotsEl = $('#dots'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
 
 let state = 'idle';
@@ -767,8 +737,7 @@ arena.addEventListener('pointermove', e => {
   arena.addEventListener(ev, () => { if(state === 'idle' || state === 'zoomed') ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg')); }));
 
 /* =====================================================================
-   7. CLIC 1 : ZOOM  /  CLIC 2 : OUVERTURE
-   Séquence : ligne de déchirure → le haut déchiré est jeté vers l'arrière → ENSUITE le bas glisse vers le bas
+   7. CLIC 1 : ZOOM  /  CLIC 2 : SÉPARATION EN DEUX MORCEAUX
    ===================================================================== */
 pack.addEventListener('click', onPackClick);
 pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
@@ -797,22 +766,36 @@ async function openPack(){
     // 1. La ligne de déchirure traverse le haut du booster
     await play(cutline, [{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(1)', opacity:1}], {duration: RM ? 30 : TIMING.cutSweep, easing:'ease-out'});
 
-    // 2. Le haut se déchire : éclat de lumière, et le morceau est jeté à toute vitesse vers l'arrière-plan
-    //    (transition CSS de la classe .torn : translateY(-200px) scale(.5) rotate(10deg), opacity 0)
+    // 2. SÉPARATION : le booster se coupe en deux morceaux visibles qui partent SIMULTANÉMENT en sens opposés.
+    //    - .part.top    : le petit bout déchiré s'envole vers le HAUT de l'écran (il tourne et rétrécit un peu)
+    //    - .part.bottom : le corps du paquet glisse vers le BAS de l'écran
+    //    Les translations sont en pixels locaux : le booster zoomé est mis à l'échelle ×ZOOM, on divise donc par ZOOM.
     buzz(14);
-    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 320, easing:'ease-out'});
-    play(cutline, [{opacity:1}, {opacity:0}], {duration:120});
-    showStack();                                          // la 1re carte se prépare à l'intérieur du paquet (elle est plus étroite que lui)
-    partTop.classList.add('torn');
-    await sleep(RM ? 20 : TIMING.topFlight);              // on attend que le morceau du haut soit parti…
+    play(burst, [{opacity:0, transform:'scaleX(.4)'}, {opacity:1, transform:'scaleX(1)', offset:.3}, {opacity:0, transform:'scaleX(1.5)'}], {duration: RM ? 100 : 360, easing:'ease-out'});
+    play(cutline, [{opacity:1}, {opacity:0}], {duration:140});
+    showStack();                                           // la 1re carte est dans le paquet : elle se dévoile à mesure que le corps descend
 
-    // 3. …et SEULEMENT ensuite le reste du paquet glisse vers le bas de l'écran
-    const dist = innerHeight - pack.getBoundingClientRect().top + 80;
-    await play(packZoom, [
-      {transform:'translateY(0px) scale(1.17)', opacity:1},
-      {opacity:1, offset:.75},
-      {transform:`translateY(${dist}px) scale(1.17)`, opacity:0}
-    ], {duration: RM ? 100 : TIMING.packSlide, easing:'cubic-bezier(.6,0,.9,.45)'});
+    const zr = packZoom.getBoundingClientRect();           // rectangle réel (échelle comprise) du booster zoomé
+    const up   = (zr.top + zr.height * .15 + 80) / ZOOM;   // pour que le haut sorte par le haut de l'écran
+    const down = (innerHeight - zr.top + 60) / ZOOM;       // pour que le corps sorte par le bas de l'écran
+    const d = RM ? 120 : TIMING.split;
+    const drift = Math.random() < .5 ? -1 : 1;             // le haut part légèrement à gauche ou à droite
+
+    const topAnim = play(partTop, [
+      {transform:'translate(0px,0px) rotate(0deg) scale(1)', opacity:1},
+      {transform:`translate(${drift*6}px,${-up*.08}px) rotate(${drift*-4}deg) scale(1.03)`, opacity:1, offset:.14},
+      {transform:`translate(${drift*34}px,${-up}px) rotate(${drift*18}deg) scale(.82)`, opacity:1, offset:.86},
+      {transform:`translate(${drift*40}px,${-up*1.08}px) rotate(${drift*22}deg) scale(.78)`, opacity:0}
+    ], {duration:d, easing:'cubic-bezier(.3,.05,.55,1)'});
+
+    const bodyAnim = play(partBottom, [
+      {transform:'translate(0px,0px) rotate(0deg)', opacity:1},
+      {transform:`translate(${-drift*3}px,${down*.03}px) rotate(${-drift*1.2}deg)`, opacity:1, offset:.12},   // petit recul au moment de la rupture
+      {transform:`translate(${-drift*8}px,${down}px) rotate(${-drift*3}deg)`, opacity:1, offset:.88},
+      {transform:`translate(${-drift*9}px,${down*1.02}px) rotate(${-drift*3}deg)`, opacity:0}
+    ], {duration:d, easing:'cubic-bezier(.5,0,.8,.45)'});
+
+    await Promise.all([topAnim, bodyAnim]);
     pack.classList.add('gone');
 
     releaseStack();
@@ -857,7 +840,7 @@ function buildStack(){
 function showStack(){
   stackEl.classList.add('show');
   play(els[0].querySelector('.lifter'),
-    [{transform:'translateY(26px) scale(.94)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1}],
+    [{transform:'translateY(14px) scale(.97)', opacity:0}, {transform:'translateY(0) scale(1)', opacity:1}],
     {duration: RM ? 1 : TIMING.stackRise, easing:'cubic-bezier(.2,.9,.2,1)', fill:'backwards'});
 }
 function releaseStack(){ els.forEach(el => el.classList.remove('hold')); }
@@ -867,7 +850,6 @@ function clearStack(){
 function startStack(){
   state = 'stack'; busy = false;
   dotsEl.hidden = false; updateDots();
-  skipBtn.hidden = false;
   activateTop();
 }
 function updateDots(){
@@ -918,7 +900,6 @@ async function activateTop(){
   }else if(c.rarity === 'epic'){
     epicMoment(el);
   }
-  if(state === 'stack') arena.classList.add('can-next');
 }
 
 function epicMoment(el){
@@ -982,21 +963,15 @@ function sparks(x, y){
 }
 
 /* =====================================================================
-   11. PASSER LA CARTE
+   11. PASSER LA CARTE : UNIQUEMENT AU GLISSEMENT (swipe / drag)
+   Plus de clic gauche/droite, plus de flèches. (Les flèches du clavier restent pour l'accessibilité.)
    ===================================================================== */
-function hit(side){
-  const e = side < 0 ? edgeL : edgeR;
-  e.classList.add('hit'); setTimeout(() => e.classList.remove('hit'), 260);
-}
-
 async function dismissTop(side){
   if(state !== 'stack' || busy) return;
   busy = true;
-  arena.classList.remove('can-next');
   const el = els[idx], c = cards[idx];
   const wasLegend = c.rarity === 'legendary';
   if(wasLegend){ veil.classList.remove('on'); rays.classList.remove('on'); }
-  hit(side);
 
   if(Math.abs(curTilt) < 2 && !RM){ setTilt(side * PEEK.kickOnClick); }
   springTilt(curTilt);
@@ -1021,14 +996,8 @@ async function dismissTop(side){
 
 const IGNORE = 'button, a, input, .bottombar';
 
-let suppressClick = false;
-screenEl.addEventListener('click', e => {
-  if(state !== 'stack' || busy || suppressClick) return;
-  if(e.target.closest(IGNORE)) return;
-  const r = arena.getBoundingClientRect();
-  dismissTop(e.clientX < r.left + r.width / 2 ? -1 : 1);
-});
-
+// Maintenir + glisser : la pile s'incline (peek) ; un balayage franc au relâchement passe la carte,
+// sinon la pile revient face au joueur en ressort.
 let dg = null;
 screenEl.addEventListener('pointerdown', e => {
   if(state !== 'stack' || busy) return;
@@ -1062,8 +1031,7 @@ function releaseVelocity(samples){
 function endDrag(e){
   if(!dg || e.pointerId !== dg.id) return;
   const d = dg; dg = null;
-  if(!d.active) return;
-  suppressClick = true; setTimeout(() => { suppressClick = false; }, 60);
+  if(!d.active){ return; }                                // simple toucher : rien ne se passe
   const v = releaseVelocity(d.samples);
   const swiped = e.type !== 'pointercancel' && Math.abs(v) >= PEEK.flickSpeed && Math.abs(d.dx) >= PEEK.minDx;
   if(swiped) dismissTop(v < 0 ? -1 : 1);
@@ -1078,16 +1046,15 @@ document.addEventListener('keydown', e => {
   if(state !== 'stack' || busy) return;
   if(e.target.closest && e.target.closest('button, input')) return;
   if(e.key === 'ArrowLeft'){ e.preventDefault(); dismissTop(-1); }
-  else if(['ArrowRight','Enter',' '].includes(e.key)){ e.preventDefault(); dismissTop(1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); dismissTop(1); }
 });
 
 /* =====================================================================
-   12. ÉCRAN DE RÉSUMÉ
+   12. ÉCRAN DE RÉSUMÉ (affiché automatiquement après la 5e carte)
    ===================================================================== */
 async function showSummary(){
   state = 'summary'; busy = true;
-  arena.classList.remove('can-next');
-  skipBtn.hidden = true; dotsEl.hidden = true;
+  dotsEl.hidden = true;
   await sleep(RM ? 0 : 200);
   await play(arena, [{opacity:1}, {opacity:0}], {duration: RM ? 1 : 320});
   arena.classList.add('hidden');
@@ -1104,20 +1071,11 @@ async function showSummary(){
   busy = false; setBusyTabs(false);
 }
 
-skipBtn.addEventListener('click', () => {
-  if(state !== 'stack' || busy) return;
-  clearLegendFx(); stackEl.classList.remove('lift');
-  cancelAnimationFrame(springRaf); setTilt(0);
-  idx = cards.length; updateDots();
-  showSummary();
-});
-
 /* =====================================================================
    13. NOUVEAU BOOSTER
    ===================================================================== */
 function resetPackVisuals(){
-  cancelWaapi(pack);
-  partTop.classList.remove('torn');                       // le haut du booster revient en place (sans transition)
+  cancelWaapi(pack);                                      // annule les animations des deux morceaux : ils reviennent en place
   pack.classList.remove('zoomed', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
 }
@@ -1158,7 +1116,7 @@ const searchEl = $('#search'), sclear = $('#sclear');
 let filter = 'all', query = '';
 let shelfRows = [], shelfTotalRows = 0, shelfShown = 0;
 
-const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const nameCache = new Map();
 const normTitle = c => { let n = nameCache.get(c.id); if(n === undefined){ n = norm(c.title); nameCache.set(c.id, n); } return n; };
 
