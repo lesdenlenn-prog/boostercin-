@@ -750,11 +750,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    1. RÉGLAGES
    ===================================================================== */
 const TIERS = [
-  {id:'legendary', label:'Légendaire',  pages:[1,5],     p:0.005},
-  {id:'epic',      label:'Épique',      pages:[6,30],    p:0.025},
-  {id:'rare',      label:'Rare',        pages:[31,100],  p:0.09},
-  {id:'uncommon',  label:'Peu commune', pages:[101,250], p:0.28},
-  {id:'common',    label:'Commune',     pages:[251,500], p:0.60}
+  // 30 000 films (1 500 pages de 20), chaque rareté agrandie ×3 par rapport à la version à 10 000 films
+  {id:'legendary', label:'Légendaire',  pages:[1,15],     p:0.005},   //    300 films (rangs 1 à 300)
+  {id:'epic',      label:'Épique',      pages:[16,90],    p:0.025},   //  1 500 films (301 à 1 800)
+  {id:'rare',      label:'Rare',        pages:[91,300],   p:0.09},    //  4 200 films (1 801 à 6 000)
+  {id:'uncommon',  label:'Peu commune', pages:[301,750],  p:0.28},    //  9 000 films (6 001 à 15 000)
+  {id:'common',    label:'Commune',     pages:[751,1500], p:0.60}     // 15 000 films (15 001 à 30 000)
 ];
 const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
 
@@ -824,14 +825,54 @@ async function tmdb(path, params = {}, keyOverride){
   return r.json();
 }
 
+/* TMDB limite /discover à 500 pages (10 000 films) par requête. Pour aller jusqu'à 1 500 pages, le classement
+   est découpé en « segments » de 500 pages :
+     segment 0 = pages   1 à  500 : requête normale
+     segment 1 = pages 501 à 1000 : même requête + vote_count.lte = nb de votes du dernier film du segment 0
+     segment 2 = pages 1001 à 1500 : idem avec le dernier film du segment 1
+   Ces seuils coûtent 1 requête chacun ; ils sont gardés 7 jours dans le navigateur et préchargés au démarrage.
+   (Les films à égalité pile sur un seuil peuvent apparaître des deux côtés : ils restent dans la même rareté.) */
+const SEG_PAGES = 500, THRESH_TTL = 7 * 24 * 3600 * 1000;
+let thresholds = store.get('vc_thresholds', null);
+if(!thresholds || Date.now() - thresholds.t > THRESH_TTL) thresholds = {t: Date.now(), v: []};
+const threshInflight = new Map();
 const pageCache = new Map();
-async function getPage(page){
+
+function discover(local, lte){
+  const params = {sort_by:'vote_count.desc', include_adult:'false', language:'fr-FR', page:local};
+  if(lte != null) params['vote_count.lte'] = lte;
+  return tmdb('/discover/movie', params);
+}
+function getThreshold(s){                      // s ≥ 1 : nb de votes du dernier film du segment s-1
+  if(thresholds.v[s] != null) return Promise.resolve(thresholds.v[s]);
+  if(threshInflight.has(s)) return threshInflight.get(s);
+  const p = (async () => {
+    const lte = s > 1 ? await getThreshold(s - 1) : null;
+    const d = await discover(SEG_PAGES, lte);
+    const last = d.results[d.results.length - 1];
+    if(!last) throw new Error('Classement TMDB incomplet. Réessaie dans un instant.');
+    thresholds.v[s] = last.vote_count;
+    store.set('vc_thresholds', thresholds);
+    return last.vote_count;
+  })();
+  threshInflight.set(s, p);
+  p.then(() => threshInflight.delete(s), () => threshInflight.delete(s));
+  return p;
+}
+async function getPage(page){                  // page globale : 1 à 1 500
   if(pageCache.has(page)) return pageCache.get(page);
-  const d = await tmdb('/discover/movie', {sort_by:'vote_count.desc', include_adult:'false', language:'fr-FR', page});
+  const seg = Math.floor((page - 1) / SEG_PAGES), local = (page - 1) % SEG_PAGES + 1;
+  const lte = seg ? await getThreshold(seg) : null;
+  let d = await discover(local, lte);
+  if(!d.results.length && d.total_pages){       // sécurité si TMDB renvoie moins de pages que prévu
+    d = await discover(randInt(1, Math.min(d.total_pages, SEG_PAGES)), lte);
+  }
   const films = d.results.map((m,i) => ({...m, rank:(page-1)*20 + i + 1}));
   pageCache.set(page, films);
   return films;
 }
+// préchargement discret des seuils pour que le 1er booster ne les attende pas
+function warmThresholds(){ if(store.get('tmdb_key','')) getThreshold(Math.ceil(TIERS[TIERS.length-1].pages[1] / SEG_PAGES) - 1).catch(() => {}); }
 
 const demoOn = () => store.get('demo', false);
 function pickTier(noCommon = false){
@@ -871,11 +912,25 @@ function prefetchBooster(){
    4. COLLECTION (données)
    ===================================================================== */
 const getCol = () => store.get('collection', {});
+
+// Passage à 30 000 films : les cartes déjà obtenues sont reclassées d'après leur rang
+// (ex. un film classé 250e, auparavant Épique, devient Légendaire). Fait une seule fois.
+function tierForRank(rank){
+  const page = Math.ceil(rank / 20);
+  return (TIERS.find(t => page >= t.pages[0] && page <= t.pages[1]) || TIERS[TIERS.length - 1]).id;
+}
+(function migrateRarity(){
+  if(store.get('rarity_model', 1) >= 2) return;
+  const col = getCol();
+  Object.values(col).forEach(c => { if(c.rank) c.rarity = tierForRank(c.rank); });
+  store.set('collection', col);
+  store.set('rarity_model', 2);
+})();
 function addToCol(cards){
   const col = getCol();
   const out = cards.map(c => {
     const isNew = !col[c.id];
-    col[c.id] = isNew ? {...c, count:1} : {...col[c.id], count: col[c.id].count + 1};
+    col[c.id] = isNew ? {...c, count:1} : {...col[c.id], ...c, count: col[c.id].count + 1};   // rang et rareté mis à jour à chaque nouveau tirage
     return {...c, isNew};
   });
   store.set('collection', col);
@@ -1672,6 +1727,7 @@ $('#keyForm').addEventListener('submit', async e => {
   try{
     await tmdb('/configuration', {}, key);
     store.set('tmdb_key', key); $('#keyInput').value = ''; st.textContent = '';
+    warmThresholds();
     refreshKeyState();
   }catch(err){
     st.textContent = err.name === 'TypeError' ? 'Impossible de joindre TMDB. Vérifie ta connexion.' : err.message;
@@ -1684,6 +1740,7 @@ $('#resetCol').addEventListener('click', () => {
 $('#demoBtn').addEventListener('click', () => { store.set('demo', !demoOn()); updateDemoBtn(); });
 
 refreshKeyState();
+warmThresholds();
 </script>
 </body>
 </html>
