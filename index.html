@@ -285,7 +285,22 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    carte cerclée de bleu glacier / violet, explosion de lumière chaude (jaune doré → orange → rouge bordeaux).
    Toujours uniquement transform / opacity animés.
    ===================================================================== */
-.scard.is-ultra .lg-back{box-shadow:0 0 0 1.5px var(--ultra),0 0 0 3.5px var(--ultra-out),inset 0 0 0 5px #120904,inset 0 0 0 6px rgba(182,209,252,.55),inset 0 0 30px rgba(255,170,60,.2)}
+.scard.is-ultra .lg-back{
+  background:radial-gradient(120% 80% at 50% 38%,#f7fbff 0,#d9e8ff 30%,#b6d1fc 62%,#8eaef0 100%);
+  box-shadow:0 0 0 1.5px var(--ultra),0 0 0 3.5px var(--ultra-out),
+    0 0 22px 6px rgba(91,30,255,.9),0 0 54px 14px rgba(140,110,255,.6),0 0 90px 26px rgba(182,209,252,.35),   /* très forte lueur */
+    inset 0 0 0 5px rgba(255,255,255,.55),inset 0 0 0 6.5px var(--ultra-out),inset 0 0 34px rgba(91,30,255,.35)}
+.scard.is-ultra .lg-back::before{border-color:rgba(91,30,255,.5);
+  background:repeating-linear-gradient(45deg,rgba(91,30,255,.09) 0 2px,transparent 2px 12px),
+             repeating-linear-gradient(-45deg,rgba(91,30,255,.09) 0 2px,transparent 2px 12px)}
+.scard.is-ultra .lg-back-emblem::before{background:radial-gradient(circle closest-side,rgba(255,255,255,.95),rgba(182,209,252,0))}
+.scard.is-ultra .lg-back-shine{background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.7) 50%,transparent 68%)}
+/* la lueur bat doucement (opacité seule) : visible même quand la carte attend sous les autres */
+.scard.is-ultra .lg-back-glow{position:absolute;inset:-14%;z-index:-1;border-radius:24px;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(150,120,255,.75),rgba(91,30,255,.35) 55%,rgba(91,30,255,0));
+  animation:ultra-beat 1.6s ease-in-out infinite}
+@keyframes ultra-beat{0%,100%{opacity:.55}50%{opacity:1}}
+.scard.lg-revealed .lg-back-glow{display:none}
 .scard.is-ultra .lg-aura{inset:-60%;
   background:radial-gradient(circle closest-side,rgba(255,250,205,.95) 0,rgba(255,214,90,.88) 45%,rgba(255,130,50,.6) 62%,rgba(200,30,60,.3) 80%,rgba(120,10,50,0) 100%)}
 /* anticipation : en plus du tremblement, la carte « gonfle » doucement */
@@ -335,7 +350,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .recapwrap h2{margin:0 0 2px;font-size:1.4rem;letter-spacing:-.01em}
 .recapwrap .tally{margin:0 0 14px;color:var(--muted)}
 .recap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
-.recap .card{cursor:pointer;width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
+.recap .rcard{position:relative;isolation:isolate;width:calc((100% - 24px)/3);--uh-in:6.5px;   /* 1,5 px glacier + 2 px violet + 3 px de néon */
+  animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
+.recap .card{cursor:pointer;width:100%}
+
+/* =====================================================================
+   HALO NÉON ROTATIF DES ULTRA-LÉGENDAIRES (Vidéothèque + résumé du booster)
+   Un conic-gradient chaud (doré → orange → rouge → bordeaux) tourne derrière la carte.
+   Le conteneur, à coins arrondis et overflow:hidden, ne dépasse la carte que de quelques px :
+   seul ce fin liseré reste visible autour du contour. On n'anime que transform (rotation) → très léger.
+   ===================================================================== */
+.uhalo{position:absolute;inset:calc(var(--uh-in) * -1);z-index:-2;pointer-events:none;overflow:hidden;
+  border-radius:calc(12px + var(--uh-in));
+  box-shadow:0 0 10px 1px rgba(255,170,60,.55),0 0 24px 4px rgba(210,40,70,.32)}   /* lueur néon fixe */
+.uhalo>i{position:absolute;left:50%;top:50%;width:250%;aspect-ratio:1;
+  background:conic-gradient(from 0deg,
+    rgba(120,10,50,0) 0deg,#8a0f3a 40deg,#e0304f 85deg,#ff8a3c 125deg,#ffd25a 160deg,#fffbe0 176deg,rgba(255,250,220,0) 180deg,
+    rgba(120,10,50,0) 180deg,#8a0f3a 220deg,#e0304f 265deg,#ff8a3c 305deg,#ffd25a 340deg,#fffbe0 356deg,rgba(255,250,220,0) 360deg);
+  animation:uh-spin 3.2s linear infinite;will-change:transform}
+@keyframes uh-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+#screen.im-open .uhalo>i{animation-play-state:paused}   /* sur-menu ouvert : rien ne tourne sous le flou */
 @keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
 .recap .card.r-legendary::after,.recap .card.r-ultra::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
@@ -492,6 +526,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .slots{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:var(--gap);
   padding:22px calc(var(--wall) + 4px) calc(var(--board)*.5)}
 .slot{position:relative;width:calc(100% * var(--cardscale));justify-self:center}
+.slot[data-r="ultra"]{isolation:isolate;--uh-gap:5px;--uh-in:calc(var(--ring) + var(--uh-gap))}   /* 2 px violet + 3 px néon */
 .slot.empty{visibility:hidden}
 .slot::after{content:'';position:absolute;left:4%;right:4%;bottom:-5px;height:11px;z-index:-1;
   background:radial-gradient(ellipse closest-side,rgba(0,3,28,.85),rgba(0,3,28,0))}
@@ -517,9 +552,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   box-shadow:0 0 0 var(--ring) var(--rc)}   /* juste le contour de rareté : il se fond dans la languette de même couleur */
 /* Ultra sélectionnée : le sur-contour violet est tracé autour de la carte ET de la languette d'un seul trait
    (4 ombres nettes décalées de 2 px), puis le halo blanc habituel */
-.slot.sel[data-r="ultra"]{filter:drop-shadow(2px 0 0 var(--ultra-out)) drop-shadow(-2px 0 0 var(--ultra-out)) drop-shadow(0 2px 0 var(--ultra-out)) drop-shadow(0 -2px 0 var(--ultra-out))
-  drop-shadow(0 0 1.5px rgba(255,255,255,.85)) drop-shadow(0 0 10px rgba(255,255,255,.4))}
-.slot.lifted .card,.slot.lifted .infobtn,.recap .card.lifted{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
+/* Ultra sélectionnée : UN seul contour violet autour du bloc carte + languette.
+   Un calque (::before) épouse exactement le bloc (carte + son liseré glacier, languette comprise) ;
+   son box-shadow trace le violet tout autour, sans coupure à la jointure. Le néon rotatif suit le même bloc. */
+.slot.sel[data-r="ultra"]::before{content:'';position:absolute;z-index:-1;pointer-events:none;
+  left:calc(var(--ring) * -1);right:calc(var(--ring) * -1);
+  top:calc(-3px - var(--ring));bottom:-37px;                         /* carte relevée de 3 px ; languette : 40 px - 3 px */
+  border-radius:calc(12px + var(--ring));
+  box-shadow:0 0 0 2px var(--ultra-out)}
+.slot.sel[data-r="ultra"] .uhalo{top:calc(-3px - var(--uh-in));bottom:calc(-37px - var(--uh-gap))}
+.slot.lifted .uhalo,.slot.lifted::before{visibility:hidden}
+.slot.lifted .card,.slot.lifted .infobtn,.recap .rcard.lifted{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
 
 /* Languette « Infos » : prolongement du bas de la carte.
    Même largeur que la carte + son contour, haut caché SOUS la carte (12 px = rayon des coins) → aucune jointure visible,
@@ -643,7 +686,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   .pack-zoom,.scard{transition-duration:.01s}
   .pack-float,.sheen,.gold,.glint,.scard .card::before,.lg-rays,.lg-rays2,.lg-glint,.lg-back-emblem svg,.lg-back-shine,.ice{animation:none !important}
   .scard.lg-tease .shaker{animation:none}
-  .scard.fx .card::after,.recap .card{animation:none !important}
+  .scard.fx .card::after,.recap .rcard,.uhalo>i,.scard.is-ultra .lg-back-glow{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
 }
 </style>
@@ -662,7 +705,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <circle cx="71.65" cy="62.5" r="9" fill="#000"/><circle cx="50" cy="75" r="9" fill="#000"/>
       <circle cx="28.35" cy="62.5" r="9" fill="#000"/><circle cx="28.35" cy="37.5" r="9" fill="#000"/>
     </mask>
+    <linearGradient id="iceGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#b6d1fc"/><stop offset="1" stop-color="#5b1eff"/>
+    </linearGradient>
   </defs>
+  <symbol id="reel-ice" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="46" fill="url(#iceGrad)" mask="url(#reelMask)"/>
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#5b1eff" stroke-opacity=".8" stroke-width="2"/>
+    <circle cx="50" cy="50" r="14" fill="none" stroke="#5b1eff" stroke-opacity=".6" stroke-width="1.5"/>
+  </symbol>
   <symbol id="reel" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="46" fill="url(#goldGrad)" mask="url(#reelMask)"/>
     <circle cx="50" cy="50" r="46" fill="none" stroke="#fff2c2" stroke-opacity=".6" stroke-width="1"/>
@@ -1165,6 +1216,8 @@ window.addEventListener('resize', () => { if(els.length) layoutStack(); });
 
 // Dos de carte : la légendaire reste « face cachée » jusqu'au flash
 const LG_BACK = `<div class="lg-back"><div class="lg-back-emblem"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg></div><div class="lg-back-shine"></div></div>`;
+// Dos Ultra : bleu glacier, bords violets, bobine glacée et lueur qui bat (visible dès qu'elle est dans la pile)
+const ULTRA_BACK = `<div class="lg-back-glow"></div><div class="lg-back"><div class="lg-back-emblem"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel-ice"/></svg></div><div class="lg-back-shine"></div></div>`;
 
 function buildStack(){
   deck.innerHTML = '';
@@ -1178,7 +1231,7 @@ function buildStack(){
     el.style.transform = stackTransform(i);
     // Les éléments de la révélation (aura, dos de carte, éclat) ne sont ajoutés QUE pour les légendaires
     el.innerHTML = `${lg ? '<div class="lg-aura"></div>' : ''}
-      <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}${lg ? LG_BACK : ''}</div></div>`;
+      <div class="lifter"><div class="shaker">${cardHTML(c, {isNew:c.isNew, hi:true})}${c.rarity === 'ultra' ? ULTRA_BACK : (lg ? LG_BACK : '')}</div></div>`;
     if(lg) el.querySelector('.card').insertAdjacentHTML('beforeend', '<span class="lg-glint"></span>');
     deck.appendChild(el);
     return el;
@@ -1444,7 +1497,7 @@ async function showSummary(){
   arena.classList.add('hidden');
 
   $('#recap').innerHTML = cards.map((c, i) =>
-    cardHTML(c, {isNew:c.isNew, hi:true}).replace('<div class="card', `<div style="--i:${i}" data-i="${i}" class="card`)).join('');
+    `<div class="rcard" style="--i:${i}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {isNew:c.isNew, hi:true}).replace('<div class="card', `<div data-i="${i}" class="card`)}</div>`).join('');
   const counts = TIERS.map(t => ({t, n: cards.filter(c => c.rarity === t.id).length})).filter(x => x.n);
   $('#tally').textContent = counts.map(x => `${x.n} ${x.t.label.toLowerCase()}${x.n > 1 ? 's' : ''}`).join(', ');
   recapWrap.classList.remove('hidden');
@@ -1521,7 +1574,7 @@ function chunk(list, n){
 function rowHTML(i){
   const row = shelfRows[i] || [];
   const slots = row.length
-    ? row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
+    ? row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {count:c.count, lazy:true})}</div>`).join('')
     : '<div class="slot empty"><div class="card"></div></div>';
   return `<div class="srow"><div class="niche">
     <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
@@ -1761,6 +1814,7 @@ async function openInfo(liftEl, cardEl, c, onDone){
   const src = cardEl.getBoundingClientRect();
   const dst = imCard.getBoundingClientRect();
   liftEl.classList.add('lifted');
+  screenEl.classList.add('im-open');
   void infoModal.offsetWidth;
   infoModal.classList.add('on');
   if(!RM) play(imCard, [{transform:flip(src, dst)}, {transform:'none'}], {duration:460, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
@@ -1791,6 +1845,7 @@ async function closeInfo(instant = false){
   infoModal.classList.add('hidden');
   imCard.innerHTML = '';
   liftEl.classList.remove('lifted');
+  screenEl.classList.remove('im-open');
   if(onDone) onDone();
   imBusy = false;
 }
@@ -1809,7 +1864,7 @@ $('#recap').addEventListener('click', e => {
   const c = cards[+el.dataset.i];
   if(!c) return;
   const owned = getCol()[c.id];                       // nombre d'exemplaires à jour (absent en mode démo)
-  openInfo(el, el, owned ? {...c, ...owned} : c);
+  openInfo(el.closest('.rcard'), el, owned ? {...c, ...owned} : c);
 });
 
 /* =====================================================================
