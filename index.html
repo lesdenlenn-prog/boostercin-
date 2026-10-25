@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#12070b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,8 @@
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none !important}
 .hidden{display:none !important}
-html{height:100%;-webkit-text-size-adjust:100%}
+/* Pas de zoom au double-tap : « manipulation » garde le défilement mais supprime le zoom et le délai de 300 ms */
+html{height:100%;-webkit-text-size-adjust:100%;touch-action:manipulation}
 html,body{margin:0;background:var(--bg);color:var(--text)}
 body{
   position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;
@@ -279,7 +280,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .recapwrap h2{margin:0 0 2px;font-size:1.4rem;letter-spacing:-.01em}
 .recapwrap .tally{margin:0 0 14px;color:var(--muted)}
 .recap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
-.recap .card{width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
+.recap .card{cursor:pointer;width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
 @keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
 .recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
@@ -458,7 +459,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .slot.sel .card,.slot.sel .card.r-epic,.slot.sel .card.r-legendary{
   z-index:1;transform:translateY(-3px);
   box-shadow:0 0 0 var(--ring) var(--rc)}   /* juste le contour de rareté : il se fond dans la languette de même couleur */
-.slot.lifted .card,.slot.lifted .infobtn{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
+.slot.lifted .card,.slot.lifted .infobtn,.recap .card.lifted{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
 
 /* Languette « Infos » : prolongement du bas de la carte.
    Même largeur que la carte + son contour, haut caché SOUS la carte (12 px = rayon des coins) → aucune jointure visible,
@@ -1357,7 +1358,7 @@ async function showSummary(){
   arena.classList.add('hidden');
 
   $('#recap').innerHTML = cards.map((c, i) =>
-    cardHTML(c, {isNew:c.isNew, hi:true}).replace('<div class="card', `<div style="--i:${i}" class="card`)).join('');
+    cardHTML(c, {isNew:c.isNew, hi:true}).replace('<div class="card', `<div style="--i:${i}" data-i="${i}" class="card`)).join('');
   const counts = TIERS.map(t => ({t, n: cards.filter(c => c.rarity === t.id).length})).filter(x => x.n);
   $('#tally').textContent = counts.map(x => `${x.n} ${x.t.label.toLowerCase()}${x.n > 1 ? 's' : ''}`).join(', ');
   recapWrap.classList.remove('hidden');
@@ -1548,7 +1549,11 @@ function selectSlot(slot){
 
 viewCol.addEventListener('click', e => {
   const btn = e.target.closest('.infobtn');
-  if(btn){ openInfo(btn.closest('.slot')); return; }
+  if(btn){
+    const slot = btn.closest('.slot');
+    openInfo(slot, slot.querySelector('.card'), getCol()[slot.dataset.id], clearSel);   // fermeture → désélection
+    return;
+  }
   const slot = e.target.closest('.slot:not(.empty)');
   if(slot){ selectSlot(slot); return; }
   if(!e.target.closest('.shead, .sfoot')) clearSel();   // appui dans le vide de l'étagère : désélection
@@ -1652,21 +1657,24 @@ function fillRating(d){
   }
 }
 
-async function openInfo(slot){
-  if(imOpen || imBusy) return;
-  const c = getCol()[slot.dataset.id];
-  if(!c) return;
-  imOpen = {slot, c};
+/* Sur-menu réutilisable : on lui passe
+     liftEl : l'élément masqué pendant que la carte est « sortie » (le slot en Vidéothèque, la carte elle-même dans le résumé)
+     cardEl : la carte d'origine (point de départ et de retour de l'animation)
+     c      : les données du film
+     onDone : appelé à la fermeture (ex. désélection en Vidéothèque) */
+async function openInfo(liftEl, cardEl, c, onDone){
+  if(imOpen || imBusy || !c || !cardEl) return;
+  imOpen = {liftEl, cardEl, c, onDone};
 
   imCard.innerHTML = cardHTML(c, {count:c.count});
   fillPanel(c, null);
   infoModal.classList.remove('hidden');
   imScroll.scrollTop = 0;
 
-  // la carte « décolle » de l'étagère et vient se placer en grand en haut de l'écran
-  const src = slot.querySelector('.card').getBoundingClientRect();
+  // la carte « décolle » de sa place et vient se placer en grand en haut de l'écran
+  const src = cardEl.getBoundingClientRect();
   const dst = imCard.getBoundingClientRect();
-  slot.classList.add('lifted');
+  liftEl.classList.add('lifted');
   void infoModal.offsetWidth;
   infoModal.classList.add('on');
   if(!RM) play(imCard, [{transform:flip(src, dst)}, {transform:'none'}], {duration:460, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
@@ -1683,13 +1691,12 @@ async function openInfo(slot){
 
 async function closeInfo(instant = false){
   if(!imOpen || imBusy) return;
-  const {slot} = imOpen;
+  const {liftEl, cardEl, onDone} = imOpen;
   imOpen = null; imBusy = true;
   infoModal.classList.remove('on');
-  const shelfCard = slot.isConnected && slot.querySelector('.card');
-  if(!instant && !RM && shelfCard){
-    // la carte retourne à sa place sur l'étagère pendant que le flou se dissipe
-    const from = imCard.getBoundingClientRect(), to = shelfCard.getBoundingClientRect();
+  if(!instant && !RM && cardEl.isConnected){
+    // la carte retourne à sa place pendant que le flou se dissipe
+    const from = imCard.getBoundingClientRect(), to = cardEl.getBoundingClientRect();
     await play(imCard, [{transform:'none'}, {transform:flip(to, from)}], {duration:340, easing:'cubic-bezier(.4,0,.2,1)'});
   }else if(!instant){
     await sleep(200);
@@ -1697,8 +1704,8 @@ async function closeInfo(instant = false){
   cancelWaapi(infoModal);
   infoModal.classList.add('hidden');
   imCard.innerHTML = '';
-  slot.classList.remove('lifted');
-  clearSel();          // retour à l'étagère : plus de halo, plus de languette « Infos », comme avant le 1er appui
+  liftEl.classList.remove('lifted');
+  if(onDone) onDone();
   imBusy = false;
 }
 
@@ -1708,6 +1715,43 @@ infoModal.addEventListener('click', e => {
   closeInfo();
 });
 document.addEventListener('keydown', e => { if(imOpen && e.key === 'Escape') closeInfo(); });
+
+// Écran de résumé : un simple appui sur l'une des 5 cartes ouvre directement le sur-menu
+$('#recap').addEventListener('click', e => {
+  const el = e.target.closest('.card');
+  if(!el || state !== 'summary') return;
+  const c = cards[+el.dataset.i];
+  if(!c) return;
+  const owned = getCol()[c.id];                       // nombre d'exemplaires à jour (absent en mode démo)
+  openInfo(el, el, owned ? {...c, ...owned} : c);
+});
+
+/* =====================================================================
+   15 quinquies. ANTI-ZOOM TACTILE (double-tap et pincement)
+   touch-action ne suffit pas partout : Safari iOS peut encore zoomer sur deux appuis rapides.
+   Si deux appuis brefs se suivent en moins de 350 ms, on annule le zoom (preventDefault) et on rejoue
+   nous-mêmes le clic, pour que l'appui reste pris en compte (booster, cartes, boutons…).
+   ===================================================================== */
+(function noZoom(){
+  let lastTap = 0, start = null;
+  document.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    start = e.touches.length === 1 ? {x:t.clientX, y:t.clientY, time:e.timeStamp} : null;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const t = e.changedTouches[0];
+    const isTap = start && Math.hypot(t.clientX - start.x, t.clientY - start.y) < 10 && e.timeStamp - start.time < 300;
+    if(isTap && e.timeStamp - lastTap < 350 && e.cancelable && !e.target.closest('input, textarea')){
+      e.preventDefault();                             // bloque le zoom double-tap…
+      e.target.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window,   // …sans perdre le clic
+        clientX:t.clientX, clientY:t.clientY}));       // (dispatchEvent fonctionne aussi sur les icônes SVG, contrairement à .click())
+    }
+    if(isTap) lastTap = e.timeStamp;
+    start = null;
+  }, {passive:false});
+  document.addEventListener('gesturestart', e => e.preventDefault());   // pincement (Safari iOS)
+  document.addEventListener('dblclick', e => e.preventDefault());
+})();
 
 /* =====================================================================
    16. CLÉ TMDB ET RÉGLAGES
