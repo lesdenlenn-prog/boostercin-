@@ -42,11 +42,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Ruban horizontal des 5 pages (carrousel « Clash Royale ») : Magasin · Marché · Accueil · Vidéothèque · Amis.
    La piste fait 500 % de large ; on la décale de -20 % par page. Pendant le glissement (.dragging),
    la transition est coupée pour que la page suive exactement le doigt. */
-.pager{position:absolute;left:0;right:0;top:0;bottom:var(--bar);overflow:hidden}
+.pager{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden}   /* les pages descendent sous la barre : rien de vide quand elle se cache */
 .track{display:flex;width:500%;height:100%;will-change:transform;
   transition:transform .34s cubic-bezier(.22,.8,.24,1)}
 .track.dragging{transition:none}
-.track > .view{position:relative;inset:auto;flex:0 0 20%;width:20%;height:100%}
+.track > .view{position:relative;inset:auto;flex:0 0 20%;width:20%;height:100%;padding-bottom:var(--bar)}
+.track > .view-shop,.track > .view-ph{padding-bottom:calc(var(--bar) + 24px)}
 
 /* ================= BARRE DE NAVIGATION ================= */
 /* 5 onglets : Magasin · Marché · Accueil · Vidéothèque · Amis — toujours visibles, fixés en bas.
@@ -73,7 +74,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   opacity:0;transform:scaleX(.2);transition:opacity .3s ease,transform .3s ease}
 .tabbtn[aria-current="page"]::after{opacity:1;transform:scaleX(1)}
 /* pendant une révélation légendaire, la barre s'efface dans l'obscurité */
-.bottombar{transition:opacity .6s ease}
+.bottombar{transition:opacity .45s ease,transform .45s cubic-bezier(.3,.7,.3,1)}
 .app.lg-dim .bottombar{opacity:.12}
 .tabbtn[aria-current="page"] svg{transform:scale(1.08);stroke-width:2.2}
 .tabbtn:disabled{cursor:not-allowed}
@@ -100,28 +101,35 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* visible sur l'Accueil et le Magasin (classe posée sur .app selon la page affichée, y compris pendant un glissement) */
 .app.hud-on .hud{opacity:1;visibility:visible}
 .app.lg-dim .hud{opacity:.12}                                     /* révélation légendaire : il s'efface dans l'obscurité */
+/* Mode immersif : dès qu'on touche le booster et jusqu'à la sortie du résumé, HUD et barre du bas disparaissent */
+.app.is-opening-booster .hud{opacity:0;visibility:hidden}
+.app.is-opening-booster .bottombar{opacity:0;transform:translateY(100%);pointer-events:none}
 /* Case profil : un peu plus grande, collée au bord gauche, fond presque transparent */
-.hud-profile{min-height:54px;min-width:136px;padding:0 24px 0 20px;border:0;border-radius:0 16px 16px 0;
-  background:rgba(255,255,255,.15);color:#fff3e4;
-  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.25);
-  font-weight:800;font-size:1.45rem;letter-spacing:-.01em;text-align:left;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+/* Même structure que les filtres de la Vidéothèque (pilule, bordure nette 1,5 px), aux couleurs bordeaux de l'Accueil */
+.hud-profile{min-height:46px;min-width:124px;margin-left:12px;padding:0 24px;border:0;border-radius:99px;
+  background:rgba(70,10,22,.55);color:#ffe3da;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.32),0 6px 16px rgba(0,0,0,.28);
+  font-weight:800;font-size:1.25rem;letter-spacing:-.01em;text-shadow:0 1px 2px rgba(0,0,0,.45);
+  transition:opacity .25s ease,visibility .25s}
 .hud-profile:active{transform:translateY(1px)}
-/* Compteurs : deux encadrés empilés, collés au bord droit, fond presque transparent */
-.hud-res{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
-.res{position:relative;display:flex;align-items:center;gap:8px;height:36px;min-width:132px;padding:0 6px 0 22px;
-  border-radius:12px 0 0 12px;background:rgba(255,255,255,.15);color:#fff3e4;
-  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.25)}
+.app[data-page="shop"] .hud-profile{opacity:0;visibility:hidden;pointer-events:none}   /* Magasin : ressources seules */
+/* Compteurs : pilules plus basses que leur icône → l'icône déborde (overflow visible) */
+.hud-res{display:flex;flex-direction:column;gap:12px;align-items:flex-end;margin-right:18px}   /* marge pour l'icône qui déborde à droite */
+.res{position:relative;overflow:visible;display:flex;align-items:center;height:26px;min-width:104px;padding:0 28px 0 19px;
+  border-radius:99px;background:rgba(70,10,22,.55);color:#ffe3da;
+  box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.32),0 6px 16px rgba(0,0,0,.28)}
 /* Le « + » coupe la bordure gauche : son centre est posé exactement sur la ligne (left:0 + translate -50 %) */
 .res-plus{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);
-  width:30px;height:30px;display:grid;place-items:center;padding:0;border:0;border-radius:9px;
+  width:26px;height:26px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;
   background:linear-gradient(180deg,#ffbe55,var(--plus));color:#2a1200;
   box-shadow:inset 0 0 0 1.5px rgba(60,20,0,.55),0 2px 0 rgba(60,20,0,.35),0 3px 8px rgba(0,0,0,.35)}
-.res-plus svg{width:16px;height:16px;stroke:currentColor;stroke-width:3;stroke-linecap:round;fill:none}
+.res-plus svg{width:14px;height:14px;stroke:currentColor;stroke-width:3;stroke-linecap:round;fill:none}
 .res-plus:active{transform:translate(-50%,-50%) scale(.92)}
-.res-val{flex:1;text-align:center;font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.res-val{flex:1;text-align:center;font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 .res-val.bump{animation:res-bump .35s cubic-bezier(.2,1.4,.4,1)}
 @keyframes res-bump{40%{transform:scale(1.3);color:#ffe9a8}}
-.res-ico{flex:none;width:26px;height:26px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+/* Icône plus grande que la pilule (32 px pour 26 px) : elle dépasse en haut, en bas et à droite */
+.res-ico{position:absolute;right:-11px;top:50%;width:32px;height:32px;transform:translateY(-50%);
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
 
 /* =====================================================================
    SUR-MENU PROFIL : panneau opaque presque plein écran, fond flouté
@@ -130,8 +138,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pm-back{position:absolute;inset:0;background:rgba(6,2,4,.4);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .28s ease}
 .pm-panel{position:absolute;
-  inset:max(15vh, calc(env(safe-area-inset-top,0px) + 48px)) 7vw max(15vh, calc(env(safe-area-inset-bottom,0px) + 48px));   /* beaucoup de flou en haut et en bas */
-  max-width:500px;margin:0 auto;border-radius:20px;display:grid;place-items:center;
+  inset:max(10vh, calc(env(safe-area-inset-top,0px) + 36px)) 5vw max(10vh, calc(env(safe-area-inset-bottom,0px) + 36px));   /* flou en haut et en bas */
+  max-width:540px;margin:0 auto;border-radius:20px;display:grid;place-items:center;
   background:linear-gradient(180deg,#2e0f17,#16070b);box-shadow:inset 0 0 0 2px rgba(216,176,138,.55),0 24px 60px rgba(0,0,0,.6);
   opacity:0;transform:scale(.94);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.2,1)}
 .pmodal.on .pm-back{opacity:1}
@@ -218,7 +226,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .arena{
   --pw:min(62vw,250px,36dvh);                 /* largeur du booster (au repos) */
   --cw:calc(var(--pw)*1.17 - 14px);           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
-  position:relative;flex:1;min-height:0}
+  position:relative;flex:1;min-height:0;
+  margin-top:64px}   /* espace sous le HUD : le booster n'est plus collé aux compteurs */
 /* Zones de toucher invisibles (moitié gauche / moitié droite), actives seulement pendant la pile de cartes */
 .zone{display:none;position:absolute;top:0;bottom:0;width:50%;z-index:55;background:transparent;opacity:0;cursor:pointer;
   -webkit-tap-highlight-color:transparent}
@@ -865,7 +874,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
   </section>
 
-  <div class="app hidden hud-on" id="app">
+  <div class="app hidden hud-on" id="app" data-page="home">
     <!-- HUD : profil + ressources (flottent au-dessus des pages Accueil et Magasin) -->
     <div class="hud">
       <button class="hud-profile" id="profileBtn" type="button" aria-haspopup="dialog">Profil</button>
@@ -1332,6 +1341,7 @@ function onPackClick(){
 
 function zoomIn(){
   state = 'zoomed';
+  appEl.classList.add('is-opening-booster');   // mode immersif : HUD + barre du bas masqués
   setCaption('');
   pack.classList.add('zoomed');
   pending = prefetchBooster();
@@ -1390,6 +1400,7 @@ async function openPack(){
 }
 
 function failOpen(msg){
+  appEl.classList.remove('is-opening-booster');
   resetPackVisuals(); clearStack();
   state = 'idle'; pending = null; setBusyTabs(false);
   setCaption(`<span class="err">${esc(msg)}</span>`);
@@ -1710,18 +1721,22 @@ function resetPackVisuals(){
   pack.classList.remove('zoomed', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
 }
-againBtn.addEventListener('click', () => {
+// Sortie du résumé : retour à l'Accueil au repos, l'interface (HUD + barre) réapparaît
+function backToIdle(animate = true){
+  appEl.classList.remove('is-opening-booster');
   againBtn.hidden = true; toColBtn.hidden = true;
   recapWrap.classList.add('hidden'); $('#recap').innerHTML = '';
   arena.getAnimations().forEach(a => a.cancel()); arena.classList.remove('hidden');
   clearStack(); clearLegendFx(); resetPackVisuals();
   state = 'idle'; busy = false; pending = null; cards = []; idx = 0;
   setCaption('');
+  if(!animate) return;
   play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});
   play(packZoom, [{opacity:0, transform:'translateY(40px) scale(.94)'}, {opacity:1, transform:'translateY(0) scale(1)'}],
        {duration: RM ? 1 : 600, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
-});
-toColBtn.addEventListener('click', () => showView('col'));
+}
+againBtn.addEventListener('click', () => backToIdle(true));
+toColBtn.addEventListener('click', () => { backToIdle(false); showView('col'); });
 
 /* =====================================================================
    14. NAVIGATION (barre du bas)
@@ -1732,7 +1747,7 @@ const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:
 const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
 let currentView = 'home', viewIdx = ORDER.indexOf('home');
 
-const canNavigate = () => !(state === 'opening' || state === 'stack');    // pas pendant l'ouverture d'un booster
+const canNavigate = () => !['zoomed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
 function setTrack(idx, dx = 0){
   track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
 }
@@ -1740,6 +1755,7 @@ const HUD_VIEWS = ['home', 'shop'];   // pages où le profil et les ressources s
 function setActiveTab(name){
   tabs.forEach(t => { if(t.dataset.view === name) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   appEl.classList.toggle('hud-on', HUD_VIEWS.includes(name));     // suit aussi la page visée pendant un glissement
+  appEl.dataset.page = name;                                        // ex. Magasin : le profil se masque
 }
 function showView(name){
   const i = ORDER.indexOf(name);
