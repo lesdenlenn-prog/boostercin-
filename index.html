@@ -87,6 +87,69 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .view-ph p{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-size:1.5rem;letter-spacing:.03em;color:#fff1c4;
   text-shadow:0 0 10px rgba(246,196,83,.45)}
 
+/* =====================================================================
+   HUD DE L'ACCUEIL : profil (haut gauche) + ressources (haut droite)
+   En position absolue au-dessus de l'Accueil : ils ne changent ni le centrage du booster ni la barre du bas,
+   et glissent avec la page dans le carrousel.
+   ===================================================================== */
+:root{--sand:#d8b08a;--sand-hi:#ecd0ae;--sand-lo:#b88a62;--ink:#3a120f;--plus:#f59a1b}
+.hud{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:8;pointer-events:none;
+  display:flex;justify-content:space-between;align-items:flex-start}
+.hud > *{pointer-events:auto}
+/* Case profil : collée au bord gauche */
+.hud-profile{min-height:48px;min-width:118px;padding:0 22px 0 18px;border:0;border-radius:0 14px 14px 0;
+  background:linear-gradient(180deg,var(--sand-hi),var(--sand) 60%,var(--sand-lo));color:var(--ink);
+  font-weight:800;font-size:1.3rem;letter-spacing:-.01em;text-align:left;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.35)}
+.hud-profile:active{transform:translateY(1px)}
+/* Compteurs : deux encadrés empilés, collés au bord droit */
+.hud-res{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.res{display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 5px;border-radius:12px 0 0 12px;min-width:136px;
+  background:linear-gradient(180deg,var(--sand-hi),var(--sand) 60%,var(--sand-lo));color:var(--ink);
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.35)}
+.res-plus{flex:none;width:27px;height:27px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;
+  background:linear-gradient(180deg,#ffbe55,var(--plus));color:#2a1200;box-shadow:inset 0 0 0 1.5px rgba(60,20,0,.55),0 2px 0 rgba(60,20,0,.35)}
+.res-plus svg{width:15px;height:15px;stroke:currentColor;stroke-width:3;stroke-linecap:round;fill:none}
+.res-plus:active{transform:translateY(1px)}
+.res-val{flex:1;text-align:center;font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums}
+.res-ico{flex:none;width:26px;height:26px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+
+/* =====================================================================
+   SUR-MENU PROFIL : panneau opaque presque plein écran, fond flouté
+   ===================================================================== */
+.pmodal{position:absolute;inset:0;z-index:85}
+.pm-back{position:absolute;inset:0;background:rgba(6,2,4,.4);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .28s ease}
+.pm-panel{position:absolute;
+  inset:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px);
+  max-width:560px;margin:0 auto;border-radius:20px;display:grid;place-items:center;
+  background:linear-gradient(180deg,#2e0f17,#16070b);box-shadow:inset 0 0 0 2px rgba(216,176,138,.55),0 24px 60px rgba(0,0,0,.6);
+  opacity:0;transform:scale(.94);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.2,1)}
+.pmodal.on .pm-back{opacity:1}
+.pmodal.on .pm-panel{opacity:1;transform:none}
+.pm-title{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-size:2rem;color:#fff1c4;text-shadow:0 0 12px rgba(246,196,83,.4)}
+.pm-close{position:absolute;top:12px;right:12px;width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:12px;
+  background:rgba(255,255,255,.08);color:#f7eee6;box-shadow:inset 0 0 0 1.5px rgba(216,176,138,.45)}
+.pm-close svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;fill:none}
+
+/* =====================================================================
+   MAGASIN
+   ===================================================================== */
+.view-shop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) 20px 24px;
+  background:radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.12),transparent 70%),
+             radial-gradient(120% 80% at 50% 35%,#3a0b13 0%,#16070b 60%,#0b0406 100%)}
+.shop-title{margin:0 0 6px;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:2rem;letter-spacing:.04em;
+  color:#fff1c4;text-shadow:0 0 10px rgba(246,196,83,.45)}
+.shop-btn{width:100%;max-width:320px;min-height:86px;display:flex;align-items:center;gap:16px;padding:0 22px;border:0;border-radius:20px;
+  font-weight:800;font-size:1.15rem;text-align:left;transition:transform .12s ease}
+.shop-btn:active{transform:scale(.97)}
+.shop-btn svg{flex:none;width:48px;height:48px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.shop-btn.reels{color:#2b1403;background:linear-gradient(180deg,#fbeab0,#e8c46a 55%,#c89a3e);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 10px 24px -8px rgba(232,196,106,.6)}
+.shop-btn.gems{color:#fff;background:linear-gradient(180deg,#a66bff,#6d28e8 55%,#4a14b8);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 10px 24px -8px rgba(124,58,237,.7)}
+
 .btn{min-height:46px;border:0;border-radius:12px;padding:0 22px;font-weight:800;color:#2b1403;
   background:linear-gradient(#fbeab0,#e8c46a 55%,#c89a3e);box-shadow:0 6px 18px -6px rgba(232,196,106,.6)}
 .btn.ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 2px var(--line)}
@@ -754,10 +817,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <circle cx="71.65" cy="62.5" r="9" fill="#000"/><circle cx="50" cy="75" r="9" fill="#000"/>
       <circle cx="28.35" cy="62.5" r="9" fill="#000"/><circle cx="28.35" cy="37.5" r="9" fill="#000"/>
     </mask>
+    <linearGradient id="gemGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c79bff"/><stop offset=".5" stop-color="#8a3ffc"/><stop offset="1" stop-color="#5a17c9"/>
+    </linearGradient>
     <linearGradient id="iceGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#b6d1fc"/><stop offset="1" stop-color="#5b1eff"/>
     </linearGradient>
   </defs>
+  <!-- gemme violette taillée (ressource « gemmes ») -->
+  <symbol id="gem" viewBox="0 0 24 24">
+    <path d="M7.6 4.5h8.8a2 2 0 0 1 1.6.8l2.6 3.5a1.6 1.6 0 0 1-.1 2l-7.4 8.7a1.4 1.4 0 0 1-2.2 0l-7.4-8.7a1.6 1.6 0 0 1-.1-2L6 5.3a2 2 0 0 1 1.6-.8z" fill="url(#gemGrad)" stroke="#3b0d8f" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M3.7 9.7h16.6M9.7 4.8 8.6 9.7l3.4 9.2 3.4-9.2-1.1-4.9" fill="none" stroke="#e4ccff" stroke-opacity=".75" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M7.2 6.4 6 8.2" stroke="#fff" stroke-opacity=".8" stroke-width="1.2" stroke-linecap="round"/>
+  </symbol>
   <symbol id="reel-ice" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="46" fill="url(#iceGrad)" mask="url(#reelMask)"/>
     <circle cx="50" cy="50" r="46" fill="none" stroke="#5b1eff" stroke-opacity=".8" stroke-width="2"/>
@@ -788,9 +860,33 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
     <div class="pager" id="pager">
       <div class="track dragging" id="track" style="transform:translateX(-40%)">
-    <section class="view view-ph" id="view-shop" aria-label="Magasin"><p>Menu en construction...</p></section>
+    <section class="view view-shop" id="view-shop" aria-label="Magasin">
+      <h2 class="shop-title">Magasin</h2>
+      <button class="shop-btn reels" type="button" data-reward="reels" data-amount="100">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg><span>Obtenir 100 bobines</span>
+      </button>
+      <button class="shop-btn gems" type="button" data-reward="gems" data-amount="100">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg><span>Obtenir 100 gemmes</span>
+      </button>
+    </section>
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home">
+      <!-- HUD : profil + ressources (flottent au-dessus de l'Accueil) -->
+      <div class="hud">
+        <button class="hud-profile" id="profileBtn" type="button" aria-haspopup="dialog">Profil</button>
+        <div class="hud-res">
+          <div class="res" aria-label="Bobines">
+            <button class="res-plus" type="button" data-goto="shop" aria-label="Obtenir des bobines"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+            <span class="res-val" id="valReels">0</span>
+            <svg class="res-ico" viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>
+          </div>
+          <div class="res" aria-label="Gemmes">
+            <button class="res-plus" type="button" data-goto="shop" aria-label="Obtenir des gemmes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+            <span class="res-val" id="valGems">0</span>
+            <svg class="res-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg>
+          </div>
+        </div>
+      </div>
       <div class="arena" id="arena">
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
         <div class="zone r" data-side="1" aria-hidden="true"></div>
@@ -908,6 +1004,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   </div>
 
   <!-- Sur-menu d'informations : on le ferme en touchant n'importe quelle zone floue (hors carte et hors bloc synopsis) -->
+  <!-- Sur-menu Profil : fermeture par la croix OU par un appui dans le flou autour -->
+  <div class="pmodal hidden" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+    <div class="pm-back"></div>
+    <div class="pm-panel">
+      <button class="pm-close" id="pmClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <p class="pm-title" id="pmTitle">Profil</p>
+    </div>
+  </div>
+
   <div class="infomodal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
     <div class="im-back"></div>
     <div class="im-scroll" id="imScroll">
@@ -1158,7 +1263,8 @@ const appEl = $('#app'), fxBackEl = $('#fxBack');
 const tabs = [...document.querySelectorAll('.tabbtn')];
 
 let state = 'idle';
-let shelfDirty = true;    // la Vidéothèque doit être (re)dessinée avant d'être affichée
+let shelfDirty = true;
+let profileOpen = false;   // sur-menu Profil ouvert    // la Vidéothèque doit être (re)dessinée avant d'être affichée
 let busy = false;
 let idx = 0;
 let cards = [];
@@ -1656,7 +1762,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => track.classList.remove('
 
   pagerEl.addEventListener('touchstart', e => {
     g = null;
-    if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy) return;
+    if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy || profileOpen) return;
     if(e.target.closest('.chips, input')) return;          // les filtres défilent horizontalement : on les laisse faire
     const t = e.touches[0];
     g = {x:t.clientX, y:t.clientY, dx:0, mode:null, w:pagerEl.clientWidth, hover:viewIdx, samples:[{x:t.clientX, t:e.timeStamp}]};
@@ -2021,6 +2127,48 @@ infoModal.addEventListener('click', e => {
   closeInfo();
 });
 document.addEventListener('keydown', e => { if(imOpen && e.key === 'Escape') closeInfo(); });
+
+/* =====================================================================
+   15 sexies. HUD : profil, ressources, magasin
+   ===================================================================== */
+const profileModal = $('#profileModal'), profileBtn = $('#profileBtn');
+function openProfile(){
+  if(profileOpen || !canNavigate()) return;            // pas pendant l'ouverture d'un booster
+  profileOpen = true;
+  profileModal.classList.remove('hidden');
+  void profileModal.offsetWidth;
+  profileModal.classList.add('on');
+  $('#pmClose').focus({preventScroll:true});
+}
+function closeProfile(){
+  if(!profileOpen) return;
+  profileOpen = false;
+  profileModal.classList.remove('on');
+  setTimeout(() => { if(!profileOpen) profileModal.classList.add('hidden'); }, 320);
+  profileBtn.focus({preventScroll:true});
+}
+profileBtn.addEventListener('click', openProfile);
+// Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
+profileModal.addEventListener('click', e => {
+  if(e.target.closest('#pmClose') || !e.target.closest('.pm-panel')) closeProfile();
+});
+document.addEventListener('keydown', e => { if(profileOpen && e.key === 'Escape') closeProfile(); });
+
+// Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
+document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
+
+// Portefeuille : structure prête, valeurs à 0 pour l'instant (l'incrémentation viendra plus tard)
+const wallet = {reels:0, gems:0};
+function renderWallet(){
+  $('#valReels').textContent = wallet.reels.toLocaleString('fr-FR');
+  $('#valGems').textContent = wallet.gems.toLocaleString('fr-FR');
+}
+renderWallet();
+// Magasin : interface seule pour l'instant (data-reward / data-amount prêts pour la future logique)
+document.querySelectorAll('.shop-btn').forEach(b => b.addEventListener('click', () => {
+  buzz(10);
+  // À brancher plus tard : wallet[b.dataset.reward] += +b.dataset.amount; renderWallet();
+}));
 
 // Écran de résumé : un simple appui sur l'une des 5 cartes ouvre directement le sur-menu
 $('#recap').addEventListener('click', e => {
