@@ -39,6 +39,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .app{--bar:calc(62px + env(safe-area-inset-bottom,0px));position:relative;height:100%;max-width:560px;margin:0 auto;overflow:hidden}
 .view{position:absolute;left:0;right:0;top:0;bottom:var(--bar)}
+/* Ruban horizontal des 5 pages (carrousel « Clash Royale ») : Magasin · Marché · Accueil · Vidéothèque · Amis.
+   La piste fait 500 % de large ; on la décale de -20 % par page. Pendant le glissement (.dragging),
+   la transition est coupée pour que la page suive exactement le doigt. */
+.pager{position:absolute;left:0;right:0;top:0;bottom:var(--bar);overflow:hidden}
+.track{display:flex;width:500%;height:100%;will-change:transform;
+  transition:transform .34s cubic-bezier(.22,.8,.24,1)}
+.track.dragging{transition:none}
+.track > .view{position:relative;inset:auto;flex:0 0 20%;width:20%;height:100%}
 
 /* ================= BARRE DE NAVIGATION ================= */
 /* 5 onglets : Magasin · Marché · Accueil · Vidéothèque · Amis — toujours visibles, fixés en bas.
@@ -57,8 +65,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* fins séparateurs verticaux entre onglets inactifs (masqués autour de l'onglet actif) */
 .tabbtn + .tabbtn::before{content:'';position:absolute;left:-2px;top:24%;bottom:24%;width:1px;background:rgba(255,255,255,.14);transition:opacity .3s}
 .tabbtn[aria-current="page"]::before,.tabbtn[aria-current="page"] + .tabbtn::before{opacity:0}
-.tabbtn[aria-current="page"]{flex-grow:1.5;background:var(--legendary);color:#000;
-  box-shadow:0 0 14px rgba(246,196,83,.35)}
+/* Onglet actif : même fond sombre et même couleur claire que les autres ; il s'élargit (flex-grow)
+   et une fine ligne dorée lumineuse apparaît tout en haut, au-dessus de l'icône. */
+.tabbtn[aria-current="page"]{flex-grow:1.5}
+.tabbtn::after{content:'';position:absolute;top:-6px;left:24%;right:24%;height:3px;border-radius:0 0 3px 3px;
+  background:var(--legendary);box-shadow:0 0 8px rgba(246,196,83,.95),0 0 18px rgba(246,196,83,.55);
+  opacity:0;transform:scaleX(.2);transition:opacity .3s ease,transform .3s ease}
+.tabbtn[aria-current="page"]::after{opacity:1;transform:scaleX(1)}
+/* pendant une révélation légendaire, la barre s'efface dans l'obscurité */
+.bottombar{transition:opacity .6s ease}
+.app.lg-dim .bottombar{opacity:.12}
 .tabbtn[aria-current="page"] svg{transform:scale(1.08);stroke-width:2.2}
 .tabbtn:disabled{cursor:not-allowed}
 .tabbtn:disabled:not([aria-current]){opacity:.4}
@@ -770,6 +786,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
   <div class="app hidden" id="app">
 
+    <div class="pager" id="pager">
+      <div class="track dragging" id="track" style="transform:translateX(-40%)">
+    <section class="view view-ph" id="view-shop" aria-label="Magasin"><p>Menu en construction...</p></section>
+    <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home">
       <div class="arena" id="arena">
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
@@ -810,9 +830,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           <button class="btn ghost" id="toColBtn" hidden>Vidéothèque</button>
         </div>
       </div>
+      <!-- voile + rayons de la révélation légendaire : dans l'Accueil, sous la carte soulevée (z-index) -->
+      <div id="fxBack" aria-hidden="true">
+        <div class="veil" id="veil"></div>
+        <div class="lg-rays" id="lgRays"></div>
+        <div class="lg-rays2" id="lgRays2"></div>
+        <div class="lg-rays-fade" id="lgRaysFade"></div>
+      </div>
     </section>
-
-    <section class="view view-col hidden" id="view-col">
+    <section class="view view-col" id="view-col">
       <div class="vhead"><h2 class="vtitle">Vidéothèque</h2></div>
 
       <header class="shead">
@@ -848,10 +874,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <button id="resetCol">Vider ma collection</button>
       </footer>
     </section>
-
-    <section class="view view-ph hidden" id="view-shop" aria-label="Magasin"><p>Menu en construction...</p></section>
-    <section class="view view-ph hidden" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
-    <section class="view view-ph hidden" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
+    <section class="view view-ph" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
+      </div>
+    </div>
 
     <nav class="bottombar" aria-label="Navigation principale">
       <button class="tabbtn" id="tab-shop" data-view="shop">
@@ -901,12 +926,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
   </div>
 
-  <div id="fxBack" aria-hidden="true">
-    <div class="veil" id="veil"></div>
-    <div class="lg-rays" id="lgRays"></div>
-    <div class="lg-rays2" id="lgRays2"></div>
-    <div class="lg-rays-fade" id="lgRaysFade"></div>
-  </div>
   <div id="fxFront" aria-hidden="true">
     <div class="flash" id="flash"></div>
   </div>
@@ -1102,6 +1121,7 @@ function tierForRank(rank){
   store.set('rarity_model', 3);
 })();
 function addToCol(cards){
+  shelfDirty = true;
   const col = getCol();
   const out = cards.map(c => {
     const isNew = !col[c.id];
@@ -1134,9 +1154,11 @@ const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), lgRays = $('#lg
 const againBtn = $('#againBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
+const appEl = $('#app'), fxBackEl = $('#fxBack');
 const tabs = [...document.querySelectorAll('.tabbtn')];
 
 let state = 'idle';
+let shelfDirty = true;    // la Vidéothèque doit être (re)dessinée avant d'être affichée
 let busy = false;
 let idx = 0;
 let cards = [];
@@ -1371,7 +1393,8 @@ function epicMoment(el){
    Version mobile : aucune particule ; uniquement des classes CSS qui animent transform / opacity. */
 async function legendaryMoment(el){
   const ultra = el.classList.contains('is-ultra');
-  const r = el.querySelector('.card').getBoundingClientRect(), scr = screenEl.getBoundingClientRect();
+  const r = el.querySelector('.card').getBoundingClientRect(), scr = screenEl.getBoundingClientRect(), fb = fxBackEl.getBoundingClientRect();
+  const bx = {x: r.left + r.width/2 - fb.left, y: r.top + r.height/2 - fb.top};   // repère du voile/des rayons (dans l'Accueil)
   const fx = {x: r.left + r.width/2 - scr.left, y: r.top + r.height/2 - scr.top};
   const tease = ultra ? TIMING.ultraTease : TIMING.legendTease;
 
@@ -1382,12 +1405,13 @@ async function legendaryMoment(el){
   lgRaysFade.classList.remove('ultra');
 
   // les rayons sont centrés sur la carte (positionnés une seule fois, ils ne font ensuite que tourner)
-  [lgRays, lgRays2].forEach(e => { e.style.left = fx.x + 'px'; e.style.top = fx.y + 'px'; });
-  lgRaysFade.style.setProperty('--cx', fx.x + 'px'); lgRaysFade.style.setProperty('--cy', fx.y + 'px');
+  [lgRays, lgRays2].forEach(e => { e.style.left = bx.x + 'px'; e.style.top = bx.y + 'px'; });
+  lgRaysFade.style.setProperty('--cx', bx.x + 'px'); lgRaysFade.style.setProperty('--cy', bx.y + 'px');
 
   // 1. ANTICIPATION : écran très sombre, la carte face cachée tremble de plus en plus vite, la lumière filtre
   stackEl.classList.add('lift');
   veil.classList.add('on');
+  appEl.classList.add('lg-dim');
   lgRays.classList.add('tease'); lgRaysFade.classList.add('on');
   el.style.setProperty('--tease', tease + 'ms');
   el.classList.add('lg-tease');
@@ -1414,7 +1438,7 @@ async function legendaryMoment(el){
 
 // La carte légendaire est passée : les effets s'éteignent en fondu
 function fadeLegendFx(keepVeil = false){
-  if(!keepVeil) veil.classList.remove('on');
+  if(!keepVeil){ veil.classList.remove('on'); appEl.classList.remove('lg-dim'); }
   lgRays.classList.remove('on', 'tease');
   lgRays2.classList.remove('on');
   if(!keepVeil) lgRaysFade.classList.remove('on');
@@ -1587,23 +1611,105 @@ toColBtn.addEventListener('click', () => showView('col'));
 /* =====================================================================
    14. NAVIGATION (barre du bas)
    ===================================================================== */
-// Routage interne : une vue par onglet (data-view du bouton ↔ id de la section)
+// Routage interne : les 5 pages sont côte à côte sur une piste horizontale (#track).
+const ORDER = ['shop', 'market', 'home', 'col', 'friends'];
 const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:'#view-col', friends:'#view-friends'};
-const viewHome = $('#view-home'), viewCol = $('#view-col');
-let currentView = 'home';
-function showView(name){
-  if(!VIEWS[name] || state === 'opening' || state === 'stack') return;
-  if(name === currentView && name !== 'col') return;
-  if(currentView === 'col' || imOpen){ closeInfo(true); clearSel(); }    // on quitte la Vidéothèque proprement
-  Object.entries(VIEWS).forEach(([k, sel]) => $(sel).classList.toggle('hidden', k !== name));
-  tabs.forEach(t => {
-    if(t.dataset.view === name) t.setAttribute('aria-current', 'page');
-    else t.removeAttribute('aria-current');
-  });
-  currentView = name;
-  if(name === 'col') renderShelf();
+const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
+let currentView = 'home', viewIdx = ORDER.indexOf('home');
+
+const canNavigate = () => !(state === 'opening' || state === 'stack');    // pas pendant l'ouverture d'un booster
+function setTrack(idx, dx = 0){
+  track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
 }
-tabs.forEach(t => t.addEventListener('click', () => showView(t.dataset.view)));
+function setActiveTab(name){
+  tabs.forEach(t => { if(t.dataset.view === name) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+}
+function showView(name){
+  const i = ORDER.indexOf(name);
+  if(i < 0 || !canNavigate()) return;
+  if(name !== currentView){
+    if(currentView === 'col' || imOpen){ closeInfo(true); clearSel(); }    // on quitte la Vidéothèque proprement
+    if(name === 'col' && shelfDirty) renderShelf();
+    currentView = name; viewIdx = i;
+    ORDER.forEach((k, j) => { $(VIEWS[k]).inert = j !== i; });          // pages hors écran : non focusables
+  }else if(name === 'col' && shelfDirty){
+    renderShelf();
+  }
+  track.classList.remove('dragging');
+  setTrack(viewIdx);                                                     // glissement animé (transition CSS)
+  setActiveTab(name);
+}
+tabs.forEach(t => t.addEventListener('click', () => showView(t.dataset.view)));   // ordinateur : navigation au clic uniquement
+ORDER.forEach((k, j) => { $(VIEWS[k]).inert = j !== viewIdx; });
+requestAnimationFrame(() => requestAnimationFrame(() => track.classList.remove('dragging')));   // pas d'animation au chargement
+
+/* ---------------------------------------------------------------------
+   Glissement entre les pages : TACTILE UNIQUEMENT (touchstart / touchmove / touchend).
+   Aucun événement souris ici : sur ordinateur, on change de page seulement via la barre du bas.
+   - le doigt est suivi au pixel près (transition coupée pendant le geste)
+   - au relâchement : page suivante/précédente si > 25 % de l'écran ou geste rapide, sinon retour
+   - geste vertical (défilement de la Vidéothèque) : on ne s'en mêle pas
+   --------------------------------------------------------------------- */
+(function pageSwipe(){
+  const SWIPE = {lock:10, ratio:1.2, distance:.25, flick:.35, flickMin:20, edgeResist:.3, velWindow:100};
+  let g = null;
+
+  pagerEl.addEventListener('touchstart', e => {
+    g = null;
+    if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy) return;
+    if(e.target.closest('.chips, input')) return;          // les filtres défilent horizontalement : on les laisse faire
+    const t = e.touches[0];
+    g = {x:t.clientX, y:t.clientY, dx:0, mode:null, w:pagerEl.clientWidth, hover:viewIdx, samples:[{x:t.clientX, t:e.timeStamp}]};
+  }, {passive:true});
+
+  pagerEl.addEventListener('touchmove', e => {
+    if(!g) return;
+    const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if(!g.mode){
+      if(Math.abs(dx) < SWIPE.lock && Math.abs(dy) < SWIPE.lock) return;
+      g.mode = Math.abs(dx) > Math.abs(dy) * SWIPE.ratio ? 'h' : 'v';
+      if(g.mode !== 'h'){ g = null; return; }               // défilement vertical : rien à faire
+      if(shelfDirty) renderShelf();                         // la Vidéothèque est à jour dès qu'elle apparaît
+      track.classList.add('dragging');
+    }
+    if(e.cancelable) e.preventDefault();
+    let d = dx;
+    if((viewIdx === 0 && d > 0) || (viewIdx === ORDER.length - 1 && d < 0)) d *= SWIPE.edgeResist;   // butée élastique
+    d = clamp(d, -g.w, g.w);
+    g.dx = d;
+    g.samples.push({x:t.clientX, t:e.timeStamp});
+    if(g.samples.length > 10) g.samples.shift();
+    setTrack(viewIdx, d);
+    // la barre suit en temps réel : l'onglet de la page la plus visible s'allume
+    const near = clamp(Math.round(viewIdx - d / g.w), 0, ORDER.length - 1);
+    if(near !== g.hover){ g.hover = near; setActiveTab(ORDER[near]); }
+  }, {passive:false});
+
+  function velocity(samples, now){
+    const recent = samples.filter(sm => now - sm.t <= SWIPE.velWindow);
+    if(recent.length < 2) return 0;
+    const a = recent[0], b = recent[recent.length - 1];
+    return (b.x - a.x) / Math.max(1, b.t - a.t);          // px/ms
+  }
+  function end(e){
+    if(!g) return;
+    const d = g; g = null;
+    if(d.mode !== 'h') return;
+    if(e.cancelable) e.preventDefault();                   // pas de « clic fantôme » sur une carte après un glissement
+    let target = viewIdx;
+    if(e.type === 'touchend'){
+      const v = velocity(d.samples, e.timeStamp);
+      if(d.dx < -d.w * SWIPE.distance || (v < -SWIPE.flick && d.dx < -SWIPE.flickMin)) target++;
+      else if(d.dx > d.w * SWIPE.distance || (v > SWIPE.flick && d.dx > SWIPE.flickMin)) target--;
+    }
+    target = clamp(target, 0, ORDER.length - 1);
+    track.classList.remove('dragging');
+    if(target === viewIdx){ setTrack(viewIdx); setActiveTab(currentView); }   // retour élastique sur la page de départ
+    else showView(ORDER[target]);                                             // glissement jusqu'à la page voisine
+  }
+  pagerEl.addEventListener('touchend', end, {passive:false});
+  pagerEl.addEventListener('touchcancel', end);
+})();
 
 /* =====================================================================
    15. VIDÉOTHÈQUE : étagère, filtres, recherche dynamique
@@ -1694,7 +1800,7 @@ function renderShelfBody(){
   updateNotFound();
 }
 
-function renderShelf(){ renderChips(); renderShelfBody(); }
+function renderShelf(){ shelfDirty = false; renderChips(); renderShelfBody(); }
 
 searchEl.addEventListener('input', () => {
   query = searchEl.value;
