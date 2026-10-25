@@ -106,23 +106,25 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .app.is-opening-booster .bottombar{opacity:0;transform:translateY(100%);pointer-events:none}
 /* Case profil : un peu plus grande, collée au bord gauche, fond presque transparent */
 /* Même structure que les filtres de la Vidéothèque (pilule, bordure nette 1,5 px), aux couleurs bordeaux de l'Accueil */
-.hud-profile{min-height:46px;min-width:124px;margin-left:12px;padding:0 24px;border:0;border-radius:99px;
-  background:rgba(70,10,22,.55);color:#ffe3da;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.32),0 6px 16px rgba(0,0,0,.28);
+.hud-profile{min-height:46px;min-width:124px;margin-left:0;padding:0 24px 0 20px;   /* collé au bord gauche de l'écran */
+  border:1.5px solid rgba(255,140,120,.3);border-left:0;border-radius:0 99px 99px 0;     /* coins gauches droits : il fusionne avec le bord */
+  background:rgba(30,3,9,.8);color:#ffe3da;box-shadow:0 6px 16px rgba(0,0,0,.32);
   font-weight:800;font-size:1.25rem;letter-spacing:-.01em;text-shadow:0 1px 2px rgba(0,0,0,.45);
   transition:opacity .25s ease,visibility .25s}
 .hud-profile:active{transform:translateY(1px)}
 .app[data-page="shop"] .hud-profile{opacity:0;visibility:hidden;pointer-events:none}   /* Magasin : ressources seules */
 /* Compteurs : pilules plus basses que leur icône → l'icône déborde (overflow visible) */
 .hud-res{display:flex;flex-direction:column;gap:12px;align-items:flex-end;margin-right:18px}   /* marge pour l'icône qui déborde à droite */
-.res{position:relative;overflow:visible;display:flex;align-items:center;height:26px;min-width:104px;padding:0 28px 0 19px;
-  border-radius:99px;background:rgba(70,10,22,.55);color:#ffe3da;
+.res{position:relative;overflow:visible;display:flex;align-items:center;height:26px;min-width:104px;padding:0 28px 0 15px;
+  border-radius:99px;background:rgba(30,3,9,.8);color:#ffe3da;
   box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.32),0 6px 16px rgba(0,0,0,.28)}
 /* Le « + » coupe la bordure gauche : son centre est posé exactement sur la ligne (left:0 + translate -50 %) */
 .res-plus{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);
-  width:26px;height:26px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;
+  width:20px;height:20px;display:grid;place-items:center;padding:0;border:0;border-radius:6px;
   background:linear-gradient(180deg,#ffbe55,var(--plus));color:#2a1200;
-  box-shadow:inset 0 0 0 1.5px rgba(60,20,0,.55),0 2px 0 rgba(60,20,0,.35),0 3px 8px rgba(0,0,0,.35)}
-.res-plus svg{width:14px;height:14px;stroke:currentColor;stroke-width:3;stroke-linecap:round;fill:none}
+  box-shadow:inset 0 0 0 1.5px #4a1a00,0 2px 0 rgba(40,12,0,.6),0 2px 6px rgba(0,0,0,.4)}   /* contour assombri */
+.res-plus svg{width:10px;height:10px;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;fill:none}
+.res-plus::before{content:'';position:absolute;inset:-9px}   /* zone de toucher élargie (invisible) malgré la petite taille */
 .res-plus:active{transform:translate(-50%,-50%) scale(.92)}
 .res-val{flex:1;text-align:center;font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 .res-val.bump{animation:res-bump .35s cubic-bezier(.2,1.4,.4,1)}
@@ -227,7 +229,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   --pw:min(62vw,250px,36dvh);                 /* largeur du booster (au repos) */
   --cw:calc(var(--pw)*1.17 - 14px);           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
   position:relative;flex:1;min-height:0;
-  margin-top:64px}   /* espace sous le HUD : le booster n'est plus collé aux compteurs */
+  margin-top:96px}   /* espace sous le HUD : le booster est bien éloigné des compteurs */
 /* Zones de toucher invisibles (moitié gauche / moitié droite), actives seulement pendant la pile de cartes */
 .zone{display:none;position:absolute;top:0;bottom:0;width:50%;z-index:55;background:transparent;opacity:0;cursor:pointer;
   -webkit-tap-highlight-color:transparent}
