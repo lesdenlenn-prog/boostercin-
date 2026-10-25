@@ -41,17 +41,35 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .view{position:absolute;left:0;right:0;top:0;bottom:var(--bar)}
 
 /* ================= BARRE DE NAVIGATION ================= */
-.bottombar{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;height:var(--bar);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  background:rgba(14,6,10,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-  border-top:1px solid rgba(255,255,255,.07)}
-.tabbtn{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  background:none;border:0;color:var(--muted);font-weight:800;font-size:.72rem;letter-spacing:.01em;transition:color .2s}
-.tabbtn svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.tabbtn[aria-current="page"]{color:var(--gold-hi)}
-.tabbtn[aria-current="page"]::before{content:'';position:absolute;top:0;left:32%;right:32%;height:2px;border-radius:0 0 3px 3px;
-  background:var(--gold);box-shadow:0 0 10px var(--gold)}
-.tabbtn:disabled{opacity:.4;cursor:not-allowed}
+/* 5 onglets : Magasin · Marché · Accueil · Vidéothèque · Amis — toujours visibles, fixés en bas.
+   Inactif : fond noir, icône + texte clairs. Actif : fond doré (couleur Légendaire), icône + texte noirs,
+   et il s'élargit en douceur (flex-grow 1 → 1.5, effet accordéon). */
+.bottombar{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:stretch;gap:3px;height:var(--bar);
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+  background:#000;border-top:1px solid rgba(255,255,255,.08)}
+.tabbtn{flex:1 1 0;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:0 2px;border:0;border-radius:14px;background:transparent;color:#efe6dc;
+  font-weight:800;font-size:clamp(.54rem,2.45vw,.68rem);letter-spacing:-.01em;
+  transition:flex-grow .3s ease,background-color .3s ease,color .3s ease,box-shadow .3s ease}
+.tabbtn span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabbtn svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .3s ease}
+/* fins séparateurs verticaux entre onglets inactifs (masqués autour de l'onglet actif) */
+.tabbtn + .tabbtn::before{content:'';position:absolute;left:-2px;top:24%;bottom:24%;width:1px;background:rgba(255,255,255,.14);transition:opacity .3s}
+.tabbtn[aria-current="page"]::before,.tabbtn[aria-current="page"] + .tabbtn::before{opacity:0}
+.tabbtn[aria-current="page"]{flex-grow:1.5;background:var(--legendary);color:#000;
+  box-shadow:0 0 14px rgba(246,196,83,.35)}
+.tabbtn[aria-current="page"] svg{transform:scale(1.08);stroke-width:2.2}
+.tabbtn:disabled{cursor:not-allowed}
+.tabbtn:disabled:not([aria-current]){opacity:.4}
+@media (max-width:340px){.tabbtn{font-size:.5rem}.tabbtn svg{width:21px;height:21px}}   /* très petits écrans : « Vidéothèque » tient en entier */
+
+/* Pages « en construction » (Magasin, Marché, Amis) */
+.view-ph{display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;
+  background:radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.12),transparent 70%),
+             radial-gradient(120% 80% at 50% 35%,#3a0b13 0%,#16070b 60%,#0b0406 100%)}
+.view-ph p{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-size:1.5rem;letter-spacing:.03em;color:#fff1c4;
+  text-shadow:0 0 10px rgba(246,196,83,.45)}
 
 .btn{min-height:46px;border:0;border-radius:12px;padding:0 22px;font-weight:800;color:#2b1403;
   background:linear-gradient(#fbeab0,#e8c46a 55%,#c89a3e);box-shadow:0 6px 18px -6px rgba(232,196,106,.6)}
@@ -831,14 +849,35 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </footer>
     </section>
 
+    <section class="view view-ph hidden" id="view-shop" aria-label="Magasin"><p>Menu en construction...</p></section>
+    <section class="view view-ph hidden" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
+    <section class="view view-ph hidden" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
+
     <nav class="bottombar" aria-label="Navigation principale">
-      <button class="tabbtn" id="tab-home" aria-current="page">
+      <button class="tabbtn" id="tab-shop" data-view="shop">
+        <!-- gemme taillée -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4h11L21 9l-9 11.5L3 9z"/><path d="M3 9h18"/><path d="M9.5 4 8 9l4 11.5L16 9l-1.5-5"/></svg>
+        <span>Magasin</span>
+      </button>
+      <button class="tabbtn" id="tab-market" data-view="market">
+        <!-- deux flèches opposées -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h15"/><path d="m15 4 4 4-4 4"/><path d="M20 16H5"/><path d="m9 12-4 4 4 4"/></svg>
+        <span>Marché</span>
+      </button>
+      <button class="tabbtn" id="tab-home" data-view="home" aria-current="page">
+        <!-- maison -->
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"/></svg>
         <span>Accueil</span>
       </button>
-      <button class="tabbtn" id="tab-col">
+      <button class="tabbtn" id="tab-col" data-view="col">
+        <!-- étagère (inchangée) -->
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="4" height="12" rx="1"/><rect x="9.5" y="3.5" width="4" height="14.5" rx="1"/><path d="m15.8 7 3.6 1-2.9 10-3.6-1z"/><path d="M3 21h18"/></svg>
-        <span>Collection</span>
+        <span>Vidéothèque</span>
+      </button>
+      <button class="tabbtn" id="tab-friends" data-view="friends">
+        <!-- buste -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/></svg>
+        <span>Amis</span>
       </button>
     </nav>
   </div>
@@ -1095,6 +1134,7 @@ const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), lgRays = $('#lg
 const againBtn = $('#againBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
+const tabs = [...document.querySelectorAll('.tabbtn')];
 
 let state = 'idle';
 let busy = false;
@@ -1105,7 +1145,7 @@ let pending = null;
 let G = 8;
 
 function setCaption(html){ capEl.innerHTML = html; }
-function setBusyTabs(b){ [tabHome, tabCol].forEach(x => x.disabled = b); }
+function setBusyTabs(b){ tabs.forEach(x => x.disabled = b); }   // pendant l'ouverture d'un booster, on ne quitte pas l'Accueil
 
 /* =====================================================================
    6. BOOSTER
@@ -1547,19 +1587,23 @@ toColBtn.addEventListener('click', () => showView('col'));
 /* =====================================================================
    14. NAVIGATION (barre du bas)
    ===================================================================== */
+// Routage interne : une vue par onglet (data-view du bouton ↔ id de la section)
+const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:'#view-col', friends:'#view-friends'};
 const viewHome = $('#view-home'), viewCol = $('#view-col');
+let currentView = 'home';
 function showView(name){
-  if(state === 'opening' || state === 'stack') return;
-  const home = name === 'home';
-  viewHome.classList.toggle('hidden', !home);
-  viewCol.classList.toggle('hidden', home);
-  tabHome.toggleAttribute('aria-current', home); if(home) tabHome.setAttribute('aria-current', 'page');
-  tabCol.toggleAttribute('aria-current', !home); if(!home) tabCol.setAttribute('aria-current', 'page');
-  if(!home) renderShelf();
-  else { closeInfo(true); clearSel(); }
+  if(!VIEWS[name] || state === 'opening' || state === 'stack') return;
+  if(name === currentView && name !== 'col') return;
+  if(currentView === 'col' || imOpen){ closeInfo(true); clearSel(); }    // on quitte la Vidéothèque proprement
+  Object.entries(VIEWS).forEach(([k, sel]) => $(sel).classList.toggle('hidden', k !== name));
+  tabs.forEach(t => {
+    if(t.dataset.view === name) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
+  currentView = name;
+  if(name === 'col') renderShelf();
 }
-tabHome.addEventListener('click', () => showView('home'));
-tabCol.addEventListener('click', () => showView('col'));
+tabs.forEach(t => t.addEventListener('click', () => showView(t.dataset.view)));
 
 /* =====================================================================
    15. VIDÉOTHÈQUE : étagère, filtres, recherche dynamique
