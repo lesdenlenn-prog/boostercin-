@@ -16,6 +16,7 @@
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
   --gold:#e8c46a; --gold-hi:#fff2c2; --gold-lo:#a9792b;
   --common:#aaa4a8; --uncommon:#4db38a; --rare:#5b97f0; --epic:#b65cf2; --legendary:#f6c453;
+  --ultra:#b6d1fc; --ultra-out:#5b1eff;   /* Ultra-légendaire : bleu glacier + sur-contour violet intense */
   box-sizing:border-box;
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -75,9 +76,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .card{--rc:var(--common);position:relative;isolation:isolate;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 0 0 1.5px var(--rc)}
 /* Dictionnaire rareté → couleur : CHAQUE rareté a sa classe, y compris Commune
    (avant, .r-common n'existait pas : hors d'une .card, --rc restait indéfini → fond transparent) */
-.r-common{--rc:var(--common)} .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
+.r-ultra{--rc:var(--ultra)} .r-common{--rc:var(--common)} .r-uncommon{--rc:var(--uncommon)} .r-rare{--rc:var(--rare)} .r-epic{--rc:var(--epic)} .r-legendary{--rc:var(--legendary)}
 .card.r-epic{box-shadow:0 0 0 1.5px var(--rc),0 0 14px -2px var(--rc)}
 .card.r-legendary{box-shadow:0 0 0 1.5px var(--rc),0 0 24px 2px rgba(246,196,83,.65)}
+/* Ultra : double contour par box-shadow multiple (glacier puis violet) : aucune déformation de la carte */
+.card.r-ultra{box-shadow:0 0 0 1.5px var(--rc),0 0 0 3.5px var(--ultra-out),0 0 24px 2px rgba(91,30,255,.55)}
 .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
 .card .meta{position:absolute;left:0;right:0;bottom:0;padding:26px 8px 7px;background:linear-gradient(to top,rgba(10,4,6,.96) 35%,rgba(10,4,6,0));font-size:.72rem;line-height:1.25}
 .card .meta b{font-weight:800;font-size:.8rem;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -89,14 +92,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
 /* Épique : rendu classique, plus d'effet holographique ni de reflet animé (seule la Légendaire garde sa brillance) */
-.scard.fx .card.r-legendary::after{animation:shine 1.4s .25s ease-out 1}
+.scard.fx .card.r-legendary::after,.scard.fx .card.r-ultra::after{animation:shine 1.4s .25s ease-out 1}
 @keyframes shine{to{transform:translateX(110%)}}
 
 .gold{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
   background:linear-gradient(120deg,transparent 22%,rgba(255,240,190,.85) 44%,rgba(255,200,90,.6) 56%,transparent 78%);
   background-size:260% 100%;background-position:110% 0;animation:goldsweep 4.2s ease-in-out infinite}
 @keyframes goldsweep{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
-.scard.under .gold,.slot .gold{animation-play-state:paused}
+.ice{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
+  background:linear-gradient(120deg,transparent 22%,rgba(230,240,255,.9) 44%,rgba(182,209,252,.65) 56%,transparent 78%);
+  background-size:260% 100%;background-position:110% 0;animation:goldsweep 4.2s ease-in-out infinite}
+.scard.under .gold,.slot .gold,.scard.under .ice,.slot .ice{animation-play-state:paused}
 
 /* ================= VUE ACCUEIL ================= */
 .view-home{display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px);
@@ -144,6 +150,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   box-shadow:0 0 0 1.5px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
 .scard .card.r-legendary::before{background-size:300% 300%;animation:framemove 2.8s linear infinite}
 @keyframes framemove{to{background-position:300% 300%}}
+.scard .card.r-ultra{
+  --frame:linear-gradient(160deg,#f4f8ff,#b6d1fc 40%,#e9f1ff 60%,#8fb2f2);
+  box-shadow:0 0 0 1.5px var(--rc),0 0 0 3.5px var(--ultra-out),0 0 calc(16px + var(--peek,0)*36px) 3px rgba(91,30,255,.85)}
 
 /* =====================================================================
    RÉVÉLATION LÉGENDAIRE — version optimisée mobile
@@ -157,7 +166,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    ===================================================================== */
 .scard.is-legendary{filter:none}                       /* un drop-shadow sur le parent forcerait un recalcul à chaque image */
 .scard.is-legendary .card::before{animation:none}      /* cadre doré fixe */
-.scard.reveal-legendary .gold{display:none}            /* remplacé par le reflet holographique ci-dessous */
+.scard.reveal-legendary .gold,.scard.reveal-legendary .ice{display:none}            /* remplacé par le reflet holographique ci-dessous */
 
 /* ---- Dos de carte (légendaires uniquement, jusqu'au flash) ---- */
 .lg-back{position:absolute;inset:0;z-index:5;border-radius:12px;overflow:hidden;
@@ -270,6 +279,52 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     rgba(255,205,100,.3) 0,rgba(4,1,2,0) 22%,rgba(4,1,2,.5) 52%,rgba(2,1,1,.97) 100%)}
 .lg-rays-fade.on{opacity:1}
 
+/* =====================================================================
+   RÉVÉLATION ULTRA-LÉGENDAIRE
+   Même mécanique que la Légendaire (classes .lg-*), en plus fort, avec sa propre identité :
+   carte cerclée de bleu glacier / violet, explosion de lumière chaude (jaune doré → orange → rouge bordeaux).
+   Toujours uniquement transform / opacity animés.
+   ===================================================================== */
+.scard.is-ultra .lg-back{box-shadow:0 0 0 1.5px var(--ultra),0 0 0 3.5px var(--ultra-out),inset 0 0 0 5px #120904,inset 0 0 0 6px rgba(182,209,252,.55),inset 0 0 30px rgba(255,170,60,.2)}
+.scard.is-ultra .lg-aura{inset:-60%;
+  background:radial-gradient(circle closest-side,rgba(255,250,205,.95) 0,rgba(255,214,90,.88) 45%,rgba(255,130,50,.6) 62%,rgba(200,30,60,.3) 80%,rgba(120,10,50,0) 100%)}
+/* anticipation : en plus du tremblement, la carte « gonfle » doucement */
+.scard.is-ultra.lg-tease .lifter{animation:lg-ultra-swell var(--tease,2.3s) cubic-bezier(.5,0,.9,.5) forwards}
+@keyframes lg-ultra-swell{to{transform:scale(1.06)}}
+/* impact : pop plus fort, avec rebond */
+.scard.is-ultra.lg-impact .lifter{animation:lg-pop-ultra .85s cubic-bezier(.2,.9,.3,1) both}
+@keyframes lg-pop-ultra{0%{transform:scale(1.06)}18%{transform:scale(1.28)}44%{transform:scale(.94)}68%{transform:scale(1.03)}100%{transform:scale(1)}}
+.scard.is-ultra.reveal-legendary .lg-aura{animation-duration:2s}
+
+/* fond : bordeaux profond plutôt que noir */
+.veil.ultra{background:radial-gradient(ellipse at 50% 45%,rgba(70,8,28,.9) 0,rgba(30,3,16,.97) 55%,rgba(8,1,6,.99) 100%)}
+/* rayons : faisceaux dorés ET rouges alternés, rotation plus rapide */
+.lg-rays.ultra{animation-duration:16s;
+  background:repeating-conic-gradient(from 0deg,
+    rgba(255,226,110,0) 0deg,rgba(255,226,110,.62) 4deg,rgba(255,170,60,.3) 8deg,rgba(255,170,60,0) 11deg 15deg,
+    rgba(220,40,70,0) 15deg,rgba(220,40,70,.45) 19deg,rgba(220,40,70,0) 23deg 30deg)}
+/* 2e couche de rayons fins, en sens inverse (Ultra seulement) */
+.lg-rays2{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;
+  opacity:0;transition:opacity .8s ease;will-change:transform;
+  background:repeating-conic-gradient(from 7deg,rgba(255,240,190,0) 0deg,rgba(255,240,190,.32) 2deg,rgba(255,240,190,0) 4deg 20deg);
+  animation:lg-spin 30s linear infinite reverse}
+.lg-rays2.on{opacity:1}
+/* « soleil » : dégradé fixe jaune → orange → rouge → bordeaux, centré sur la carte (comme la référence) */
+.lg-rays-fade.ultra{background:radial-gradient(circle 62vmax at var(--cx,50%) var(--cy,50%),
+    rgba(255,248,200,.95) 0,rgba(255,226,120,.8) 30%,rgba(255,150,60,.55) 45%,rgba(214,50,90,.42) 62%,rgba(120,16,70,.75) 82%,rgba(40,4,30,.97) 100%)}
+/* flash : blanc au centre, bords dorés → rouges, double pulsation */
+.flash.ultra{background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),#fff 0,#fff 26%,#fff2b8 46%,#ffb15a 70%,#d8325a 100%)}
+.flash.ultra.go{animation:lg-flash-ultra 1s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes lg-flash-ultra{0%{opacity:0}6%{opacity:1}28%{opacity:1}36%{opacity:.45}44%{opacity:1}60%{opacity:1}100%{opacity:0}}
+/* ondes de choc chaudes */
+.ring.warm{border-color:#ffb347;box-shadow:0 0 24px 4px rgba(255,140,50,.8),inset 0 0 20px rgba(255,190,80,.6)}
+.ring.crimson{border-color:#e0305a;box-shadow:0 0 24px 4px rgba(220,40,80,.75),inset 0 0 20px rgba(255,90,110,.5)}
+#screen.shake-hard{animation:shake-hard .9s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes shake-hard{
+  10%,90%{transform:translate(-3px,2px)}20%,80%{transform:translate(7px,-5px) rotate(.35deg)}
+  30%,50%,70%{transform:translate(-13px,6px)}40%,60%{transform:translate(13px,-6px) rotate(-.35deg)}
+}
+
 .dots{display:flex;gap:8px;justify-content:center;height:10px}
 .dots i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:background .3s,transform .3s}
 .dots i.done{background:var(--gold-lo)}
@@ -282,7 +337,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .recap{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
 .recap .card{cursor:pointer;width:calc((100% - 24px)/3);animation:pop .65s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i)*110ms)}
 @keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
-.recap .card.r-legendary::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
+.recap .card.r-legendary::after,.recap .card.r-ultra::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
 #fxBack,#fxFront{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #fxBack{z-index:40}
@@ -444,6 +499,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .slot .card{width:100%;box-shadow:0 0 0 var(--ring) var(--rc),0 7px 9px rgba(0,4,36,.7)}
 .slot .card.r-epic{box-shadow:0 0 0 var(--ring) var(--rc),0 0 12px -2px var(--rc),0 7px 9px rgba(0,4,36,.7)}
 .slot .card.r-legendary{box-shadow:0 0 0 var(--ring) var(--rc),0 0 16px 1px rgba(246,196,83,.55),0 7px 9px rgba(0,4,36,.7)}
+.slot .card.r-ultra{box-shadow:0 0 0 var(--ring) var(--rc),0 0 0 calc(var(--ring) + 2px) var(--ultra-out),0 0 16px 2px rgba(91,30,255,.5),0 7px 9px rgba(0,4,36,.7)}
 .slot .card::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,rgba(130,190,255,.1),rgba(130,190,255,0) 36%)}
 .slot .card .meta{font-size:.6rem;padding:18px 5px 4px}
@@ -456,9 +512,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .srow.has-sel{z-index:3}                     /* le bouton peut déborder sur l'étagère suivante sans passer dessous */
 /* Le halo blanc est porté par le slot (drop-shadow) : il épouse la silhouette carte + languette « Infos » d'un seul tenant */
 .slot.sel{filter:drop-shadow(0 0 1.5px rgba(255,255,255,.85)) drop-shadow(0 0 10px rgba(255,255,255,.4))}
-.slot.sel .card,.slot.sel .card.r-epic,.slot.sel .card.r-legendary{
+.slot.sel .card,.slot.sel .card.r-epic,.slot.sel .card.r-legendary,.slot.sel .card.r-ultra{
   z-index:1;transform:translateY(-3px);
   box-shadow:0 0 0 var(--ring) var(--rc)}   /* juste le contour de rareté : il se fond dans la languette de même couleur */
+/* Ultra sélectionnée : le sur-contour violet est tracé autour de la carte ET de la languette d'un seul trait
+   (4 ombres nettes décalées de 2 px), puis le halo blanc habituel */
+.slot.sel[data-r="ultra"]{filter:drop-shadow(2px 0 0 var(--ultra-out)) drop-shadow(-2px 0 0 var(--ultra-out)) drop-shadow(0 2px 0 var(--ultra-out)) drop-shadow(0 -2px 0 var(--ultra-out))
+  drop-shadow(0 0 1.5px rgba(255,255,255,.85)) drop-shadow(0 0 10px rgba(255,255,255,.4))}
 .slot.lifted .card,.slot.lifted .infobtn,.recap .card.lifted{visibility:hidden}   /* la carte « quitte » l'étagère pendant que le sur-menu est ouvert */
 
 /* Languette « Infos » : prolongement du bas de la carte.
@@ -490,6 +550,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .im-card .card{width:100%;box-shadow:0 0 0 2.5px var(--rc),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-epic{box-shadow:0 0 0 2.5px var(--rc),0 0 26px 0 rgba(182,92,242,.7),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-legendary{box-shadow:0 0 0 2.5px var(--rc),0 0 34px 4px rgba(246,196,83,.65),0 22px 40px rgba(0,0,0,.6)}
+.im-card .card.r-ultra{box-shadow:0 0 0 2.5px var(--rc),0 0 0 5px var(--ultra-out),0 0 34px 4px rgba(91,30,255,.6),0 22px 40px rgba(0,0,0,.6)}
 /* Encart de note : 5 étoiles grises, remplies en doré (couleur Légendaire) au dixième près */
 .im-rate{flex:none;display:flex;align-items:center;gap:12px;margin-top:-4px;padding:9px 14px;border-radius:12px;
   background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 12px 28px rgba(0,0,0,.4);
@@ -580,7 +641,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 @media (prefers-reduced-motion:reduce){
   .pack-zoom,.scard{transition-duration:.01s}
-  .pack-float,.sheen,.gold,.glint,.scard .card::before,.lg-rays,.lg-glint,.lg-back-emblem svg,.lg-back-shine{animation:none !important}
+  .pack-float,.sheen,.gold,.glint,.scard .card::before,.lg-rays,.lg-rays2,.lg-glint,.lg-back-emblem svg,.lg-back-shine,.ice{animation:none !important}
   .scard.lg-tease .shaker{animation:none}
   .scard.fx .card::after,.recap .card{animation:none !important}
   .faller{animation:none;transform:translate(0,var(--y0))}
@@ -738,6 +799,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   <div id="fxBack" aria-hidden="true">
     <div class="veil" id="veil"></div>
     <div class="lg-rays" id="lgRays"></div>
+    <div class="lg-rays2" id="lgRays2"></div>
     <div class="lg-rays-fade" id="lgRaysFade"></div>
   </div>
   <div id="fxFront" aria-hidden="true">
@@ -751,14 +813,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    1. RÉGLAGES
    ===================================================================== */
 const TIERS = [
-  // 30 000 films (1 500 pages de 20), chaque rareté agrandie ×3 par rapport à la version à 10 000 films
-  {id:'legendary', label:'Légendaire',  pages:[1,15],     p:0.005},   //    300 films (rangs 1 à 300)
-  {id:'epic',      label:'Épique',      pages:[16,90],    p:0.025},   //  1 500 films (301 à 1 800)
-  {id:'rare',      label:'Rare',        pages:[91,300],   p:0.09},    //  4 200 films (1 801 à 6 000)
-  {id:'uncommon',  label:'Peu commune', pages:[301,750],  p:0.28},    //  9 000 films (6 001 à 15 000)
-  {id:'common',    label:'Commune',     pages:[751,1500], p:0.60}     // 15 000 films (15 001 à 30 000)
+  // 30 000 films classés par nombre de votes TMDB. ranks = [premier rang, dernier rang] de chaque rareté.
+  {id:'ultra',     label:'Ultra-légendaire', ranks:[1,15],         p:0.0005},  //     15 films : le top 15
+  {id:'legendary', label:'Légendaire',       ranks:[16,300],       p:0.005},   //    285 films
+  {id:'epic',      label:'Épique',           ranks:[301,1800],     p:0.025},   //  1 500 films
+  {id:'rare',      label:'Rare',             ranks:[1801,6000],    p:0.09},    //  4 200 films
+  {id:'uncommon',  label:'Peu commune',      ranks:[6001,15000],   p:0.28},    //  9 000 films
+  {id:'common',    label:'Commune',          ranks:[15001,30000],  p:0.5995}   // 15 000 films
 ];
-const DEMO_P = {legendary:0.22, epic:0.30, rare:0.22, uncommon:0.16, common:0.10};
+const DEMO_P = {ultra:0.15, legendary:0.20, epic:0.25, rare:0.18, uncommon:0.12, common:0.10};
+const isLegendLike = r => r === 'legendary' || r === 'ultra';   // raretés qui ont la révélation spectaculaire
 
 const TIMING = {
   cutSweep:90,         // la ligne de déchirure traverse le haut du booster
@@ -766,6 +830,8 @@ const TIMING = {
   stackRise:320,
   legendTease:1700,    // 1. anticipation (écran sombre, tremblement qui accélère, aura)
   legendFlashPeak:55,  // 2. délai jusqu'à ce que l'écran soit entièrement blanc : on retourne la carte à ce moment-là
+  ultraTease:2300,     // Ultra : anticipation plus longue
+  ultraSettle:950,     // Ultra : pop plus ample
   legendSettle:700,    //    durée du « pop » avant de rendre la main au joueur
   exit:520, unlockAfterExit:240
 };
@@ -784,7 +850,7 @@ const SHELF = {
 const TIER = Object.fromEntries(TIERS.map(t => [t.id, t]));
 const tierIdx = id => TIERS.findIndex(t => t.id === id);
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const imgUrl = (c, hi = false) => 'https://image.tmdb.org/t/p/' + (hi || c.rarity==='epic' || c.rarity==='legendary' ? 'w500' : 'w342') + c.poster;
+const imgUrl = (c, hi = false) => 'https://image.tmdb.org/t/p/' + (hi || ['epic','legendary','ultra'].includes(c.rarity) ? 'w500' : 'w342') + c.poster;
 
 /* =====================================================================
    2. UTILITAIRES
@@ -873,7 +939,7 @@ async function getPage(page){                  // page globale : 1 à 1 500
   return films;
 }
 // préchargement discret des seuils pour que le 1er booster ne les attende pas
-function warmThresholds(){ if(store.get('tmdb_key','')) getThreshold(Math.ceil(TIERS[TIERS.length-1].pages[1] / SEG_PAGES) - 1).catch(() => {}); }
+function warmThresholds(){ if(store.get('tmdb_key','')) getThreshold(Math.ceil(Math.ceil(TIERS[TIERS.length-1].ranks[1] / 20) / SEG_PAGES) - 1).catch(() => {}); }
 
 const demoOn = () => store.get('demo', false);
 function pickTier(noCommon = false){
@@ -887,17 +953,21 @@ function pickTier(noCommon = false){
 
 async function drawBooster(){
   const tiers = [pickTier(), pickTier(), pickTier(), pickTier(), pickTier(true)];
-  const pages = await Promise.all(tiers.map(t => getPage(randInt(t.pages[0], t.pages[1]))));
+  // un rang tiré au hasard dans la tranche de la rareté → la page TMDB qui le contient (20 films par page)
+  const pageNos = tiers.map(t => Math.ceil(randInt(t.ranks[0], t.ranks[1]) / 20));
+  const pages = await Promise.all(pageNos.map(getPage));
   const used = new Set();
   const cards = tiers.map((t,i) => {
-    let pool = pages[i].filter(m => m.poster_path && !used.has(m.id));
-    if(!pool.length) pool = pages[i].filter(m => m.poster_path);
+    // seuls les films de la page qui appartiennent à cette rareté (ex. page 1 : rangs 1-15 Ultra, 16-20 Légendaire)
+    const inTier = pages[i].filter(m => m.rank >= t.ranks[0] && m.rank <= t.ranks[1] && m.poster_path);
+    let pool = inTier.filter(m => !used.has(m.id));
+    if(!pool.length) pool = inTier.length ? inTier : pages[i].filter(m => m.poster_path);
     const m = pool[randInt(0, pool.length-1)];
     used.add(m.id);
     return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count,
             overview:m.overview || ''};   // synopsis déjà fourni par /discover : affiché instantanément dans le sur-menu
   });
-  return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));
+  return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));   // la plus rare est révélée en dernier
 }
 
 function preload(cards){
@@ -917,15 +987,14 @@ const getCol = () => store.get('collection', {});
 // Passage à 30 000 films : les cartes déjà obtenues sont reclassées d'après leur rang
 // (ex. un film classé 250e, auparavant Épique, devient Légendaire). Fait une seule fois.
 function tierForRank(rank){
-  const page = Math.ceil(rank / 20);
-  return (TIERS.find(t => page >= t.pages[0] && page <= t.pages[1]) || TIERS[TIERS.length - 1]).id;
+  return (TIERS.find(t => rank >= t.ranks[0] && rank <= t.ranks[1]) || TIERS[TIERS.length - 1]).id;
 }
 (function migrateRarity(){
-  if(store.get('rarity_model', 1) >= 2) return;
+  if(store.get('rarity_model', 1) >= 3) return;   // v3 : ajout de l'Ultra-légendaire (top 15)
   const col = getCol();
   Object.values(col).forEach(c => { if(c.rank) c.rarity = tierForRank(c.rank); });
   store.set('collection', col);
-  store.set('rarity_model', 2);
+  store.set('rarity_model', 3);
 })();
 function addToCol(cards){
   const col = getCol();
@@ -943,6 +1012,7 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
   return `<div class="card r-${c.rarity}" title="${esc(c.title)}">
     <img src="${imgUrl(c, hi)}" alt="Affiche de ${esc(c.title)}" decoding="async" draggable="false" ${lazy ? 'loading="lazy"' : ''}>
     ${c.rarity==='legendary' ? '<span class="gold"></span>' : ''}
+    ${c.rarity==='ultra' ? '<span class="ice"></span>' : ''}
     ${isNew ? '<span class="badge new">Nouvelle</span>' : ''}
     ${count > 1 ? `<span class="badge">×${count}</span>` : ''}
     <div class="meta"><b>${esc(c.title)}</b>
@@ -955,7 +1025,7 @@ function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
    ===================================================================== */
 const screenEl = $('#screen'), arena = $('#arena'), stackEl = $('#stack'), deck = $('#deck'), pack = $('#pack'), packZoom = $('#packZoom'), tilt = $('#tilt');
 const partTop = $('#partTop'), partBottom = $('#partBottom'), cutline = $('#cutline'), burst = $('#burst');
-const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), lgRays = $('#lgRays'), lgRaysFade = $('#lgRaysFade'), flashEl = $('#flash'), fxFront = $('#fxFront');
+const capEl = $('#caption'), srEl = $('#sr'), veil = $('#veil'), lgRays = $('#lgRays'), lgRays2 = $('#lgRays2'), lgRaysFade = $('#lgRaysFade'), flashEl = $('#flash'), fxFront = $('#fxFront');
 const againBtn = $('#againBtn'), toColBtn = $('#toColBtn');
 const dotsEl = $('#dots'), recapWrap = $('#recapWrap');
 const tabHome = $('#tab-home'), tabCol = $('#tab-col');
@@ -1103,8 +1173,8 @@ function buildStack(){
   G = Math.max(4, stackEl.offsetWidth * PEEK.gap);
   els = cards.map((c, i) => {
     const el = document.createElement('div');
-    const lg = c.rarity === 'legendary';
-    el.className = 'scard' + (lg ? ' is-legendary' : '') + (i > 0 ? ' under hold' : '');
+    const lg = isLegendLike(c.rarity);
+    el.className = 'scard' + (lg ? ' is-legendary' : '') + (c.rarity === 'ultra' ? ' is-ultra' : '') + (i > 0 ? ' under hold' : '');
     el.style.transform = stackTransform(i);
     // Les éléments de la révélation (aura, dos de carte, éclat) ne sont ajoutés QUE pour les légendaires
     el.innerHTML = `${lg ? '<div class="lg-aura"></div>' : ''}
@@ -1172,7 +1242,7 @@ function springTilt(from, v0 = 0){
 async function activateTop(){
   const el = els[idx], c = cards[idx];
   srEl.textContent = `Carte ${idx+1} sur ${cards.length} : ${c.title}, ${TIER[c.rarity].label}`;
-  if(c.rarity === 'legendary'){
+  if(isLegendLike(c.rarity)){
     busy = true;
     await legendaryMoment(el);
     busy = false;
@@ -1188,37 +1258,49 @@ function epicMoment(el){
     {duration: RM ? 1 : 800, easing:'ease-in-out'});
 }
 
-/* Révélation d'une LÉGENDAIRE : 3 phases (anticipation → impact → persistant).
+/* Révélation d'une LÉGENDAIRE ou d'une ULTRA-LÉGENDAIRE : 3 phases (anticipation → impact → persistant).
+   L'Ultra reprend la même mécanique avec son thème (classe .ultra sur les calques d'effets) et des réglages plus forts.
    Version mobile : aucune particule ; uniquement des classes CSS qui animent transform / opacity. */
 async function legendaryMoment(el){
+  const ultra = el.classList.contains('is-ultra');
   const r = el.querySelector('.card').getBoundingClientRect(), scr = screenEl.getBoundingClientRect();
   const fx = {x: r.left + r.width/2 - scr.left, y: r.top + r.height/2 - scr.top};
+  const tease = ultra ? TIMING.ultraTease : TIMING.legendTease;
+
+  // thème des calques plein écran (le « soleil » chaud de l'Ultra n'apparaît qu'à l'impact)
+  veil.classList.toggle('ultra', ultra);
+  lgRays.classList.toggle('ultra', ultra);
+  flashEl.classList.toggle('ultra', ultra);
+  lgRaysFade.classList.remove('ultra');
 
   // les rayons sont centrés sur la carte (positionnés une seule fois, ils ne font ensuite que tourner)
-  lgRays.style.left = fx.x + 'px'; lgRays.style.top = fx.y + 'px';
+  [lgRays, lgRays2].forEach(e => { e.style.left = fx.x + 'px'; e.style.top = fx.y + 'px'; });
   lgRaysFade.style.setProperty('--cx', fx.x + 'px'); lgRaysFade.style.setProperty('--cy', fx.y + 'px');
 
   // 1. ANTICIPATION : écran très sombre, la carte face cachée tremble de plus en plus vite, la lumière filtre
   stackEl.classList.add('lift');
   veil.classList.add('on');
   lgRays.classList.add('tease'); lgRaysFade.classList.add('on');
-  el.style.setProperty('--tease', TIMING.legendTease + 'ms');
+  el.style.setProperty('--tease', tease + 'ms');
   el.classList.add('lg-tease');
-  buzz([8, 260, 8, 180, 10, 120, 12, 80, 14, 50, 16, 30, 20, 20, 24]);   // pulsations qui se rapprochent
-  await sleep(RM ? 300 : TIMING.legendTease);
+  buzz(ultra ? [8, 300, 8, 220, 10, 160, 12, 110, 14, 70, 16, 45, 18, 30, 22, 20, 26, 14, 30]
+             : [8, 260, 8, 180, 10, 120, 12, 80, 14, 50, 16, 30, 20, 20, 24]);   // pulsations qui se rapprochent
+  await sleep(RM ? 300 : tease);
 
-  // 2. IMPACT : flash blanc plein écran ; la carte se retourne pendant que l'écran est blanc, puis « pop »
+  // 2. IMPACT : flash plein écran ; la carte se retourne pendant que l'écran est blanc, puis « pop »
   flashGo(fx.x, fx.y);
   await sleep(RM ? 0 : TIMING.legendFlashPeak);
   el.classList.remove('lg-tease');
   el.classList.add('lg-revealed', 'lg-impact', 'reveal-legendary', 'fx');
-  buzz([40, 30, 90]);
-  if(!RM){ shake(); rings(fx.x, fx.y); }
+  if(ultra) lgRaysFade.classList.add('ultra');          // le soleil chaud s'allume sous le flash
+  buzz(ultra ? [60, 30, 120, 40, 60] : [40, 30, 90]);
+  if(!RM){ shake(ultra); rings(fx.x, fx.y, ultra); }
 
   // 3. PERSISTANT : rayons divins à pleine intensité (+ halo, lévitation, reflet via .reveal-legendary)
   lgRays.classList.remove('tease'); lgRays.classList.add('on');
+  if(ultra) lgRays2.classList.add('on');
 
-  await sleep(RM ? 200 : TIMING.legendSettle);
+  await sleep(RM ? 200 : (ultra ? TIMING.ultraSettle : TIMING.legendSettle));
   el.classList.remove('lg-impact');
 }
 
@@ -1226,11 +1308,12 @@ async function legendaryMoment(el){
 function fadeLegendFx(keepVeil = false){
   if(!keepVeil) veil.classList.remove('on');
   lgRays.classList.remove('on', 'tease');
+  lgRays2.classList.remove('on');
   if(!keepVeil) lgRaysFade.classList.remove('on');
 }
 function clearLegendFx(){
   fadeLegendFx();
-  screenEl.classList.remove('shake');
+  screenEl.classList.remove('shake', 'shake-hard');
   flashEl.classList.remove('go');
   fxFront.querySelectorAll('.ring').forEach(n => n.remove());
 }
@@ -1239,17 +1322,20 @@ function flashGo(x, y){
   flashEl.style.setProperty('--fx', x + 'px'); flashEl.style.setProperty('--fy', y + 'px');
   flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
 }
-function shake(){
-  screenEl.classList.remove('shake'); void screenEl.offsetWidth; screenEl.classList.add('shake');
-  setTimeout(() => screenEl.classList.remove('shake'), 800);
+function shake(hard = false){
+  const cls = hard ? 'shake-hard' : 'shake';
+  screenEl.classList.remove('shake', 'shake-hard'); void screenEl.offsetWidth; screenEl.classList.add(cls);
+  setTimeout(() => screenEl.classList.remove(cls), hard ? 950 : 800);
 }
-function rings(x, y){
-  for(let k=0; k<2; k++){
-    const r = document.createElement('div'); r.className = 'ring'; r.style.left = x + 'px'; r.style.top = y + 'px';
+function rings(x, y, ultra = false){
+  const kinds = ultra ? ['warm', '', 'crimson'] : ['', ''];   // Ultra : 3 ondes (orange, or, rouge)
+  kinds.forEach((kind, k) => {
+    const r = document.createElement('div'); r.className = 'ring' + (kind ? ' ' + kind : '');
+    r.style.left = x + 'px'; r.style.top = y + 'px';
     fxFront.appendChild(r);
-    play(r, [{transform:'translate(-50%,-50%) scale(.2)', opacity:.9}, {transform:'translate(-50%,-50%) scale(7)', opacity:0}],
-         {duration:1100, delay:k*160, easing:'cubic-bezier(.1,.7,.2,1)', fill:'forwards'}).then(() => r.remove());
-  }
+    play(r, [{transform:'translate(-50%,-50%) scale(.2)', opacity:.9}, {transform:`translate(-50%,-50%) scale(${ultra ? 8.5 : 7})`, opacity:0}],
+         {duration: ultra ? 1300 : 1100, delay:k*160, easing:'cubic-bezier(.1,.7,.2,1)', fill:'forwards'}).then(() => r.remove());
+  });
 }
 /* =====================================================================
    11. PASSER LA CARTE : toucher/clic moitié gauche ou droite (zones invisibles) OU glissement (swipe / drag)
@@ -1259,8 +1345,8 @@ async function dismissTop(side){
   if(state !== 'stack' || busy) return;
   busy = true;
   const el = els[idx], c = cards[idx];
-  const wasLegend = c.rarity === 'legendary';
-  const nextIsLegend = idx + 1 < cards.length && cards[idx + 1].rarity === 'legendary';
+  const wasLegend = isLegendLike(c.rarity);
+  const nextIsLegend = idx + 1 < cards.length && isLegendLike(cards[idx + 1].rarity);
   if(wasLegend) fadeLegendFx(nextIsLegend);     // deux légendaires d'affilée : on garde l'écran sombre
 
   if(Math.abs(curTilt) < 2 && !RM){ setTilt(side * PEEK.kickOnClick); }
