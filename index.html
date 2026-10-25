@@ -144,7 +144,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .scard .card.r-rare{--frame:linear-gradient(160deg,#9cc4ff,#2d63c4)}
 .scard .card.r-epic{
   --frame:linear-gradient(160deg,#dcb0ff,#7a2fc0);   /* cadre violet uni, sans arc-en-ciel animé */
-  box-shadow:0 0 0 1.5px var(--rc),0 0 calc(8px + var(--peek,0)*22px) 1px rgba(182,92,242,.85)}
+  box-shadow:0 0 0 1.5px var(--rc)}
+/* Pendant l'ouverture, SEULES les Légendaires et Ultra-légendaires (.scard.is-legendary) émettent de la lumière,
+   et cette lueur grandit avec le peek (--peek). Commune → Épique : contour seul, aucune lueur sur la tranche. */
+.scard:not(.is-legendary) .card{box-shadow:0 0 0 1.5px var(--rc)}
 .scard .card.r-legendary{
   --frame:linear-gradient(115deg,#fff7d6,#f6c453 25%,#fff3bf 50%,#d9a232 75%,#fff7d6);
   box-shadow:0 0 0 1.5px var(--rc),0 0 calc(14px + var(--peek,0)*34px) 3px rgba(255,200,80,.9)}
@@ -364,12 +367,23 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   border-radius:calc(12px + var(--uh-in));
   box-shadow:0 0 10px 1px rgba(255,170,60,.55),0 0 24px 4px rgba(210,40,70,.32)}   /* lueur néon fixe */
 .uhalo>i{position:absolute;left:50%;top:50%;width:250%;aspect-ratio:1;
-  background:conic-gradient(from 0deg,
-    rgba(120,10,50,0) 0deg,#8a0f3a 40deg,#e0304f 85deg,#ff8a3c 125deg,#ffd25a 160deg,#fffbe0 176deg,rgba(255,250,220,0) 180deg,
-    rgba(120,10,50,0) 180deg,#8a0f3a 220deg,#e0304f 265deg,#ff8a3c 305deg,#ffd25a 340deg,#fffbe0 356deg,rgba(255,250,220,0) 360deg);
-  animation:uh-spin 3.2s linear infinite;will-change:transform}
+  /* Dégradé EN MIROIR, répété 2 fois sur le tour : chaque point chaud (jaune pâle au centre) se fond des deux côtés
+     dans l'orange, le rouge, le bordeaux, puis la transparence. Aucune démarcation nette. */
+  background:repeating-conic-gradient(from 0deg,
+    rgba(120,10,50,0) 0deg,
+    rgba(138,15,58,.18) 25deg,
+    rgba(200,35,70,.45) 50deg,
+    rgba(240,90,60,.75) 70deg,
+    rgba(255,170,70,.92) 82deg,
+    #ffe9a8 90deg,
+    rgba(255,170,70,.92) 98deg,
+    rgba(240,90,60,.75) 110deg,
+    rgba(200,35,70,.45) 130deg,
+    rgba(138,15,58,.18) 155deg,
+    rgba(120,10,50,0) 180deg);
+  animation:uh-spin 8s linear infinite;will-change:transform}   /* plus lent : 8 s par tour (au lieu de 3,2 s) */
 @keyframes uh-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
-#screen.im-open .uhalo>i{animation-play-state:paused}   /* sur-menu ouvert : rien ne tourne sous le flou */
+#screen.im-open .view .uhalo>i{animation-play-state:paused}   /* sur-menu ouvert : les halos sous le flou s'arrêtent (pas celui du sur-menu) */
 @keyframes pop{from{opacity:0;transform:translateY(26px) scale(.84)}to{opacity:1;transform:none}}
 .recap .card.r-legendary::after,.recap .card.r-ultra::after{animation:shine 1.4s calc(var(--i)*110ms + 600ms) ease-out 1}
 
@@ -589,7 +603,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .im-scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;align-items:center;gap:18px;
   padding:calc(env(safe-area-inset-top,0px) + 28px) 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
-.im-card{--mw:min(62vw,270px,calc(46dvh * 2 / 3));flex:none;width:var(--mw);transform-origin:50% 50%}
+.im-card{--mw:min(62vw,270px,calc(46dvh * 2 / 3));flex:none;width:var(--mw);transform-origin:50% 50%;
+  position:relative;isolation:isolate;--uh-in:8px}   /* 2,5 px glacier + 2,5 px violet + 3 px de néon */
 .im-card .card{width:100%;box-shadow:0 0 0 2.5px var(--rc),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-epic{box-shadow:0 0 0 2.5px var(--rc),0 0 26px 0 rgba(182,92,242,.7),0 22px 40px rgba(0,0,0,.6)}
 .im-card .card.r-legendary{box-shadow:0 0 0 2.5px var(--rc),0 0 34px 4px rgba(246,196,83,.65),0 22px 40px rgba(0,0,0,.6)}
@@ -1805,7 +1820,7 @@ async function openInfo(liftEl, cardEl, c, onDone){
   if(imOpen || imBusy || !c || !cardEl) return;
   imOpen = {liftEl, cardEl, c, onDone};
 
-  imCard.innerHTML = cardHTML(c, {count:c.count});
+  imCard.innerHTML = (c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : '') + cardHTML(c, {count:c.count});
   fillPanel(c, null);
   infoModal.classList.remove('hidden');
   imScroll.scrollTop = 0;
