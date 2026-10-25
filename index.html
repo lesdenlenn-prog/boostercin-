@@ -60,7 +60,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   font-weight:800;font-size:clamp(.54rem,2.45vw,.68rem);letter-spacing:-.01em;
   transition:flex-grow .3s ease,background-color .3s ease,color .3s ease,box-shadow .3s ease}
 .tabbtn span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabbtn svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+.tabbtn svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;   /* style « rounded » */
   transition:transform .3s ease}
 /* fins séparateurs verticaux entre onglets inactifs (masqués autour de l'onglet actif) */
 .tabbtn + .tabbtn::before{content:'';position:absolute;left:-2px;top:24%;bottom:24%;width:1px;background:rgba(255,255,255,.14);transition:opacity .3s}
@@ -68,7 +68,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Onglet actif : même fond sombre et même couleur claire que les autres ; il s'élargit (flex-grow)
    et une fine ligne dorée lumineuse apparaît tout en haut, au-dessus de l'icône. */
 .tabbtn[aria-current="page"]{flex-grow:1.5}
-.tabbtn::after{content:'';position:absolute;top:-6px;left:24%;right:24%;height:3px;border-radius:0 0 3px 3px;
+.tabbtn::after{content:'';position:absolute;top:-6px;left:12%;right:12%;height:3px;border-radius:0 0 3px 3px;   /* 76 % de la largeur, centrée */
   background:var(--legendary);box-shadow:0 0 8px rgba(246,196,83,.95),0 0 18px rgba(246,196,83,.55);
   opacity:0;transform:scaleX(.2);transition:opacity .3s ease,transform .3s ease}
 .tabbtn[aria-current="page"]::after{opacity:1;transform:scaleX(1)}
@@ -881,27 +881,27 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <nav class="bottombar" aria-label="Navigation principale">
       <button class="tabbtn" id="tab-shop" data-view="shop">
         <!-- gemme taillée -->
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4h11L21 9l-9 11.5L3 9z"/><path d="M3 9h18"/><path d="M9.5 4 8 9l4 11.5L16 9l-1.5-5"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 4.5h8.8a2 2 0 0 1 1.6.8l2.6 3.5a1.6 1.6 0 0 1-.1 2l-7.4 8.7a1.4 1.4 0 0 1-2.2 0l-7.4-8.7a1.6 1.6 0 0 1-.1-2L6 5.3a2 2 0 0 1 1.6-.8z"/><path d="M3.7 9.7h16.6"/><path d="M9.7 4.8 8.6 9.7l3.4 9.2 3.4-9.2-1.1-4.9"/></svg>
         <span>Magasin</span>
       </button>
       <button class="tabbtn" id="tab-market" data-view="market">
         <!-- deux flèches opposées -->
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h15"/><path d="m15 4 4 4-4 4"/><path d="M20 16H5"/><path d="m9 12-4 4 4 4"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h13.5"/><path d="M15.5 5 18.5 8l-3 3"/><path d="M19 16H5.5"/><path d="M8.5 13 5.5 16l3 3"/></svg>
         <span>Marché</span>
       </button>
       <button class="tabbtn" id="tab-home" data-view="home" aria-current="page">
         <!-- maison -->
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V10"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 10.7 4.9a2 2 0 0 1 2.6 0L20.5 11"/><path d="M5.5 9.6v8.9a2 2 0 0 0 2 2H10v-4.6a2 2 0 0 1 4 0v4.6h2.5a2 2 0 0 0 2-2V9.6"/></svg>
         <span>Accueil</span>
       </button>
       <button class="tabbtn" id="tab-col" data-view="col">
         <!-- étagère (inchangée) -->
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="4" height="12" rx="1"/><rect x="9.5" y="3.5" width="4" height="14.5" rx="1"/><path d="m15.8 7 3.6 1-2.9 10-3.6-1z"/><path d="M3 21h18"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="4" height="12" rx="1.6"/><rect x="9.5" y="3.5" width="4" height="14.5" rx="1.6"/><rect x="15.3" y="6.8" width="3.8" height="11" rx="1.5" transform="rotate(16 17.2 12.3)"/><path d="M3 21h18"/></svg>
         <span>Vidéothèque</span>
       </button>
       <button class="tabbtn" id="tab-friends" data-view="friends">
-        <!-- buste -->
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/></svg>
+        <!-- deux bustes : premier plan + un second, plus petit, derrière à droite -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.5" cy="8.2" r="3.6"/><path d="M3 20c.6-3.8 3.2-6 6.5-6s5.9 2.2 6.5 6"/><circle cx="17.6" cy="7.5" r="2.5"/><path d="M18.2 13.3c2.1.5 3.5 2.3 3.9 5.1"/></svg>
         <span>Amis</span>
       </button>
     </nav>
