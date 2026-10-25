@@ -239,8 +239,72 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   -webkit-tap-highlight-color:transparent}
 .zone.l{left:0}.zone.r{right:0}
 .arena.nav .zone{display:block}
-.homefoot{flex:none;min-height:86px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
+.homefoot{flex:none;min-height:132px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
+.actions:not(:has(button:not([hidden]))){display:none}
+
+/* =====================================================================
+   SOUS LE BOOSTER : énergie (boosters gratuits) / sélection / « touche pour ouvrir »
+   Les 3 blocs se superposent dans une zone de hauteur fixe et s'échangent en fondu (data-step sur l'Accueil).
+   ===================================================================== */
+.hf-layer{position:relative;width:100%;max-width:340px;height:112px}
+.view-home[data-step="off"] .hf-layer{display:none}
+.hf-layer > *{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;
+  opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s ease,transform .3s ease,visibility .25s}
+.view-home[data-step="idle"] .energy,
+.view-home[data-step="select"] .open-panel,
+.view-home[data-step="armed"] .open-hint{opacity:1;visibility:visible;transform:none}
+
+/* Énergie : 3/6 + jauge à 6 segments + compte à rebours */
+.energy{gap:8px;padding:10px 14px;border-radius:16px;background:rgba(30,3,9,.55);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.22)}
+.en-top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#ffe3da;font-weight:800}
+.en-count{display:flex;align-items:center;gap:8px;font-size:1.05rem}
+.en-count svg{width:24px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.en-count small{color:#c9a69c;font-weight:500;font-size:.78rem}
+.en-timer{font-variant-numeric:tabular-nums;font-size:.95rem;color:#ffd98a}
+.en-timer.full{color:#8fe0b0}
+.en-gauge{width:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.en-gauge i{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;position:relative}
+.en-gauge i::after{content:'';position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--f,0));
+  background:linear-gradient(90deg,#f6c453,#ffe08a);transition:transform .6s ease}
+.en-gauge i.charging::after{background:linear-gradient(90deg,#d9893a,#f6c453)}
+
+/* Étape 1 : sélection */
+.open-panel{gap:6px}
+.open-panel .btn{min-width:230px;display:flex;align-items:center;justify-content:center;gap:8px}
+.open-panel .btn svg{width:22px;height:22px}
+.open-panel .btn.nudge{animation:nudge .45s ease}
+@keyframes nudge{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.op-sub{margin:0;font-size:.78rem;color:#c9a69c;text-align:center;font-variant-numeric:tabular-nums}
+.op-back{display:flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:0;border-radius:99px;background:transparent;color:#ffe3da;font-weight:800;font-size:.85rem}
+.op-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.op-back:active{background:rgba(255,255,255,.08)}
+/* Étape 2 payée : on invite à toucher le booster */
+.open-hint{justify-content:center;height:100%;color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
+@keyframes hint-pulse{50%{opacity:.55}}
+.pack-pos.armed .pack-halo{opacity:1;animation:armed-glow 1.4s ease-in-out infinite}
+@keyframes armed-glow{50%{opacity:.55}}
+
+/* =====================================================================
+   POP-UP DE PAIEMENT (conversion gemmes → bobines / fonds insuffisants)
+   ===================================================================== */
+.paymodal{position:absolute;inset:0;z-index:90;display:grid;place-items:center;padding:24px}
+.pay-back{position:absolute;inset:0;background:rgba(6,2,4,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .25s ease}
+.pay-panel{position:relative;width:100%;max-width:340px;padding:22px 20px 18px;border-radius:20px;text-align:center;
+  background:linear-gradient(180deg,#2e0f17,#16070b);box-shadow:inset 0 0 0 2px rgba(216,176,138,.5),0 24px 60px rgba(0,0,0,.6);
+  opacity:0;transform:scale(.92);transition:opacity .25s ease,transform .3s cubic-bezier(.2,1.2,.3,1)}
+.paymodal.on .pay-back{opacity:1}
+.paymodal.on .pay-panel{opacity:1;transform:none}
+.pay-panel h3{margin:0 0 10px;font-size:1.25rem;color:#fff1c4}
+.pay-panel p{margin:0 0 8px;color:#ead6cf;line-height:1.45}
+.pay-panel b{color:#ffe08a}
+.pay-panel .rate{font-size:.78rem;color:#b99c9a}
+.pay-bal{display:flex;justify-content:center;gap:16px;margin:12px 0 16px;font-weight:800;color:#ffe3da}
+.pay-bal span{display:flex;align-items:center;gap:6px}
+.pay-bal svg{width:22px;height:22px}
+.pay-actions{display:flex;flex-direction:column;gap:8px}
+.pay-actions .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.pay-actions .btn svg{width:20px;height:20px}
 
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
@@ -940,7 +1004,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </button>
     </section>
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
-    <section class="view view-home" id="view-home">
+    <section class="view view-home" id="view-home" data-step="idle">
       <div class="arena" id="arena">
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
         <div class="zone r" data-side="1" aria-hidden="true"></div>
@@ -973,6 +1037,24 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </div>
 
       <div class="homefoot">
+        <div class="hf-layer">
+          <!-- Énergie : boosters gratuits -->
+          <div class="energy" id="energy" aria-live="polite">
+            <div class="en-top">
+              <span class="en-count"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg><span><b id="enCount">6</b>/6 <small>gratuits</small></span></span>
+              <span class="en-timer" id="enTimer">Plein</span>
+            </div>
+            <div class="en-gauge" id="enGauge" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <!-- Étape 1 : sélection -->
+          <div class="open-panel" id="openPanel">
+            <button class="btn" id="openBtn" type="button">Ouvrir un booster</button>
+            <p class="op-sub" id="openSub"></p>
+            <button class="op-back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Retour</button>
+          </div>
+          <!-- Étape 2 réglée : toucher le booster -->
+          <p class="open-hint" id="openHint">Touche le booster pour l'ouvrir</p>
+        </div>
         <div class="dots" id="dots" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i></div>
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
@@ -1067,6 +1149,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
   <!-- Sur-menu d'informations : on le ferme en touchant n'importe quelle zone floue (hors carte et hors bloc synopsis) -->
   <!-- Sur-menu Profil : fermeture par la croix OU par un appui dans le flou autour -->
+  <!-- Pop-up de paiement -->
+  <div class="paymodal hidden" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+    <div class="pay-back"></div>
+    <div class="pay-panel">
+      <h3 id="payTitle"></h3>
+      <div id="payBody"></div>
+      <div class="pay-bal"><span><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg><b id="payReels">0</b></span><span><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg><b id="payGems">0</b></span></div>
+      <div class="pay-actions" id="payActions"></div>
+    </div>
+  </div>
+
   <div class="pmodal hidden" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
     <div class="pm-back"></div>
     <div class="pm-panel">
@@ -1379,9 +1472,11 @@ arena.addEventListener('pointermove', e => {
    ===================================================================== */
 pack.addEventListener('click', onPackClick);
 pack.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPackClick(); } });
+/* Flux : idle → (1er appui) 'zoomed' = sélection → (« Ouvrir » + paiement) 'armed' → (appui) ouverture */
 function onPackClick(){
   if(state === 'idle') zoomIn();
-  else if(state === 'zoomed') openPack();
+  else if(state === 'zoomed') nudgeOpenBtn();     // il faut d'abord valider « Ouvrir un booster »
+  else if(state === 'armed') openPack();
 }
 
 function zoomIn(){
@@ -1389,11 +1484,14 @@ function zoomIn(){
   appEl.classList.add('is-opening-booster');   // mode immersif : HUD + barre du bas masqués
   setCaption('');
   pack.classList.add('zoomed');
-  pending = prefetchBooster();
+  setStep('select');
+  updateEnergyUI();
+  pending = pending || prefetchBooster();      // tirage préparé en avance (conservé si le joueur fait « Retour »)
 }
 
 async function openPack(){
   state = 'opening'; setBusyTabs(true);
+  pack.classList.remove('armed'); setStep('off');
   pack.classList.add('opened'); pack.setAttribute('tabindex', '-1');
   ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg'));
   try{
@@ -1445,7 +1543,9 @@ async function openPack(){
 }
 
 function failOpen(msg){
+  refundLastPayment();                         // le booster payé n'a pas pu s'ouvrir : on rend la mise
   appEl.classList.remove('is-opening-booster');
+  setStep('idle');
   resetPackVisuals(); clearStack();
   state = 'idle'; pending = null; setBusyTabs(false);
   setCaption(`<span class="err">${esc(msg)}</span>`);
@@ -1498,6 +1598,7 @@ function clearStack(){
 }
 function startStack(){
   state = 'stack'; busy = false;
+  lastPayment = null;                          // ouverture réussie : paiement définitif
   arena.classList.add('nav');
   dotsEl.hidden = false; updateDots();
   activateTop();
@@ -1769,6 +1870,7 @@ function resetPackVisuals(){
 // Sortie du résumé : retour à l'Accueil au repos, l'interface (HUD + barre) réapparaît
 function backToIdle(animate = true){
   appEl.classList.remove('is-opening-booster');
+  setStep('idle'); updateEnergyUI();
   againBtn.hidden = true; toColBtn.hidden = true;
   recapWrap.classList.add('hidden'); $('#recap').innerHTML = '';
   arena.getAnimations().forEach(a => a.cancel()); arena.classList.remove('hidden');
@@ -1792,7 +1894,7 @@ const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:
 const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
 let currentView = 'home', viewIdx = ORDER.indexOf('home');
 
-const canNavigate = () => !['zoomed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
+const canNavigate = () => !['zoomed', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
 function setTrack(idx, dx = 0){
   track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
 }
@@ -2340,12 +2442,27 @@ function renderWallet(bumped){
   valGems.textContent  = gemsTotal.toLocaleString('fr-FR');
   if(bumped){ bumped.classList.remove('bump'); void bumped.offsetWidth; bumped.classList.add('bump'); }   // petit rebond
 }
+function saveWallet(){
+  reelsTotal = Math.max(0, Math.floor(reelsTotal));    // jamais négatif, toujours entier
+  gemsTotal  = Math.max(0, Math.floor(gemsTotal));
+  store.set('wallet', {reels:reelsTotal, gems:gemsTotal});
+}
 function addResource(kind, amount){
+  if(!(amount > 0)) return;
   if(kind === 'reels') reelsTotal += amount;
   else if(kind === 'gems') gemsTotal += amount;
   else return;
-  store.set('wallet', {reels:reelsTotal, gems:gemsTotal});
+  saveWallet();
   renderWallet(kind === 'reels' ? valReels : valGems);
+}
+// Dépense : refusée (false) si le solde ne suffit pas → aucun compteur ne peut passer sous 0
+function spendResource(kind, amount){
+  if(!(amount >= 0)) return false;
+  if(kind === 'reels'){ if(reelsTotal < amount) return false; reelsTotal -= amount; }
+  else if(kind === 'gems'){ if(gemsTotal < amount) return false; gemsTotal -= amount; }
+  else return false;
+  saveWallet(); renderWallet();
+  return true;
 }
 renderWallet();
 // Magasin : chaque appui ajoute instantanément 100 à la ressource du bouton (data-reward / data-amount)
@@ -2353,6 +2470,188 @@ document.querySelectorAll('.shop-btn').forEach(b => b.addEventListener('click', 
   addResource(b.dataset.reward, +b.dataset.amount);
   buzz(10);
 }));
+
+/* =====================================================================
+   15 septies. ÉCONOMIE DES BOOSTERS
+   - 6 boosters gratuits max (6 dès la 1re connexion), +1 toutes les 4 h, timer en pause quand c'est plein
+   - plus de gratuit : on « paie le temps restant » en bobines, par heure ENTAMÉE (1 h = 15 bobines, 4 h = 60)
+   - bobines manquantes : conversion de gemmes par LOT de 5 bobines (5 bobines = 2 gemmes)
+   Tout est horodaté dans localStorage : le compte à rebours continue quand l'appli est fermée.
+   ===================================================================== */
+const ENERGY = {max:6, period:4 * 3600 * 1000};       // 4 h
+const REELS_PER_HOUR = 15;                             // 4 h = 60 bobines
+const REELS_PER_LOT = 5, GEMS_PER_LOT = 2;             // 5 bobines = 2 gemmes
+
+let energy = store.get('energy', null);                // {n: boosters dispo, t: début du compte à rebours en cours (ms)}
+if(!energy || typeof energy.n !== 'number' || typeof energy.t !== 'number') energy = {n:ENERGY.max, t:Date.now()};   // 1re connexion : 6 boosters
+let lastPayment = null;                                // {type:'free'} ou {type:'reels', amount} : remboursé si l'ouverture échoue
+
+// Recalcule les boosters gagnés pendant l'absence, à partir de l'horodatage sauvegardé
+function refreshEnergy(now = Date.now()){
+  energy.n = clamp(Math.floor(energy.n), 0, ENERGY.max);
+  if(energy.t > now) energy.t = now;                   // horloge du téléphone reculée : on repart de maintenant
+  if(energy.n >= ENERGY.max){
+    energy.t = now;                                    // plein : timer en pause
+  }else{
+    const gained = Math.floor((now - energy.t) / ENERGY.period);
+    if(gained > 0){
+      energy.n = Math.min(ENERGY.max, energy.n + gained);
+      energy.t = energy.n >= ENERGY.max ? now : energy.t + gained * ENERGY.period;   // on garde l'avance du cycle en cours
+    }
+  }
+  store.set('energy', energy);
+}
+const msToNext = (now = Date.now()) => energy.n >= ENERGY.max ? 0 : Math.max(0, energy.t + ENERGY.period - now);
+
+// Coût en bobines du temps restant : heure entamée = heure due (2 h 10 → 3 h → 45 ; 30 min → 1 h → 15)
+function timerCost(now = Date.now()){
+  const minutesLeft = msToNext(now) / 60000;
+  return Math.max(1, Math.ceil(minutesLeft / 60)) * REELS_PER_HOUR;
+}
+// Gemmes nécessaires pour N bobines manquantes : par lots de 5 entamés (12 manquantes → 3 lots → 6 gemmes)
+const gemsForReels = missing => Math.ceil(Math.max(0, missing) / REELS_PER_LOT) * GEMS_PER_LOT;
+
+function consumeFreeBooster(){
+  refreshEnergy();
+  if(energy.n <= 0) return false;
+  if(energy.n >= ENERGY.max) energy.t = Date.now();    // on quitte le « plein » : le compte à rebours démarre maintenant
+  energy.n -= 1;
+  store.set('energy', energy);
+  return true;
+}
+// Le booster en cours de recharge est « acheté » : le compte à rebours repart de zéro pour le suivant
+function skipTimer(){ energy.t = Date.now(); store.set('energy', energy); }
+
+function refundLastPayment(){
+  if(!lastPayment) return;
+  if(lastPayment.type === 'free'){
+    refreshEnergy();
+    energy.n = Math.min(ENERGY.max, energy.n + 1);
+    if(energy.n >= ENERGY.max) energy.t = Date.now();
+    store.set('energy', energy);
+  }else if(lastPayment.type === 'reels'){
+    addResource('reels', lastPayment.amount);
+  }
+  lastPayment = null;
+  updateEnergyUI();
+}
+
+/* ---------- Affichage ---------- */
+const homeView = $('#view-home'), enCount = $('#enCount'), enTimer = $('#enTimer'), enSegs = [...document.querySelectorAll('#enGauge i')];
+const openBtn = $('#openBtn'), openSub = $('#openSub');
+function setStep(step){ homeView.dataset.step = step; }
+const hms = ms => { const t = Math.ceil(ms / 1000); return [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map(v => String(v).padStart(2, '0')).join(':'); };
+
+function updateEnergyUI(){
+  refreshEnergy();
+  const n = energy.n, left = msToNext(), progress = n >= ENERGY.max ? 0 : 1 - left / ENERGY.period;
+  enCount.textContent = n;
+  enTimer.textContent = n >= ENERGY.max ? 'Plein' : hms(left);
+  enTimer.classList.toggle('full', n >= ENERGY.max);
+  enSegs.forEach((seg, i) => {
+    const f = i < n ? 1 : (i === n ? progress : 0);    // segments pleins + celui qui se recharge
+    seg.style.setProperty('--f', f.toFixed(4));
+    seg.classList.toggle('charging', i === n && n < ENERGY.max);
+  });
+  if(state === 'zoomed'){
+    if(n > 0){
+      openBtn.innerHTML = 'Ouvrir un booster';
+      openSub.textContent = `Gratuit · ${n}/${ENERGY.max} disponibles`;
+    }else{
+      openBtn.innerHTML = `Ouvrir · ${timerCost()} <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>`;
+      openSub.textContent = `Plus de booster gratuit · prochain dans ${hms(left)}`;
+    }
+  }
+}
+setInterval(updateEnergyUI, 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) updateEnergyUI(); });
+updateEnergyUI();
+
+function nudgeOpenBtn(){ openBtn.classList.remove('nudge'); void openBtn.offsetWidth; openBtn.classList.add('nudge'); buzz(12); }
+
+// Retour : on annule la sélection et on revient à l'Accueil (rien n'est dépensé)
+function cancelSelect(){
+  if(state !== 'zoomed') return;
+  state = 'idle';
+  pack.classList.remove('zoomed');
+  appEl.classList.remove('is-opening-booster');
+  setStep('idle'); updateEnergyUI();
+}
+$('#backBtn').addEventListener('click', cancelSelect);
+
+// Paiement validé : le joueur peut toucher le booster pour l'ouvrir
+function armBooster(payment){
+  lastPayment = payment;
+  state = 'armed';
+  setStep('armed');
+  pack.classList.add('armed');
+  updateEnergyUI();
+  buzz([10, 40, 10]);
+}
+
+// Étape 2 : « Ouvrir un booster »
+openBtn.addEventListener('click', () => {
+  if(state !== 'zoomed') return;
+  refreshEnergy();
+  if(energy.n > 0){                                    // 1. booster gratuit disponible
+    if(consumeFreeBooster()) armBooster({type:'free'});
+    return;
+  }
+  const cost = timerCost();                            // 2. payer le temps restant en bobines
+  if(spendResource('reels', cost)){ skipTimer(); armBooster({type:'reels', amount:cost}); return; }
+  const missing = cost - reelsTotal;                   // 3. pas assez de bobines → pop-up de conversion
+  showPayPopup(cost, missing, gemsForReels(missing));
+});
+
+/* ---------- Pop-up de paiement ---------- */
+const payModal = $('#payModal');
+let payOpen = false;
+function showPayPopup(cost, missing, gemCost){
+  const enough = gemsTotal >= gemCost;
+  $('#payTitle').textContent = enough ? 'Bobines insuffisantes' : 'Fonds insuffisants';
+  $('#payBody').innerHTML = enough
+    ? `<p>Ouvrir maintenant coûte <b>${cost} bobines</b>. Il t'en manque <b>${missing}</b>.</p>
+       <p>Convertir <b>${gemCost} gemmes</b> pour compléter ?</p><p class="rate">5 bobines = 2 gemmes (par lot de 5 entamé)</p>`
+    : `<p>Il te manque <b>${missing} bobines</b>, soit <b>${gemCost} gemmes</b> à convertir.</p>
+       <p>Tu n'as que <b>${gemsTotal} gemme${gemsTotal > 1 ? 's' : ''}</b>.</p>`;
+  $('#payReels').textContent = reelsTotal.toLocaleString('fr-FR');
+  $('#payGems').textContent = gemsTotal.toLocaleString('fr-FR');
+  $('#payActions').innerHTML = enough
+    ? `<button class="btn" type="button" data-pay="convert">Convertir ${gemCost} <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg> et ouvrir</button>
+       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`
+    : `<button class="btn" type="button" data-pay="shop">Aller au Magasin</button>
+       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
+  payModal.dataset.cost = cost; payModal.dataset.missing = missing; payModal.dataset.gems = gemCost;
+  payOpen = true;
+  payModal.classList.remove('hidden'); void payModal.offsetWidth; payModal.classList.add('on');
+  payModal.querySelector('.pay-actions .btn').focus({preventScroll:true});
+}
+function closePayPopup(){
+  if(!payOpen) return;
+  payOpen = false;
+  payModal.classList.remove('on');
+  setTimeout(() => { if(!payOpen) payModal.classList.add('hidden'); }, 280);
+}
+payModal.addEventListener('click', e => {
+  const act = e.target.closest('[data-pay]');
+  if(!act){ if(!e.target.closest('.pay-panel')){ closePayPopup(); cancelSelect(); } return; }   // clic dans le flou = Annuler
+  const cost = +payModal.dataset.cost, missing = +payModal.dataset.missing, gemCost = +payModal.dataset.gems;
+  if(act.dataset.pay === 'convert'){
+    // on revérifie tout au moment du clic (rien ne doit pouvoir passer sous zéro)
+    if(state !== 'zoomed' || !spendResource('gems', gemCost)){ closePayPopup(); return; }
+    reelsTotal += missing;                             // exactement les bobines manquantes, pas plus
+    saveWallet();
+    if(!spendResource('reels', cost)){ closePayPopup(); return; }
+    skipTimer();
+    closePayPopup();
+    armBooster({type:'reels', amount:cost});
+  }else if(act.dataset.pay === 'shop'){
+    closePayPopup(); cancelSelect(); showView('shop');
+  }else{
+    closePayPopup(); cancelSelect();                   // Annuler : retour à l'Accueil
+  }
+});
+document.addEventListener('keydown', e => { if(payOpen && e.key === 'Escape'){ closePayPopup(); cancelSelect(); } });
 
 // Écran de résumé : un simple appui sur l'une des 5 cartes ouvre directement le sur-menu
 $('#recap').addEventListener('click', e => {
