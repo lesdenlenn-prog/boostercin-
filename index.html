@@ -104,7 +104,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .app.lg-dim .hud{opacity:.12}                                     /* révélation légendaire : il s'efface dans l'obscurité */
 /* Mode immersif : dès qu'on touche le booster et jusqu'à la sortie du résumé, HUD et barre du bas disparaissent */
 .app.is-opening-booster .hud{opacity:0;visibility:hidden}
-.app.is-opening-booster .bottombar{opacity:0;transform:translateY(100%);pointer-events:none}
+.app.is-opening-booster .bottombar,
+.app.is-selecting .bottombar{opacity:0;transform:translateY(100%);pointer-events:none}   /* sélection : seule la barre se cache, le HUD reste */
 /* Case profil : un peu plus grande, collée au bord gauche, fond presque transparent */
 /* Même structure que les filtres de la Vidéothèque (pilule, bordure nette 1,5 px), aux couleurs bordeaux de l'Accueil */
 .hud-profile{display:flex;align-items:center;gap:12px;   /* cercle photo centré verticalement, texte juste à droite */
@@ -276,8 +277,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .open-panel .btn.nudge{animation:nudge .45s ease}
 @keyframes nudge{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .op-sub{margin:0;font-size:.78rem;color:#c9a69c;text-align:center;font-variant-numeric:tabular-nums}
-.op-back{display:flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:0;border-radius:99px;background:transparent;color:#ffe3da;font-weight:800;font-size:.85rem}
-.op-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.op-back{display:grid;place-items:center;width:46px;height:40px;padding:0;border:0;border-radius:14px;background:transparent}
+.op-back svg{width:30px;height:30px;fill:none;stroke:url(#backGrad);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}   /* flèche en U couché */
 .op-back:active{background:rgba(255,255,255,.08)}
 /* Étape 2 payée : on invite à toucher le booster */
 .open-hint{justify-content:center;height:100%;color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
@@ -305,6 +306,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pay-actions{display:flex;flex-direction:column;gap:8px}
 .pay-actions .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
 .pay-actions .btn svg{width:20px;height:20px}
+#againBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+#againBtn svg{width:22px;height:22px}
+#againBtn .cost{display:inline-flex;align-items:center;gap:5px;padding-left:10px;margin-left:2px;border-left:1.5px solid rgba(43,20,3,.3)}
+/* Outil de test (Magasin) */
+.dbg-reset{margin-top:28px;min-height:36px;padding:0 16px;border:1.5px dashed rgba(255,140,120,.5);border-radius:10px;
+  background:transparent;color:#ffb3a3;font-weight:800;font-size:.75rem;letter-spacing:.12em}
 
 .stack{position:absolute;left:50%;top:50%;width:var(--cw);aspect-ratio:2/3;transform:translate(-50%,-50%);
   z-index:4;visibility:hidden;perspective:1100px}
@@ -935,6 +942,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <circle cx="71.65" cy="62.5" r="9" fill="#000"/><circle cx="50" cy="75" r="9" fill="#000"/>
       <circle cx="28.35" cy="62.5" r="9" fill="#000"/><circle cx="28.35" cy="37.5" r="9" fill="#000"/>
     </mask>
+    <linearGradient id="backGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8f6b"/><stop offset="1" stop-color="#ff5b72"/>
+    </linearGradient>
     <linearGradient id="gemGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#c79bff"/><stop offset=".5" stop-color="#8a3ffc"/><stop offset="1" stop-color="#5a17c9"/>
     </linearGradient>
@@ -1002,6 +1012,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <button class="shop-btn gems" type="button" data-reward="gems" data-amount="100">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg><span>Obtenir 100 gemmes</span>
       </button>
+      <!-- OUTIL DE TEST (temporaire) : remet bobines, gemmes et boosters gratuits à 0 -->
+      <button class="dbg-reset" id="dbgReset" type="button">RESET RESSOURCES</button>
     </section>
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home" data-step="idle">
@@ -1050,7 +1062,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           <div class="open-panel" id="openPanel">
             <button class="btn" id="openBtn" type="button">Ouvrir un booster</button>
             <p class="op-sub" id="openSub"></p>
-            <button class="op-back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Retour</button>
+            <button class="op-back" id="backBtn" type="button" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 4.5h10a6 6 0 0 1 0 12H4"/><path d="M8.6 12 4 16.5l4.6 4.5"/></svg></button>
           </div>
           <!-- Étape 2 réglée : toucher le booster -->
           <p class="open-hint" id="openHint">Touche le booster pour l'ouvrir</p>
@@ -1059,7 +1071,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
           <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
-          <button class="btn ghost" id="toColBtn" hidden>Vidéothèque</button>
+          <button class="btn ghost" id="toColBtn" hidden>Retour à l'accueil</button>
         </div>
       </div>
       <!-- voile + rayons de la révélation légendaire : dans l'Accueil, sous la carte soulevée (z-index) -->
@@ -1481,7 +1493,7 @@ function onPackClick(){
 
 function zoomIn(){
   state = 'zoomed';
-  appEl.classList.add('is-opening-booster');   // mode immersif : HUD + barre du bas masqués
+  appEl.classList.add('is-selecting');         // sélection : la barre se cache, le HUD (ressources) reste visible
   setCaption('');
   pack.classList.add('zoomed');
   setStep('select');
@@ -1544,7 +1556,7 @@ async function openPack(){
 
 function failOpen(msg){
   refundLastPayment();                         // le booster payé n'a pas pu s'ouvrir : on rend la mise
-  appEl.classList.remove('is-opening-booster');
+  appEl.classList.remove('is-opening-booster', 'is-selecting');
   setStep('idle');
   resetPackVisuals(); clearStack();
   state = 'idle'; pending = null; setBusyTabs(false);
@@ -1856,6 +1868,7 @@ async function showSummary(){
   setCaption(demoOn() ? 'Mode démo : ces cartes ne sont pas ajoutées à ta collection.' : '');
   srEl.textContent = 'Résumé de ton booster affiché.';
   againBtn.hidden = false; toColBtn.hidden = false;
+  updateEnergyUI();                              // libellé (et prix éventuel) du bouton « Ouvrir un autre booster »
   busy = false; setBusyTabs(false);
 }
 
@@ -1869,7 +1882,7 @@ function resetPackVisuals(){
 }
 // Sortie du résumé : retour à l'Accueil au repos, l'interface (HUD + barre) réapparaît
 function backToIdle(animate = true){
-  appEl.classList.remove('is-opening-booster');
+  appEl.classList.remove('is-opening-booster', 'is-selecting');
   setStep('idle'); updateEnergyUI();
   againBtn.hidden = true; toColBtn.hidden = true;
   recapWrap.classList.add('hidden'); $('#recap').innerHTML = '';
@@ -1882,8 +1895,8 @@ function backToIdle(animate = true){
   play(packZoom, [{opacity:0, transform:'translateY(40px) scale(.94)'}, {opacity:1, transform:'translateY(0) scale(1)'}],
        {duration: RM ? 1 : 600, easing:'cubic-bezier(.2,.9,.2,1)', fill:'none'});
 }
-againBtn.addEventListener('click', () => backToIdle(true));
-toColBtn.addEventListener('click', () => { backToIdle(false); showView('col'); });
+againBtn.addEventListener('click', onAgainClick);                // gratuit → directement « Touche le booster » ; payant → confirmation
+toColBtn.addEventListener('click', () => backToIdle(true));        // « Retour à l'accueil »
 
 /* =====================================================================
    14. NAVIGATION (barre du bas)
@@ -2430,7 +2443,10 @@ profileModal.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if(profileOpen && e.key === 'Escape') closeProfile(); });
 
 // Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
-document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
+document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => {
+  if(state === 'zoomed') cancelSelect();          // pendant la sélection, « + » annule et file au Magasin
+  showView(b.dataset.goto);
+}));
 
 // Portefeuille : un total par ressource, sauvegardé dans le navigateur
 const savedWallet = store.get('wallet', {reels:0, gems:0});
@@ -2519,8 +2535,8 @@ function consumeFreeBooster(){
   store.set('energy', energy);
   return true;
 }
-// Le booster en cours de recharge est « acheté » : le compte à rebours repart de zéro pour le suivant
-function skipTimer(){ energy.t = Date.now(); store.set('energy', energy); }
+// NB : acheter un booster en bobines est une transaction isolée : elle ne touche JAMAIS à energy.t.
+// Le compte à rebours du prochain booster gratuit continue donc de tourner en parallèle.
 
 function refundLastPayment(){
   if(!lastPayment) return;
@@ -2540,13 +2556,15 @@ function refundLastPayment(){
 const homeView = $('#view-home'), enCount = $('#enCount'), enTimer = $('#enTimer'), enSegs = [...document.querySelectorAll('#enGauge i')];
 const openBtn = $('#openBtn'), openSub = $('#openSub');
 function setStep(step){ homeView.dataset.step = step; }
-const hms = ms => { const t = Math.ceil(ms / 1000); return [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map(v => String(v).padStart(2, '0')).join(':'); };
+// Compte à rebours en heures:minutes (minute entamée arrondie au-dessus : on n'affiche jamais 00:00 avant l'heure)
+const hm = ms => { const m = Math.ceil(ms / 60000); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const REEL_ICON = '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>';
 
 function updateEnergyUI(){
   refreshEnergy();
   const n = energy.n, left = msToNext(), progress = n >= ENERGY.max ? 0 : 1 - left / ENERGY.period;
   enCount.textContent = n;
-  enTimer.textContent = n >= ENERGY.max ? 'Plein' : hms(left);
+  enTimer.textContent = n >= ENERGY.max ? 'Plein' : hm(left);
   enTimer.classList.toggle('full', n >= ENERGY.max);
   enSegs.forEach((seg, i) => {
     const f = i < n ? 1 : (i === n ? progress : 0);    // segments pleins + celui qui se recharge
@@ -2558,9 +2576,13 @@ function updateEnergyUI(){
       openBtn.innerHTML = 'Ouvrir un booster';
       openSub.textContent = `Gratuit · ${n}/${ENERGY.max} disponibles`;
     }else{
-      openBtn.innerHTML = `Ouvrir · ${timerCost()} <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>`;
-      openSub.textContent = `Plus de booster gratuit · prochain dans ${hms(left)}`;
+      openBtn.innerHTML = `Ouvrir · ${timerCost()} ${REEL_ICON}`;
+      openSub.textContent = '';
     }
+  }
+  if(state === 'summary'){                             // bouton du résumé : gratuit ou avec son prix
+    againBtn.innerHTML = n > 0 ? 'Ouvrir un autre booster'
+      : `Ouvrir un autre booster <span class="cost">${timerCost()} bobines ${REEL_ICON}</span>`;
   }
 }
 setInterval(updateEnergyUI, 1000);
@@ -2569,59 +2591,94 @@ updateEnergyUI();
 
 function nudgeOpenBtn(){ openBtn.classList.remove('nudge'); void openBtn.offsetWidth; openBtn.classList.add('nudge'); buzz(12); }
 
-// Retour : on annule la sélection et on revient à l'Accueil (rien n'est dépensé)
+// Retour (flèche en U) : on annule la sélection et on revient à l'Accueil (rien n'est dépensé)
 function cancelSelect(){
   if(state !== 'zoomed') return;
   state = 'idle';
   pack.classList.remove('zoomed');
-  appEl.classList.remove('is-opening-booster');
+  appEl.classList.remove('is-selecting', 'is-opening-booster');
   setStep('idle'); updateEnergyUI();
 }
 $('#backBtn').addEventListener('click', cancelSelect);
 
-// Paiement validé : le joueur peut toucher le booster pour l'ouvrir
+// Paiement validé : le HUD disparaît (mode immersif) et le joueur peut toucher le booster pour l'ouvrir
 function armBooster(payment){
   lastPayment = payment;
   state = 'armed';
+  appEl.classList.remove('is-selecting');
+  appEl.classList.add('is-opening-booster');
+  pack.classList.add('zoomed', 'armed');
   setStep('armed');
-  pack.classList.add('armed');
+  pending = pending || prefetchBooster();
   updateEnergyUI();
   buzz([10, 40, 10]);
 }
+// Depuis le résumé : retour à l'Accueil puis directement à l'étape « Touche le booster » (sans sélection)
+function armFromSummary(payment){
+  backToIdle(false);
+  play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});   // le booster réapparaît en fondu, déjà agrandi
+  armBooster(payment);
+}
+const armFor = (ctx, payment) => ctx === 'summary' ? armFromSummary(payment) : armBooster(payment);
 
-// Étape 2 : « Ouvrir un booster »
-openBtn.addEventListener('click', () => {
-  if(state !== 'zoomed') return;
+/* Paiement d'un booster. ctx = 'select' (étape de sélection) ou 'summary' (bouton du résumé)
+   1. booster gratuit disponible → on en déduit 1
+   2. sinon : coût du temps restant en bobines (sans toucher au compte à rebours)
+   3. bobines insuffisantes → pop-up de conversion en gemmes */
+function payForBooster(ctx){
   refreshEnergy();
-  if(energy.n > 0){                                    // 1. booster gratuit disponible
-    if(consumeFreeBooster()) armBooster({type:'free'});
+  if(energy.n > 0){
+    if(consumeFreeBooster()) armFor(ctx, {type:'free'});
     return;
   }
-  const cost = timerCost();                            // 2. payer le temps restant en bobines
-  if(spendResource('reels', cost)){ skipTimer(); armBooster({type:'reels', amount:cost}); return; }
-  const missing = cost - reelsTotal;                   // 3. pas assez de bobines → pop-up de conversion
-  showPayPopup(cost, missing, gemsForReels(missing));
-});
+  const cost = timerCost();
+  if(spendResource('reels', cost)){ armFor(ctx, {type:'reels', amount:cost}); return; }
+  const missing = cost - reelsTotal;
+  showPayPopup(ctx, 'convert', cost, missing, gemsForReels(missing));
+}
+
+// Étape de sélection : « Ouvrir un booster » (le prix est affiché sur le bouton)
+openBtn.addEventListener('click', () => { if(state === 'zoomed') payForBooster('select'); });
+
+// Résumé : « Ouvrir un autre booster »
+function onAgainClick(){
+  if(state !== 'summary') return;
+  refreshEnergy();
+  if(energy.n > 0){ payForBooster('summary'); return; }          // cas A : gratuit → direct
+  showPayPopup('summary', 'confirm', timerCost(), 0, 0);         // cas B : payant → confirmation
+}
 
 /* ---------- Pop-up de paiement ---------- */
 const payModal = $('#payModal');
 let payOpen = false;
-function showPayPopup(cost, missing, gemCost){
-  const enough = gemsTotal >= gemCost;
-  $('#payTitle').textContent = enough ? 'Bobines insuffisantes' : 'Fonds insuffisants';
-  $('#payBody').innerHTML = enough
-    ? `<p>Ouvrir maintenant coûte <b>${cost} bobines</b>. Il t'en manque <b>${missing}</b>.</p>
-       <p>Convertir <b>${gemCost} gemmes</b> pour compléter ?</p><p class="rate">5 bobines = 2 gemmes (par lot de 5 entamé)</p>`
-    : `<p>Il te manque <b>${missing} bobines</b>, soit <b>${gemCost} gemmes</b> à convertir.</p>
-       <p>Tu n'as que <b>${gemsTotal} gemme${gemsTotal > 1 ? 's' : ''}</b>.</p>`;
+function showPayPopup(ctx, kind, cost, missing, gemCost){
+  // kind : 'confirm' (payer X bobines ?) | 'convert' (bobines manquantes → gemmes, ou fonds insuffisants)
+  const enoughGems = gemsTotal >= gemCost;
+  let title, body, actions;
+  if(kind === 'confirm'){
+    title = 'Ouvrir un autre booster';
+    body = `<p>Voulez-vous payer <b>${cost} bobines</b> ?</p>`;
+    actions = `<button class="btn" type="button" data-pay="confirm">Payer ${cost} ${REEL_ICON}</button>
+               <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
+  }else if(enoughGems){
+    title = 'Bobines insuffisantes';
+    body = `<p>Ouvrir maintenant coûte <b>${cost} bobines</b>. Il t'en manque <b>${missing}</b>.</p>
+            <p>Convertir <b>${gemCost} gemmes</b> pour compléter ?</p><p class="rate">5 bobines = 2 gemmes (par lot de 5 entamé)</p>`;
+    actions = `<button class="btn" type="button" data-pay="convert">Convertir ${gemCost} <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg> et ouvrir</button>
+               <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
+  }else{
+    title = 'Fonds insuffisants';
+    body = `<p>Il te manque <b>${missing} bobines</b>, soit <b>${gemCost} gemmes</b> à convertir.</p>
+            <p>Tu n'as que <b>${gemsTotal} gemme${gemsTotal > 1 ? 's' : ''}</b>.</p>`;
+    actions = `<button class="btn" type="button" data-pay="shop">Aller au Magasin</button>
+               <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
+  }
+  $('#payTitle').textContent = title;
+  $('#payBody').innerHTML = body;
+  $('#payActions').innerHTML = actions;
   $('#payReels').textContent = reelsTotal.toLocaleString('fr-FR');
   $('#payGems').textContent = gemsTotal.toLocaleString('fr-FR');
-  $('#payActions').innerHTML = enough
-    ? `<button class="btn" type="button" data-pay="convert">Convertir ${gemCost} <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg> et ouvrir</button>
-       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`
-    : `<button class="btn" type="button" data-pay="shop">Aller au Magasin</button>
-       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
-  payModal.dataset.cost = cost; payModal.dataset.missing = missing; payModal.dataset.gems = gemCost;
+  Object.assign(payModal.dataset, {ctx, cost, missing, gems:gemCost});
   payOpen = true;
   payModal.classList.remove('hidden'); void payModal.offsetWidth; payModal.classList.add('on');
   payModal.querySelector('.pay-actions .btn').focus({preventScroll:true});
@@ -2632,26 +2689,46 @@ function closePayPopup(){
   payModal.classList.remove('on');
   setTimeout(() => { if(!payOpen) payModal.classList.add('hidden'); }, 280);
 }
+// Annuler : en sélection → retour à l'Accueil ; depuis le résumé → on reste sur le résumé
+function cancelPay(){
+  const ctx = payModal.dataset.ctx;
+  closePayPopup();
+  if(ctx === 'select') cancelSelect();
+}
 payModal.addEventListener('click', e => {
   const act = e.target.closest('[data-pay]');
-  if(!act){ if(!e.target.closest('.pay-panel')){ closePayPopup(); cancelSelect(); } return; }   // clic dans le flou = Annuler
+  if(!act){ if(!e.target.closest('.pay-panel')) cancelPay(); return; }   // clic dans le flou = Annuler
+  const ctx = payModal.dataset.ctx;
   const cost = +payModal.dataset.cost, missing = +payModal.dataset.missing, gemCost = +payModal.dataset.gems;
-  if(act.dataset.pay === 'convert'){
+  const stillValid = ctx === 'select' ? state === 'zoomed' : state === 'summary';
+  if(act.dataset.pay === 'confirm'){
+    closePayPopup();
+    if(stillValid) payForBooster(ctx);                 // paie (ou propose la conversion si les bobines manquent)
+  }else if(act.dataset.pay === 'convert'){
     // on revérifie tout au moment du clic (rien ne doit pouvoir passer sous zéro)
-    if(state !== 'zoomed' || !spendResource('gems', gemCost)){ closePayPopup(); return; }
+    if(!stillValid || reelsTotal + missing < cost || !spendResource('gems', gemCost)){ closePayPopup(); return; }
     reelsTotal += missing;                             // exactement les bobines manquantes, pas plus
     saveWallet();
     if(!spendResource('reels', cost)){ closePayPopup(); return; }
-    skipTimer();
     closePayPopup();
-    armBooster({type:'reels', amount:cost});
+    armFor(ctx, {type:'reels', amount:cost});          // le compte à rebours gratuit n'est pas touché
   }else if(act.dataset.pay === 'shop'){
-    closePayPopup(); cancelSelect(); showView('shop');
+    closePayPopup();
+    if(ctx === 'select') cancelSelect(); else backToIdle(false);
+    showView('shop');
   }else{
-    closePayPopup(); cancelSelect();                   // Annuler : retour à l'Accueil
+    cancelPay();
   }
 });
-document.addEventListener('keydown', e => { if(payOpen && e.key === 'Escape'){ closePayPopup(); cancelSelect(); } });
+document.addEventListener('keydown', e => { if(payOpen && e.key === 'Escape') cancelPay(); });
+
+// OUTIL DE TEST (Magasin) : bobines, gemmes et boosters gratuits à 0
+$('#dbgReset').addEventListener('click', () => {
+  reelsTotal = 0; gemsTotal = 0; saveWallet(); renderWallet();
+  energy = {n:0, t:Date.now()}; store.set('energy', energy);   // 0 booster, le compte à rebours repart de maintenant
+  updateEnergyUI();
+  buzz(20);
+});
 
 // Écran de résumé : un simple appui sur l'une des 5 cartes ouvre directement le sur-menu
 $('#recap').addEventListener('click', e => {
