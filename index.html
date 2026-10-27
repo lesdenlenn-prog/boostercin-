@@ -231,10 +231,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.16),transparent 70%),
     radial-gradient(120% 80% at 50% 35%,#4b0d17 0%,#1b080d 58%,#0d0406 100%)}
 .arena{
-  --pw:min(62vw,250px,36dvh);                 /* largeur du booster (au repos) */
-  --cw:calc(var(--pw)*1.17 - 14px);           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
+  container-type:size;                        /* les enfants peuvent se dimensionner sur la hauteur réelle de l'arène (cqh) */
   position:relative;flex:1;min-height:0;
   margin-top:96px}   /* espace sous le HUD : le booster est bien éloigné des compteurs */
+.arena > *{
+  /* largeur du booster au repos : jamais plus grand que ce que l'arène permet une fois ZOOMÉ (×1,17, + une marge)
+     → plus aucun chevauchement avec le HUD ni avec les boutons, quel que soit le téléphone */
+  --pw:min(62vw,250px,calc(100cqh / 1.5 / 1.25));
+  --cw:calc(var(--pw)*1.17 - 14px)}           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
+@media (max-width:768px){
+  .arena{margin-top:150px}                    /* téléphone : booster plus bas, bien sous les compteurs */
+}
 /* Zones de toucher invisibles (moitié gauche / moitié droite), actives seulement pendant la pile de cartes */
 .zone{display:none;position:absolute;top:0;bottom:0;width:50%;z-index:55;background:transparent;opacity:0;cursor:pointer;
   -webkit-tap-highlight-color:transparent}
@@ -248,7 +255,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    SOUS LE BOOSTER : énergie (boosters gratuits) / sélection / « touche pour ouvrir »
    Les 3 blocs se superposent dans une zone de hauteur fixe et s'échangent en fondu (data-step sur l'Accueil).
    ===================================================================== */
-.hf-layer{position:relative;width:100%;max-width:340px;height:112px}
+.hf-layer{position:relative;width:100%;max-width:340px;height:112px;transition:transform .45s cubic-bezier(.3,.7,.3,1)}
+/* Sélection / attente : la barre du bas est cachée → le bloc descend dans la place libérée (écart net avec le booster) */
+.app.is-selecting .hf-layer,.app.is-opening-booster .hf-layer{transform:translateY(calc(var(--bar) - 18px))}
 .view-home[data-step="off"] .hf-layer{display:none}
 .hf-layer > *{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;
   opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s ease,transform .3s ease,visibility .25s}
@@ -273,17 +282,29 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Étape 1 : sélection */
 .open-panel{gap:6px}
 .open-panel .btn{min-width:230px;display:flex;align-items:center;justify-content:center;gap:8px}
+/* Même structure que les encadrés du HUD : pilule + bordure nette de 1,5 px */
+.btn.cta{border-radius:99px;background:var(--legendary);color:#000;          /* Call-to-Action : doré Légendaire, texte noir */
+  box-shadow:inset 0 0 0 1.5px rgba(90,45,0,.45),0 8px 20px -6px rgba(246,196,83,.6)}
+.btn.cta:active{transform:translateY(1px);filter:brightness(.96)}
+.btn.cta svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.85)) drop-shadow(0 1px 1px rgba(0,0,0,.4))}   /* bobine lisible sur le doré */
+.btn.pill-dark{border-radius:99px;background:rgba(30,3,9,.8);color:#ffe3da;   /* fond sombre standard du HUD */
+  box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
+.btn.pill-dark:active{background:rgba(60,8,18,.85)}
 .open-panel .btn svg{width:22px;height:22px}
 .open-panel .btn.nudge{animation:nudge .45s ease}
 @keyframes nudge{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .op-sub{margin:0;font-size:.78rem;color:#c9a69c;text-align:center;font-variant-numeric:tabular-nums}
-.op-back{display:grid;place-items:center;width:46px;height:40px;padding:0;border:0;border-radius:14px;background:transparent}
-.op-back svg{width:30px;height:30px;fill:none;stroke:url(#backGrad);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}   /* flèche en U couché */
-.op-back:active{background:rgba(255,255,255,.08)}
+.op-back{display:grid;place-items:center;width:58px;height:38px;padding:0;border:0;border-radius:99px;   /* pilule + bordure 1,5 px du HUD */
+  background:#f1e3d4;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.55),0 6px 16px rgba(0,0,0,.28)}   /* fond clair (pas doré) pour que la flèche noire se voie */
+.op-back svg{width:26px;height:26px;fill:none;stroke:#000;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}   /* flèche en U couché, noire et fine */
+.op-back:active{background:#e4d2c0}
 /* Étape 2 payée : on invite à toucher le booster */
 .open-hint{justify-content:center;height:100%;color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
 @keyframes hint-pulse{50%{opacity:.55}}
 .pack-pos.armed .pack-halo{opacity:1;animation:armed-glow 1.4s ease-in-out infinite}
+/* paiement pris en compte : petit « pop » du paquet (1,17 → 1,25 → 1,17) */
+.pack-pos.zoomed.armed .pack-zoom{animation:armed-pop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes armed-pop{0%{transform:scale(1.17)}35%{transform:scale(1.25)}100%{transform:scale(1.17)}}
 @keyframes armed-glow{50%{opacity:.55}}
 
 /* =====================================================================
@@ -308,7 +329,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pay-actions .btn svg{width:20px;height:20px}
 #againBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
 #againBtn svg{width:22px;height:22px}
-#againBtn .cost{display:inline-flex;align-items:center;gap:5px;padding-left:10px;margin-left:2px;border-left:1.5px solid rgba(43,20,3,.3)}
+#againBtn .cost{display:inline-flex;align-items:center;gap:5px;padding-left:10px;margin-left:2px;border-left:1.5px solid rgba(0,0,0,.3)}
 /* Outil de test (Magasin) */
 .dbg-reset{margin-top:28px;min-height:36px;padding:0 16px;border:1.5px dashed rgba(255,140,120,.5);border-radius:10px;
   background:transparent;color:#ffb3a3;font-weight:800;font-size:.75rem;letter-spacing:.12em}
@@ -1060,7 +1081,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           </div>
           <!-- Étape 1 : sélection -->
           <div class="open-panel" id="openPanel">
-            <button class="btn" id="openBtn" type="button">Ouvrir un booster</button>
+            <button class="btn cta" id="openBtn" type="button">Ouvrir un booster</button>
             <p class="op-sub" id="openSub"></p>
             <button class="op-back" id="backBtn" type="button" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 4.5h10a6 6 0 0 1 0 12H4"/><path d="M8.6 12 4 16.5l4.6 4.5"/></svg></button>
           </div>
@@ -1070,8 +1091,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <div class="dots" id="dots" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i></div>
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
-          <button class="btn" id="againBtn" hidden>Ouvrir un autre booster</button>
-          <button class="btn ghost" id="toColBtn" hidden>Retour à l'accueil</button>
+          <button class="btn cta" id="againBtn" hidden>Ouvrir un autre booster</button>
+          <button class="btn pill-dark" id="toColBtn" hidden>Retour à l'accueil</button>
         </div>
       </div>
       <!-- voile + rayons de la révélation légendaire : dans l'Accueil, sous la carte soulevée (z-index) -->
