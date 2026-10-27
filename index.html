@@ -117,7 +117,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .hud-profile:active{transform:translateY(1px)}
 .hud-avatar{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.3rem;line-height:1;
   background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.35);text-shadow:none}   /* future photo de profil */
-.app[data-page="shop"] .hud-profile{opacity:0;visibility:hidden;pointer-events:none}   /* Magasin : ressources seules */
+.app[data-page="shop"] .hud-profile,
+.app.is-selecting .hud-profile{opacity:0;visibility:hidden;pointer-events:none}   /* Magasin et sélection d'un booster : ressources seules */
 /* Compteurs : pilules plus basses que leur icône → l'icône déborde (overflow visible) */
 .hud-res{display:flex;flex-direction:column;gap:12px;align-items:flex-end;margin-right:18px}   /* marge pour l'icône qui déborde à droite */
 .res{position:relative;overflow:visible;display:flex;align-items:center;height:26px;min-width:104px;padding:0 28px 0 15px;
@@ -269,35 +270,37 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    [ barre continue 0→100 % sur 4 h  /  ⏱ x hr y min ] + petit booster doré avec le nombre de boosters gratuits
    ===================================================================== */
 .energy{position:absolute;z-index:3;
-  /* la boîte s'aligne exactement sous les lettres « CINÉ » du booster : --tl / --tw = position et largeur du mot,
-     mesurées en JS en proportion de la largeur du booster (donc justes quelle que soit sa taille) */
-  left:calc(50% - var(--pw) / 2 + var(--pw) * var(--tl, .245));width:calc(var(--pw) * var(--tw, .51));
-  top:calc(50% + var(--pw) * .75 + 12px);
+  /* dans .pack-zoom : même repère et même zoom que le booster. La boîte s'aligne exactement sous « CINÉ »
+     (--tl / --tw = position et largeur du mot, mesurées en JS en proportion de la largeur du booster) */
+  left:calc(var(--tl, .245) * 100%);width:calc(var(--tw, .51) * 100%);top:calc(100% + 12px);
   opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s;pointer-events:none}
-.view-home[data-step="idle"] .energy{opacity:1;visibility:visible}
-.en-box{padding:4px 6px 3px;border-radius:5px;
+.view-home[data-step="idle"] .energy,
+.view-home[data-step="select"][data-free="0"] .energy,        /* sélection sans booster gratuit : on voit ce qu'on va payer */
+.view-home[data-step="rush"] .energy{opacity:1;visibility:visible}
+.en-box{padding:5px 8px 4px;border-radius:6px;
   background:#6a0f1d;box-shadow:inset 0 0 0 1px rgba(255,140,120,.35),0 3px 8px rgba(0,0,0,.35)}   /* bordeaux plus clair que le fond */
 /* Rail creusé : ombre noire en haut, liseré doré en bas */
-.en-track{position:relative;height:3px;border-radius:99px;background:#3a0610;overflow:hidden;
-  box-shadow:inset 0 1px 0 0 rgba(0,0,0,.85),inset 0 -1px 0 0 #d4af37}   /* plus fin, toujours creusé (noir en haut, doré en bas) */
+.en-track{position:relative;height:4px;border-radius:99px;background:#3a0610;overflow:hidden;
+  box-shadow:inset 0 1px 0 0 rgba(0,0,0,.85),inset 0 -1px 0 0 #d4af37}
 .en-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;overflow:hidden;
   background:linear-gradient(180deg,#ffe9a8,#f6c453 55%,#d9a232);transition:width 1s linear}
+.energy.rush .en-fill{transition:width 1s ease-in-out}        /* achat : la barre se remplit en exactement 1 s */
 .en-fill::after{content:'';position:absolute;inset:0;transform:translateX(-100%);   /* reflet qui défile : barre « active » */
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:en-shimmer 2.4s ease-in-out infinite}
 @keyframes en-shimmer{60%,100%{transform:translateX(100%)}}
-.en-time{display:flex;align-items:center;gap:3px;margin-top:3px;color:#f3cf7a;font-weight:300;font-size:.6rem;line-height:1;   /* police fine */
+.en-time{display:flex;align-items:center;gap:4px;margin-top:4px;color:#f3cf7a;font-weight:300;font-size:.7rem;line-height:1;   /* police fine */
   letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.en-time svg{flex:none;width:9px;height:9px;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round}
+.en-time svg{flex:none;width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round}
 /* Mini-booster : rectangle vertical fin, doré uni, scellages PLATS en haut et en bas
    (alternance de petits rectangles dorés / dorés foncés) — accroché juste après la boîte */
-.en-pack{position:absolute;left:calc(100% - 2px);top:50%;transform:translateY(-50%);width:16px;height:27px;
+.en-pack{position:absolute;left:calc(100% - 2px);top:50%;transform:translateY(-50%);width:19px;height:32px;
   display:grid;place-items:center;border-radius:1px;
   background:
     repeating-linear-gradient(90deg,#f6c453 0 2px,#9c6f1c 2px 4px) top/100% 4px no-repeat,
     repeating-linear-gradient(90deg,#f6c453 0 2px,#9c6f1c 2px 4px) bottom/100% 4px no-repeat,
     #f6c453;
   box-shadow:0 2px 5px rgba(0,0,0,.45)}
-.en-pack span{font-weight:800;font-size:.72rem;line-height:1;color:#3a2200}
+.en-pack span{font-weight:800;font-size:.85rem;line-height:1;color:#3a2200}
 @media (prefers-reduced-motion:reduce){.en-fill::after{animation:none}}
 
 /* Étape 1 : sélection */
@@ -1071,14 +1074,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home" data-step="idle">
       <div class="arena" id="arena">
-        <!-- Jauge de recharge des boosters gratuits (sous le booster) -->
-        <div class="energy" id="energy" role="status" aria-label="Boosters gratuits">
-          <div class="en-box">
-            <div class="en-track"><div class="en-fill" id="enFill"></div></div>
-            <div class="en-time"><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.8"/><path d="M6 3.4V6l1.8 1.1"/></svg><span id="enTimer">Plein</span></div>
-          </div>
-          <div class="en-pack" title="Boosters gratuits disponibles"><span id="enCount">6</span></div>
-        </div>
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
         <div class="zone r" data-side="1" aria-hidden="true"></div>
         <div class="stack" id="stack">
@@ -1098,6 +1093,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
                 <div class="linebox"><div class="cutline" id="cutline"></div><div class="glint"></div></div>
               </div>
               <div class="burst" id="burst"></div>
+            </div>
+            <!-- Jauge de recharge des boosters gratuits (sous le booster, dans .pack-zoom : elle zoome AVEC lui) -->
+            <div class="energy" id="energy" role="status" aria-label="Boosters gratuits">
+              <div class="en-box">
+                <div class="en-track"><div class="en-fill" id="enFill"></div></div>
+                <div class="en-time"><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.8"/><path d="M6 3.4V6l1.8 1.1"/></svg><span id="enTimer">Plein</span></div>
+              </div>
+              <div class="en-pack" title="Boosters gratuits disponibles"><span id="enCount">6</span></div>
             </div>
           </div>
         </div>
@@ -1961,7 +1964,7 @@ const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:
 const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
 let currentView = 'home', viewIdx = ORDER.indexOf('home');
 
-const canNavigate = () => !['zoomed', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
+const canNavigate = () => !['zoomed', 'rushing', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
 function setTrack(idx, dx = 0){
   track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
 }
@@ -2601,6 +2604,7 @@ function refundLastPayment(){
     store.set('energy', energy);
   }else if(lastPayment.type === 'reels'){
     addResource('reels', lastPayment.amount);
+    if(lastPayment.prevT != null){ energy.t = lastPayment.prevT; store.set('energy', energy); }   // on annule aussi la remise à zéro du timer
   }
   lastPayment = null;
   updateEnergyUI();
@@ -2612,6 +2616,8 @@ const openBtn = $('#openBtn'), openSub = $('#openSub');
 function setStep(step){ homeView.dataset.step = step; }
 // Compte à rebours en heures:minutes (minute entamée arrondie au-dessus : on n'affiche jamais 00:00 avant l'heure)
 // « x hr y min » (minute entamée arrondie au-dessus)
+// format du décompte rapide : « 00 hr 00 min »
+const hrMin2 = ms => { const m = Math.max(0, Math.ceil(ms / 60000)); return `${String(Math.floor(m / 60)).padStart(2, '0')} hr ${String(m % 60).padStart(2, '0')} min`; };
 const hrMin = ms => { const m = Math.ceil(ms / 60000); return `${Math.floor(m / 60)} hr ${m % 60} min`; };
 const hm = ms => { const m = Math.ceil(ms / 60000); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
 const REEL_ICON = '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>';
@@ -2637,6 +2643,8 @@ function updateEnergyUI(){
   refreshEnergy();
   const n = energy.n, left = msToNext(), progress = n >= ENERGY.max ? 0 : 1 - left / ENERGY.period;
   const full = n >= ENERGY.max;
+  homeView.dataset.free = n;                           // sert à afficher la jauge à l'étape de sélection quand il faut payer
+  if(state === 'rushing') return;                      // la jauge est en train de s'animer : on n'y touche pas
   enCount.textContent = n > 0 ? n : '';                // 0 booster : le petit booster doré reste vide
   enTimer.textContent = full ? 'Plein' : hrMin(left);
   enFill.style.width = (full ? 100 : progress * 100).toFixed(2) + '%';   // UNE barre : 0 → 100 % sur 4 h, puis repart à 0
@@ -2729,9 +2737,47 @@ function payForBooster(ctx){
     return;
   }
   const cost = timerCost();
-  if(spendResource('reels', cost)){ armFor(ctx, {type:'reels', amount:cost}); return; }
+  if(spendResource('reels', cost)){ reelsPaid(ctx, cost); return; }
   const missing = cost - reelsTotal;
   showPayPopup(ctx, 'convert', cost, missing, gemsForReels(missing));
+}
+
+/* Achat en bobines validé (bobines déjà déduites) :
+   1. la jauge se remplit jusqu'à 100 % en exactement 1 s et le décompte file jusqu'à « 00 hr 00 min »
+   2. le timer global repart pour un cycle complet de 4 h (energy.t = maintenant, sauvegardé)
+   3. seulement ensuite : secousse + grand zoom → « Touche le booster pour l'ouvrir » */
+const RUSH_MS = 1000;
+function reelsPaid(ctx, cost){
+  const prevT = energy.t;                              // pour pouvoir annuler si l'ouverture échoue (réseau)
+  if(ctx === 'summary'){                               // depuis le résumé : retour à l'Accueil, booster agrandi, jauge visible
+    backToIdle(false);
+    play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 300, fill:'none'});
+    appEl.classList.add('is-selecting');
+    pack.classList.add('zoomed');
+  }
+  setStep('rush');
+  rushTimer(() => {
+    energy.t = Date.now();                             // NOUVELLE RÈGLE : payer en bobines relance un cycle complet de 4 h
+    store.set('energy', energy);
+    armBooster({type:'reels', amount:cost, prevT});
+  });
+}
+function rushTimer(onDone){
+  state = 'rushing';
+  const left0 = msToNext();
+  energyEl.classList.add('rush');
+  void enFill.offsetWidth;
+  enFill.style.width = '100%';                         // transition CSS de 1 s (classe .rush)
+  const t0 = performance.now();
+  const ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   // même courbe que ease-in-out
+  const tick = now => {
+    const k = Math.min(1, (now - t0) / (RM ? 1 : RUSH_MS));
+    enTimer.textContent = hrMin2(left0 * (1 - ease(k)));
+    if(k < 1){ requestAnimationFrame(tick); return; }
+    enTimer.textContent = hrMin2(0);                   // « 00 hr 00 min »
+    setTimeout(() => { energyEl.classList.remove('rush'); onDone(); }, 120);
+  };
+  requestAnimationFrame(tick);
 }
 
 // Étape de sélection : « Ouvrir un booster » (le prix est affiché sur le bouton)
@@ -2808,7 +2854,7 @@ payModal.addEventListener('click', e => {
     saveWallet();
     if(!spendResource('reels', cost)){ closePayPopup(); return; }
     closePayPopup();
-    armFor(ctx, {type:'reels', amount:cost});          // le compte à rebours gratuit n'est pas touché
+    reelsPaid(ctx, cost);                              // même enchaînement qu'un paiement direct
   }else if(act.dataset.pay === 'shop'){
     closePayPopup();
     if(ctx === 'select') cancelSelect(); else backToIdle(false);
