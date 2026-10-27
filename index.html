@@ -278,8 +278,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .en-box{padding:4px 6px 3px;border-radius:5px;
   background:#6a0f1d;box-shadow:inset 0 0 0 1px rgba(255,140,120,.35),0 3px 8px rgba(0,0,0,.35)}   /* bordeaux plus clair que le fond */
 /* Rail creusé : ombre noire en haut, liseré doré en bas */
-.en-track{position:relative;height:5px;border-radius:99px;background:#3a0610;overflow:hidden;
-  box-shadow:inset 0 2px 0 0 rgba(0,0,0,.8),inset 0 -1px 0 0 #d4af37}
+.en-track{position:relative;height:3px;border-radius:99px;background:#3a0610;overflow:hidden;
+  box-shadow:inset 0 1px 0 0 rgba(0,0,0,.85),inset 0 -1px 0 0 #d4af37}   /* plus fin, toujours creusé (noir en haut, doré en bas) */
 .en-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;overflow:hidden;
   background:linear-gradient(180deg,#ffe9a8,#f6c453 55%,#d9a232);transition:width 1s linear}
 .en-fill::after{content:'';position:absolute;inset:0;transform:translateX(-100%);   /* reflet qui défile : barre « active » */
@@ -322,11 +322,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .actions{align-items:center}
 .actions .op-back[hidden]{display:none}
 /* Étape 2 payée : on invite à toucher le booster */
-.open-hint{justify-content:center;height:100%;color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
+.open-hint{justify-content:flex-end;padding-bottom:4px;height:100%;   /* tout en bas : le paquet très agrandi garde un écart net */
+  color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
 @keyframes hint-pulse{50%{opacity:.55}}
 .pack-pos.armed .pack-halo{opacity:1;animation:armed-glow 1.4s ease-in-out infinite}
 /* paiement pris en compte : petit « pop » du paquet (1,17 → 1,25 → 1,17) */
-.pack-pos.zoomed.armed .pack-zoom{transform:scale(1.34);transition:transform .45s cubic-bezier(.3,1.5,.5,1)}   /* zoom plus imposant, qui reste jusqu'à la déchirure */
+.pack-pos.zoomed.armed .pack-zoom{transform:scale(var(--armed-scale,1.34));transition:transform .5s cubic-bezier(.3,1.35,.5,1)}   /* grand zoom (calculé en JS), gardé jusqu'à la déchirure */
+/* Validation : secousse rapide du paquet, puis le grand zoom */
+.pack-pos.shaking .pack-tilt{animation:pk-shake .36s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes pk-shake{
+  10%,90%{transform:translate(-1px,0) rotate(-1deg)}
+  20%,80%{transform:translate(3px,0) rotate(1.5deg)}
+  30%,50%,70%{transform:translate(-5px,0) rotate(-2.5deg)}
+  40%,60%{transform:translate(5px,0) rotate(2.5deg)}
+}
 .pack-pos.opened .pack-halo{animation:none}
 @keyframes armed-glow{50%{opacity:.55}}
 
@@ -352,7 +361,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pay-actions .btn svg{width:20px;height:20px}
 #againBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
 #againBtn svg{width:22px;height:22px}
-#againBtn .cost{display:inline-flex;align-items:center;gap:5px;padding-left:10px;margin-left:2px;border-left:1.5px solid rgba(0,0,0,.3)}
+#againBtn .cost{display:inline-flex;align-items:center;gap:5px}
 /* Outil de test (Magasin) */
 .dbg-reset{margin-top:28px;min-height:36px;padding:0 16px;border:1.5px dashed rgba(255,140,120,.5);border-radius:10px;
   background:transparent;color:#ffb3a3;font-weight:800;font-size:.75rem;letter-spacing:.12em}
@@ -1275,7 +1284,8 @@ const TIMING = {
   legendSettle:700,    //    durée du « pop » avant de rendre la main au joueur
   exit:520, unlockAfterExit:240
 };
-const ZOOM = 1.34;     // échelle du booster au moment de la déchirure (= .pack-pos.zoomed.armed .pack-zoom en CSS)
+let ZOOM = 1.34;       // échelle du booster au moment de la déchirure (recalculée à chaque validation : voir computeArmedScale)
+const ARMED_MAX = 1.5;  // plafond du grand zoom
 
 const PEEK = {
   maxTilt:40, tiltPerPx:.26, gap:.03, minDx:40, flickSpeed:.5, velWindow:100,
@@ -1921,7 +1931,7 @@ async function showSummary(){
    ===================================================================== */
 function resetPackVisuals(){
   cancelWaapi(pack);                                      // annule les animations des deux morceaux : ils reviennent en place
-  pack.classList.remove('zoomed', 'armed', 'opened', 'gone');
+  pack.classList.remove('zoomed', 'armed', 'shaking', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
 }
 // Sortie du résumé : retour à l'Accueil au repos, l'interface (HUD + barre) réapparaît
@@ -1951,7 +1961,7 @@ const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:
 const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
 let currentView = 'home', viewIdx = ORDER.indexOf('home');
 
-const canNavigate = () => !['zoomed', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
+const canNavigate = () => !['zoomed', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
 function setTrack(idx, dx = 0){
   track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
 }
@@ -2642,7 +2652,7 @@ function updateEnergyUI(){
   }
   if(state === 'summary'){                             // bouton du résumé : gratuit ou avec son prix
     againBtn.innerHTML = n > 0 ? 'Ouvrir un autre booster'
-      : `Ouvrir un autre booster <span class="cost">${timerCost()} bobines ${REEL_ICON}</span>`;
+      : `Ouvrir un autre booster : <span class="cost">${timerCost()} ${REEL_ICON}</span>`;
   }
 }
 setInterval(updateEnergyUI, 1000);
@@ -2662,16 +2672,43 @@ function cancelSelect(){
 $('#backBtn').addEventListener('click', cancelSelect);
 
 // Paiement validé : le HUD disparaît (mode immersif) et le joueur peut toucher le booster pour l'ouvrir
+/* Échelle du grand zoom : la plus grande possible (plafonnée à ARMED_MAX) sans sortir de l'écran,
+   en gardant de la place en bas pour « Touche le booster ». Plus le paquet est grand, plus les cartes le sont. */
+function computeArmedScale(){
+  const pw = pack.offsetWidth, ph = pack.offsetHeight;          // taille au repos (les transformations ne comptent pas)
+  if(!pw || !ph) return 1.34;
+  const a = arena.getBoundingClientRect(), v = homeView.getBoundingClientRect();
+  const cy = a.top + a.height / 2;                               // le paquet reste centré dans l'arène
+  const top = v.top + (parseFloat(getComputedStyle(homeView).paddingTop) || 0) + 16;
+  const bottom = v.bottom - 72;                                  // place du texte « Touche le booster pour l'ouvrir »
+  const s = Math.min(2 * (cy - top) / ph, 2 * (bottom - cy) / ph, (v.width - 20) / pw, ARMED_MAX);
+  return Math.max(1.17, s);
+}
+
+// Paiement validé : le HUD disparaît (mode immersif), le paquet tremble, puis grandit fortement ;
+// ensuite seulement le joueur peut le toucher pour l'ouvrir
 function armBooster(payment){
   lastPayment = payment;
-  state = 'armed';
+  state = 'arming';                                              // pendant la secousse, un appui ne fait rien
   appEl.classList.remove('is-selecting');
   appEl.classList.add('is-opening-booster');
-  pack.classList.add('zoomed', 'armed');
+  pack.classList.add('zoomed');
   setStep('armed');
   pending = pending || prefetchBooster();
   updateEnergyUI();
-  buzz([10, 40, 10]);
+  buzz([10, 40, 10, 40, 20]);
+  // taille finale du paquet… et des cartes qui en sortiront (carte = paquet zoomé − 14 px)
+  ZOOM = computeArmedScale();
+  pack.style.setProperty('--armed-scale', ZOOM.toFixed(3));
+  stackEl.style.setProperty('--cw', (pack.offsetWidth * ZOOM - 14).toFixed(1) + 'px');
+  // 1. secousse rapide (classe temporaire) → 2. grand zoom
+  pack.classList.remove('shaking'); void pack.offsetWidth; pack.classList.add('shaking');
+  setTimeout(() => {
+    pack.classList.remove('shaking');
+    if(state !== 'arming') return;
+    pack.classList.add('armed');                                 // déclenche le grand zoom (transition CSS)
+    state = 'armed';
+  }, RM ? 0 : 360);
 }
 // Depuis le résumé : retour à l'Accueil puis directement à l'étape « Touche le booster » (sans sélection)
 function armFromSummary(payment){
