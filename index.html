@@ -237,8 +237,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .arena > *{
   /* largeur du booster au repos : jamais plus grand que ce que l'arène permet une fois ZOOMÉ (×1,17, + une marge)
      → plus aucun chevauchement avec le HUD ni avec les boutons, quel que soit le téléphone */
-  --pw:min(62vw,250px,calc(100cqh / 1.5 / 1.25));
-  --cw:calc(var(--pw)*1.17 - 14px)}           /* carte = largeur du booster ZOOMÉ (×1,17) moins 14 px : elle rentre pile à l'intérieur du paquet */
+  --pw:min(62vw,250px,calc(100cqh / 1.5 / 1.32));
+  --cw:calc(var(--pw)*1.24 - 14px)}           /* carte = largeur du booster PRÊT (×1,24, taille au moment de la déchirure) moins 14 px */
 @media (max-width:768px){
   .arena{margin-top:150px}                    /* téléphone : booster plus bas, bien sous les compteurs */
 }
@@ -261,23 +261,40 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .view-home[data-step="off"] .hf-layer{display:none}
 .hf-layer > *{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;
   opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s ease,transform .3s ease,visibility .25s}
-.view-home[data-step="idle"] .energy,
 .view-home[data-step="select"] .open-panel,
 .view-home[data-step="armed"] .open-hint{opacity:1;visibility:visible;transform:none}
 
-/* Énergie : 3/6 + jauge à 6 segments + compte à rebours */
-.energy{gap:8px;padding:10px 14px;border-radius:16px;background:rgba(30,3,9,.55);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.22)}
-.en-top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#ffe3da;font-weight:800}
-.en-count{display:flex;align-items:center;gap:8px;font-size:1.05rem}
-.en-count svg{width:24px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.en-count small{color:#c9a69c;font-weight:500;font-size:.78rem}
-.en-timer{font-variant-numeric:tabular-nums;font-size:.95rem;color:#ffd98a}
-.en-timer.full{color:#8fe0b0}
-.en-gauge{width:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
-.en-gauge i{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;position:relative}
-.en-gauge i::after{content:'';position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--f,0));
-  background:linear-gradient(90deg,#f6c453,#ffe08a);transition:transform .6s ease}
-.en-gauge i.charging::after{background:linear-gradient(90deg,#d9893a,#f6c453)}
+/* =====================================================================
+   JAUGE DE RECHARGE (Accueil) : juste sous le booster, centrée
+   [ barre continue 0→100 % sur 4 h  /  ⏱ x hr y min ] + petit booster doré avec le nombre de boosters gratuits
+   ===================================================================== */
+.energy{position:absolute;left:50%;top:calc(50% + var(--pw) * .75 + 16px);z-index:3;display:flex;align-items:center;
+  transform:translateX(-50%);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s;pointer-events:none}
+.view-home[data-step="idle"] .energy{opacity:1;visibility:visible}
+.en-box{width:146px;padding:7px 24px 5px 10px;border-radius:8px;
+  background:#6a0f1d;box-shadow:inset 0 0 0 1px rgba(255,140,120,.35),0 4px 10px rgba(0,0,0,.35)}   /* bordeaux plus clair que le fond */
+/* Rail creusé : ombre noire en haut, liseré doré en bas */
+.en-track{position:relative;height:7px;border-radius:99px;background:#3a0610;overflow:hidden;
+  box-shadow:inset 0 2px 0 0 rgba(0,0,0,.8),inset 0 -1px 0 0 #d4af37}
+.en-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;overflow:hidden;
+  background:linear-gradient(180deg,#ffe9a8,#f6c453 55%,#d9a232);transition:width 1s linear}
+.en-fill::after{content:'';position:absolute;inset:0;transform:translateX(-100%);   /* reflet qui défile : barre « active » */
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:en-shimmer 2.4s ease-in-out infinite}
+@keyframes en-shimmer{60%,100%{transform:translateX(100%)}}
+.en-time{display:flex;align-items:center;gap:4px;margin-top:4px;color:#f3cf7a;font-weight:800;font-size:.68rem;line-height:1;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.en-time svg{flex:none;width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+/* Petit booster doré accroché à droite : nombre de boosters gratuits (vide à 0) */
+.en-pack{position:relative;margin-left:-16px;width:30px;height:40px;display:grid;place-items:center;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.en-pack::before{content:'';position:absolute;inset:0;
+  clip-path:polygon(0 8%,12.5% 0,25% 8%,37.5% 0,50% 8%,62.5% 0,75% 8%,87.5% 0,100% 8%,100% 92%,87.5% 100%,75% 92%,62.5% 100%,50% 92%,37.5% 100%,25% 92%,12.5% 100%,0 92%);
+  background:
+    repeating-linear-gradient(90deg,rgba(120,70,0,.25) 0 1px,transparent 1px 3px) top/100% 12% no-repeat,
+    repeating-linear-gradient(90deg,rgba(120,70,0,.25) 0 1px,transparent 1px 3px) bottom/100% 12% no-repeat,
+    linear-gradient(160deg,#fff0b8,#f6c453 45%,#d9a232)}
+.en-pack span{position:relative;font-weight:800;font-size:1.15rem;line-height:1;color:#2b1403}
+@media (prefers-reduced-motion:reduce){.en-fill::after{animation:none}}
 
 /* Étape 1 : sélection */
 .open-panel{gap:6px}
@@ -294,17 +311,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .open-panel .btn.nudge{animation:nudge .45s ease}
 @keyframes nudge{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .op-sub{margin:0;font-size:.78rem;color:#c9a69c;text-align:center;font-variant-numeric:tabular-nums}
-.op-back{display:grid;place-items:center;width:58px;height:38px;padding:0;border:0;border-radius:99px;   /* pilule + bordure 1,5 px du HUD */
-  background:#f1e3d4;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.55),0 6px 16px rgba(0,0,0,.28)}   /* fond clair (pas doré) pour que la flèche noire se voie */
-.op-back svg{width:26px;height:26px;fill:none;stroke:#000;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}   /* flèche en U couché, noire et fine */
-.op-back:active{background:#e4d2c0}
+.op-back{display:grid;place-items:center;width:58px;height:38px;padding:0;border:0;border-radius:99px;   /* même encadré que le HUD */
+  background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
+.op-back svg{width:26px;height:26px;fill:none;stroke:#f6c453;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}   /* flèche en U couché, dorée */
+.op-back:active{background:rgba(60,8,18,.85)}
+.actions{align-items:center}
+.actions .op-back[hidden]{display:none}
 /* Étape 2 payée : on invite à toucher le booster */
 .open-hint{justify-content:center;height:100%;color:#ffe9a8;font-weight:800;letter-spacing:.02em;animation:hint-pulse 1.6s ease-in-out infinite}
 @keyframes hint-pulse{50%{opacity:.55}}
 .pack-pos.armed .pack-halo{opacity:1;animation:armed-glow 1.4s ease-in-out infinite}
 /* paiement pris en compte : petit « pop » du paquet (1,17 → 1,25 → 1,17) */
-.pack-pos.zoomed.armed .pack-zoom{animation:armed-pop .5s cubic-bezier(.3,1.4,.5,1)}
-@keyframes armed-pop{0%{transform:scale(1.17)}35%{transform:scale(1.25)}100%{transform:scale(1.17)}}
+.pack-pos.zoomed.armed .pack-zoom{transform:scale(1.24);transition:transform .45s cubic-bezier(.3,1.5,.5,1)}   /* petit zoom… qui reste : le paquet ne rétrécit plus */
+.pack-pos.opened .pack-halo{animation:none}
 @keyframes armed-glow{50%{opacity:.55}}
 
 /* =====================================================================
@@ -1039,6 +1058,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home" data-step="idle">
       <div class="arena" id="arena">
+        <!-- Jauge de recharge des boosters gratuits (sous le booster) -->
+        <div class="energy" id="energy" role="status" aria-label="Boosters gratuits">
+          <div class="en-box">
+            <div class="en-track"><div class="en-fill" id="enFill"></div></div>
+            <div class="en-time"><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.8"/><path d="M6 3.4V6l1.8 1.1"/></svg><span id="enTimer">Plein</span></div>
+          </div>
+          <div class="en-pack" title="Boosters gratuits disponibles"><span id="enCount">6</span></div>
+        </div>
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
         <div class="zone r" data-side="1" aria-hidden="true"></div>
         <div class="stack" id="stack">
@@ -1071,14 +1098,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
       <div class="homefoot">
         <div class="hf-layer">
-          <!-- Énergie : boosters gratuits -->
-          <div class="energy" id="energy" aria-live="polite">
-            <div class="en-top">
-              <span class="en-count"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg><span><b id="enCount">6</b>/6 <small>gratuits</small></span></span>
-              <span class="en-timer" id="enTimer">Plein</span>
-            </div>
-            <div class="en-gauge" id="enGauge" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
           <!-- Étape 1 : sélection -->
           <div class="open-panel" id="openPanel">
             <button class="btn cta" id="openBtn" type="button">Ouvrir un booster</button>
@@ -1092,7 +1111,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <p class="caption" id="caption" role="status"></p>
         <div class="actions">
           <button class="btn cta" id="againBtn" hidden>Ouvrir un autre booster</button>
-          <button class="btn pill-dark" id="toColBtn" hidden>Retour à l'accueil</button>
+          <button class="op-back" id="toColBtn" type="button" aria-label="Retour à l'accueil" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 4.5h10a6 6 0 0 1 0 12H4"/><path d="M8.6 12 4 16.5l4.6 4.5"/></svg></button>
         </div>
       </div>
       <!-- voile + rayons de la révélation légendaire : dans l'Accueil, sous la carte soulevée (z-index) -->
@@ -1252,7 +1271,7 @@ const TIMING = {
   legendSettle:700,    //    durée du « pop » avant de rendre la main au joueur
   exit:520, unlockAfterExit:240
 };
-const ZOOM = 1.17;     // échelle du booster zoomé (doit rester égale à .pack-pos.zoomed .pack-zoom en CSS)
+const ZOOM = 1.24;     // échelle du booster au moment de la déchirure (= .pack-pos.zoomed.armed .pack-zoom en CSS)
 
 const PEEK = {
   maxTilt:40, tiltPerPx:.26, gap:.03, minDx:40, flickSpeed:.5, velWindow:100,
@@ -1524,7 +1543,7 @@ function zoomIn(){
 
 async function openPack(){
   state = 'opening'; setBusyTabs(true);
-  pack.classList.remove('armed'); setStep('off');
+  setStep('off');                              // on garde .armed : le paquet conserve sa grande taille pendant la déchirure
   pack.classList.add('opened'); pack.setAttribute('tabindex', '-1');
   ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg'));
   try{
@@ -1898,7 +1917,7 @@ async function showSummary(){
    ===================================================================== */
 function resetPackVisuals(){
   cancelWaapi(pack);                                      // annule les animations des deux morceaux : ils reviennent en place
-  pack.classList.remove('zoomed', 'opened', 'gone');
+  pack.classList.remove('zoomed', 'armed', 'opened', 'gone');
   pack.setAttribute('tabindex', '0');
 }
 // Sortie du résumé : retour à l'Accueil au repos, l'interface (HUD + barre) réapparaît
@@ -2574,24 +2593,23 @@ function refundLastPayment(){
 }
 
 /* ---------- Affichage ---------- */
-const homeView = $('#view-home'), enCount = $('#enCount'), enTimer = $('#enTimer'), enSegs = [...document.querySelectorAll('#enGauge i')];
+const homeView = $('#view-home'), enCount = $('#enCount'), enTimer = $('#enTimer'), enFill = $('#enFill'), energyEl = $('#energy');
 const openBtn = $('#openBtn'), openSub = $('#openSub');
 function setStep(step){ homeView.dataset.step = step; }
 // Compte à rebours en heures:minutes (minute entamée arrondie au-dessus : on n'affiche jamais 00:00 avant l'heure)
+// « x hr y min » (minute entamée arrondie au-dessus)
+const hrMin = ms => { const m = Math.ceil(ms / 60000); return `${Math.floor(m / 60)} hr ${m % 60} min`; };
 const hm = ms => { const m = Math.ceil(ms / 60000); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
 const REEL_ICON = '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>';
 
 function updateEnergyUI(){
   refreshEnergy();
   const n = energy.n, left = msToNext(), progress = n >= ENERGY.max ? 0 : 1 - left / ENERGY.period;
-  enCount.textContent = n;
-  enTimer.textContent = n >= ENERGY.max ? 'Plein' : hm(left);
-  enTimer.classList.toggle('full', n >= ENERGY.max);
-  enSegs.forEach((seg, i) => {
-    const f = i < n ? 1 : (i === n ? progress : 0);    // segments pleins + celui qui se recharge
-    seg.style.setProperty('--f', f.toFixed(4));
-    seg.classList.toggle('charging', i === n && n < ENERGY.max);
-  });
+  const full = n >= ENERGY.max;
+  enCount.textContent = n > 0 ? n : '';                // 0 booster : le petit booster doré reste vide
+  enTimer.textContent = full ? 'Plein' : hrMin(left);
+  enFill.style.width = (full ? 100 : progress * 100).toFixed(2) + '%';   // UNE barre : 0 → 100 % sur 4 h, puis repart à 0
+  energyEl.setAttribute('aria-label', `${n} booster${n > 1 ? 's' : ''} gratuit${n > 1 ? 's' : ''} sur ${ENERGY.max}` + (full ? '' : `, prochain dans ${hrMin(left)}`));
   if(state === 'zoomed'){
     if(n > 0){
       openBtn.innerHTML = 'Ouvrir un booster';
