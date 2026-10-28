@@ -146,16 +146,68 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pm-back{position:absolute;inset:0;background:rgba(6,2,4,.4);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .28s ease}
 .pm-panel{position:absolute;
-  inset:max(10vh, calc(env(safe-area-inset-top,0px) + 36px)) 5vw max(10vh, calc(env(safe-area-inset-bottom,0px) + 36px));   /* flou en haut et en bas */
-  max-width:540px;margin:0 auto;border-radius:20px;display:grid;place-items:center;
-  background:linear-gradient(180deg,#2e0f17,#16070b);box-shadow:inset 0 0 0 2px rgba(216,176,138,.55),0 24px 60px rgba(0,0,0,.6);
+  inset:max(4vh, calc(env(safe-area-inset-top,0px) + 20px)) 5vw max(4vh, calc(env(safe-area-inset-bottom,0px) + 20px));   /* plus haut qu'avant */
+  max-width:540px;margin:0 auto;border-radius:20px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;align-items:center;padding:26px 0 24px;
+  background:linear-gradient(180deg,#5c1520 0%,#3a0c14 55%,#22070c 100%);   /* bordeaux du thème */
+  box-shadow:inset 0 0 0 2px rgba(216,176,138,.45),0 24px 60px rgba(0,0,0,.6);
   opacity:0;transform:scale(.94);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.2,1)}
 .pmodal.on .pm-back{opacity:1}
 .pmodal.on .pm-panel{opacity:1;transform:none}
-.pm-title{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-size:2rem;color:#fff1c4;text-shadow:0 0 12px rgba(246,196,83,.4)}
-.pm-close{position:absolute;top:12px;right:12px;width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:12px;
-  background:rgba(255,255,255,.08);color:#f7eee6;box-shadow:inset 0 0 0 1.5px rgba(216,176,138,.45)}
-.pm-close svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;fill:none}
+/* boutons ronds du coin : même style que les encadrés du HUD */
+.pm-iconbtn{position:absolute;top:12px;width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:99px;
+  background:rgba(30,3,9,.8);color:#ffe3da;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
+.pm-iconbtn:active{background:rgba(60,8,18,.85)}
+.pm-iconbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pm-close{left:12px}
+.pm-settings{right:12px}
+.pm-settings svg{width:22px;height:22px;stroke-width:1.8}
+/* En-tête : photo (avec anneau doré de progression de niveau), pseudo, niveau */
+.pm-avatar{position:relative;flex:none;width:104px;height:104px;margin-top:6px;display:grid;place-items:center}
+.pm-avatar::before{content:'';position:absolute;inset:-7px;border-radius:50%;   /* anneau doré (progression du niveau : --xp) */
+  background:conic-gradient(from -30deg,#f6c453 0 var(--xp,62%),rgba(246,196,83,.15) var(--xp,62%) 100%);
+  -webkit-mask:radial-gradient(circle closest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
+          mask:radial-gradient(circle closest-side,transparent calc(100% - 4px),#000 calc(100% - 4px))}
+.pm-photo{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:2.6rem;
+  background:#e2c4a0;box-shadow:inset 0 0 0 2.5px #1a0a0c,0 8px 20px rgba(0,0,0,.4)}
+.pm-name{margin:16px 0 0;padding:0 6px 4px;font-size:1.45rem;font-weight:800;color:#fff3e4;
+  background:radial-gradient(60% 2px at 50% 100%,rgba(255,243,228,.85),transparent) bottom/100% 2px no-repeat}   /* petit trait sous le pseudo */
+.pm-level{min-height:1.2em;margin:4px 0 0;color:#f6c453;font-weight:800;font-size:1rem;letter-spacing:.04em}
+/* Top Films : pellicule à 4 cases */
+.pm-section{width:100%;margin-top:18px}
+.pm-h{margin:0 0 8px 16px;color:#f6c453;font-weight:800;font-size:.8rem;letter-spacing:.14em}
+.filmstrip{--perf:7px;position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  padding:calc(var(--perf) + 10px) 12px;background:#0b0809;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.06),0 10px 24px rgba(0,0,0,.45)}
+.filmstrip::before,.filmstrip::after{content:'';position:absolute;left:6px;right:6px;height:var(--perf);   /* perforations */
+  background:repeating-linear-gradient(90deg,transparent 0 5px,rgba(236,226,210,.85) 5px 11px,transparent 11px 16px);
+  -webkit-mask:linear-gradient(#000 0 0);border-radius:1px}
+.filmstrip::before{top:5px}
+.filmstrip::after{bottom:5px}
+.tf-slot{position:relative;aspect-ratio:2/3;border:0;padding:0;border-radius:6px;overflow:hidden;cursor:pointer;   /* mêmes proportions qu'une carte */
+  background:rgba(222,204,178,.32);box-shadow:inset 0 0 0 1px rgba(255,240,220,.18),inset 0 8px 16px rgba(0,0,0,.25);
+  display:grid;place-items:center;color:rgba(255,244,228,.85)}
+.tf-slot:active{transform:scale(.97)}
+.tf-plus{font-size:2.2rem;font-weight:300;line-height:1}
+.tf-slot .card{position:absolute;inset:0;width:100%;height:100%;border-radius:6px}   /* la carte remplit la case sans la déformer */
+.tf-slot .card .meta{font-size:.5rem;padding:12px 4px 3px}
+.tf-slot .card .meta b{font-size:.58rem}
+.tf-slot .card .badge{display:none}
+
+/* =====================================================================
+   SÉLECTION D'UN FILM (même grille que la Vidéothèque)
+   ===================================================================== */
+.pickmodal{position:absolute;inset:0;z-index:88;display:flex;flex-direction:column;background:#02050f;
+  opacity:0;transform:translateY(16px);transition:opacity .25s ease,transform .3s cubic-bezier(.2,.9,.2,1)}
+.pickmodal.on{opacity:1;transform:none}
+.pick-head{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px;
+  border-bottom:1px solid rgba(70,130,255,.18)}
+.pick-head h3{margin:0;flex:1;text-align:center;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:1.4rem;color:#fff1c4}
+.pick-head .pm-iconbtn{position:static;flex:none}
+.pick-head .spacer{flex:none;width:42px}
+.pick-list{flex:1;min-height:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
+.pick-list .slot:not(.empty) .card{cursor:pointer}
+.pick-empty{margin:40px 24px;text-align:center;color:#7f9ae0}
 
 /* =====================================================================
    MAGASIN
@@ -1231,9 +1283,28 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   <div class="pmodal hidden" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
     <div class="pm-back"></div>
     <div class="pm-panel">
-      <button class="pm-close" id="pmClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
-      <p class="pm-title" id="pmTitle">Profil</p>
+      <button class="pm-iconbtn pm-close" id="pmClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <button class="pm-iconbtn pm-settings" id="pmSettings" type="button" aria-label="Paramètres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14.1 2.5h-4.2l-.4 2.5a7.5 7.5 0 0 0-2.6 1.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.4 2.5h4.2l.4-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/></svg></button>
+      <!-- En-tête -->
+      <div class="pm-avatar"><div class="pm-photo" aria-hidden="true">🎞️</div></div>
+      <h2 class="pm-name" id="pmTitle">Pseudo</h2>
+      <p class="pm-level" id="pmLevel"></p>   <!-- ex. « Lv. 57 » : prêt pour plus tard -->
+      <!-- Top Films : pellicule à 4 cases -->
+      <section class="pm-section" aria-labelledby="tfTitle">
+        <h3 class="pm-h" id="tfTitle">TOP FILMS</h3>
+        <div class="filmstrip" id="filmstrip"></div>
+      </section>
     </div>
+  </div>
+
+  <!-- Sélection d'un film pour le Top Films (même grille que la Vidéothèque) -->
+  <div class="pickmodal hidden" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <div class="pick-head">
+      <button class="pm-iconbtn" id="pickClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <h3 id="pickTitle">Choisis un film</h3>
+      <span class="spacer"></span>
+    </div>
+    <div class="view-col pick-list" id="pickList"></div>
   </div>
 
   <div class="infomodal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
@@ -1946,6 +2017,7 @@ function backToIdle(animate = true){
   arena.getAnimations().forEach(a => a.cancel()); arena.classList.remove('hidden');
   clearStack(); clearLegendFx(); resetPackVisuals();
   state = 'idle'; busy = false; pending = null; cards = []; idx = 0;
+  updateEnergyUI();                              // de retour sur l'Accueil : la jauge reprend sa vraie valeur (ex. 4 hr 0 min)
   setCaption('');
   if(!animate) return;
   play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});
@@ -2480,6 +2552,7 @@ const profileModal = $('#profileModal'), profileBtn = $('#profileBtn');
 function openProfile(){
   if(profileOpen || !canNavigate()) return;            // pas pendant l'ouverture d'un booster
   profileOpen = true;
+  renderTopFilms();
   profileModal.classList.remove('hidden');
   void profileModal.offsetWidth;
   profileModal.classList.add('on');
@@ -2493,11 +2566,72 @@ function closeProfile(){
   profileBtn.focus({preventScroll:true});
 }
 profileBtn.addEventListener('click', openProfile);
+$('#pmSettings').addEventListener('click', () => buzz(8));   // Paramètres : menu à venir
+
+/* ---------- Top Films : 4 cases (localStorage 'topFilms' = 4 identifiants de films ou null) ---------- */
+const TOP_N = 4;
+let topFilms = store.get('topFilms', []);
+topFilms = Array.from({length:TOP_N}, (_, i) => topFilms[i] ?? null);
+const filmstrip = $('#filmstrip');
+function renderTopFilms(){
+  const col = getCol();
+  filmstrip.innerHTML = topFilms.map((id, i) => {
+    const c = id != null ? col[id] : null;
+    return c
+      ? `<button class="tf-slot" type="button" data-i="${i}" aria-label="Top ${i + 1} : ${esc(c.title)} (changer)">${cardHTML(c)}</button>`
+      : `<button class="tf-slot" type="button" data-i="${i}" aria-label="Ajouter un film en position ${i + 1}"><span class="tf-plus" aria-hidden="true">+</span></button>`;
+  }).join('');
+}
+filmstrip.addEventListener('click', e => {
+  const slot = e.target.closest('.tf-slot');
+  if(slot) openPicker(+slot.dataset.i);                // « + » (ou carte déjà placée) → modale de sélection
+});
+
+/* ---------- Modale de sélection (grille de la Vidéothèque) ---------- */
+const pickModal = $('#pickModal'), pickList = $('#pickList');
+let pickSlot = null;
+function openPicker(slotIndex){
+  pickSlot = slotIndex;
+  $('#pickTitle').textContent = `Top film n° ${slotIndex + 1}`;
+  const films = Object.values(getCol()).sort((a, b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
+  if(!films.length){
+    pickList.innerHTML = '<p class="pick-empty">Ta vidéothèque est vide : ouvre des boosters pour obtenir des films !</p>';
+  }else{
+    const rows = [];
+    for(let k = 0; k < films.length; k += 3) rows.push(films.slice(k, k + 3));
+    pickList.innerHTML = `<div class="cabinet"><div class="scap"></div>${rows.map(row => `<div class="srow"><div class="niche">
+      <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
+      <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}</div>`).join('')}</div></div></div>`).join('')}</div>`;
+  }
+  pickList.scrollTop = 0;
+  pickModal.classList.remove('hidden'); void pickModal.offsetWidth; pickModal.classList.add('on');
+}
+function closePicker(){
+  pickModal.classList.remove('on');
+  setTimeout(() => { if(!pickModal.classList.contains('on')){ pickModal.classList.add('hidden'); pickList.innerHTML = ''; } }, 300);
+  pickSlot = null;
+}
+$('#pickClose').addEventListener('click', closePicker);
+pickList.addEventListener('click', e => {
+  const slot = e.target.closest('.slot[data-id]');
+  if(!slot || pickSlot === null) return;
+  chooseTopFilm(pickSlot, slot.dataset.id);
+});
+// Film choisi → il remplit la case (sans en changer la taille). Un même film ne peut occuper qu'une case.
+function chooseTopFilm(i, id){
+  topFilms = topFilms.map(x => String(x) === String(id) ? null : x);
+  topFilms[i] = id;
+  store.set('topFilms', topFilms);
+  renderTopFilms();
+  closePicker();
+  buzz(10);
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && pickModal.classList.contains('on')) closePicker(); });
 // Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
 profileModal.addEventListener('click', e => {
   if(e.target.closest('#pmClose') || !e.target.closest('.pm-panel')) closeProfile();
 });
-document.addEventListener('keydown', e => { if(profileOpen && e.key === 'Escape') closeProfile(); });
+document.addEventListener('keydown', e => { if(profileOpen && e.key === 'Escape' && !pickModal.classList.contains('on')) closeProfile(); });
 
 // Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
 document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => {
@@ -2644,11 +2778,15 @@ function updateEnergyUI(){
   const n = energy.n, left = msToNext(), progress = n >= ENERGY.max ? 0 : 1 - left / ENERGY.period;
   const full = n >= ENERGY.max;
   homeView.dataset.free = n;                           // sert à afficher la jauge à l'étape de sélection quand il faut payer
-  if(state === 'rushing') return;                      // la jauge est en train de s'animer : on n'y touche pas
-  enCount.textContent = n > 0 ? n : '';                // 0 booster : le petit booster doré reste vide
-  enTimer.textContent = full ? 'Plein' : hrMin(left);
-  enFill.style.width = (full ? 100 : progress * 100).toFixed(2) + '%';   // UNE barre : 0 → 100 % sur 4 h, puis repart à 0
-  energyEl.setAttribute('aria-label', `${n} booster${n > 1 ? 's' : ''} gratuit${n > 1 ? 's' : ''} sur ${ENERGY.max}` + (full ? '' : `, prochain dans ${hrMin(left)}`));
+  // Jauge figée (sur « 00 hr 00 min » / 100 % après un achat) pendant toute l'ouverture :
+  // elle ne reprend sa vraie valeur qu'au retour à l'Accueil (le localStorage, lui, est déjà à jour)
+  const gaugeFrozen = ['rushing', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);
+  if(!gaugeFrozen){
+    enCount.textContent = n > 0 ? n : '';              // 0 booster : le petit booster doré reste vide
+    enTimer.textContent = full ? 'Plein' : hrMin(left);
+    enFill.style.width = (full ? 100 : progress * 100).toFixed(2) + '%';   // UNE barre : 0 → 100 % sur 4 h, puis repart à 0
+    energyEl.setAttribute('aria-label', `${n} booster${n > 1 ? 's' : ''} gratuit${n > 1 ? 's' : ''} sur ${ENERGY.max}` + (full ? '' : `, prochain dans ${hrMin(left)}`));
+  }
   if(state === 'zoomed'){
     if(n > 0){
       openBtn.innerHTML = 'Ouvrir un booster';
