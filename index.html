@@ -10,7 +10,7 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -219,6 +219,143 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .tf-slot.is-editing .tf-btn{transform:none}
 .tf-btn:active{background:rgba(70,14,24,.9)}
 .tf-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* =====================================================================
+   FAVORIS (sous le Top Films) : 2 genres côte à côte + réalisateur sur toute la largeur
+   ===================================================================== */
+.favgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
+.fav-card{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 8px 18px rgba(0,0,0,.35);transition:transform .15s ease}
+.fav-card:active{transform:scale(.98)}
+.fav-card.is-editing:active{transform:none}
+.fav-card:focus-visible{outline:2px solid #fff3e4;outline-offset:3px}
+.fav-card::after{content:'';position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;   /* liseré fin par-dessus le décor */
+  box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.22)}
+.fav-card.empty::after{box-shadow:none;border:1.5px dashed rgba(255,240,220,.32)}
+.fav-genre{height:106px}
+.fav-dir{grid-column:1 / -1}
+.fav-body{position:absolute;inset:0;isolation:isolate;overflow:hidden;transition:filter .22s ease,transform .22s ease}
+.fav-dir .fav-body{position:relative;inset:auto}
+/* Mode édition (même principe que le Top Films) : flou + quasi noir et blanc, poubelle / crayon par-dessus */
+.fav-card.is-editing .fav-body{filter:blur(4px) grayscale(.85) brightness(.7);transform:scale(1.08)}
+.fav-card.is-editing .tf-edit{opacity:1;visibility:visible}
+.fav-card.is-editing .tf-btn{transform:none}
+.fav-card .tf-edit{gap:12px}
+.fav-card .tf-btn{width:42px;height:42px}
+.fav-card .tf-btn svg{width:20px;height:20px}
+
+/* Libellés communs */
+.g-rank{position:absolute;top:10px;left:12px;font-size:.6rem;font-weight:800;letter-spacing:.14em;opacity:.78}
+.g-name{position:absolute;left:12px;right:10px;bottom:10px;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;
+  font-size:1.22rem;line-height:1.05;text-shadow:var(--g-ts,0 2px 6px rgba(0,0,0,.5))}
+
+/* Case vide : attente élégante + « + » */
+.fav-empty{color:rgba(255,244,228,.85);display:grid;place-items:center;
+  background:repeating-linear-gradient(135deg,rgba(255,240,220,.035) 0 8px,transparent 8px 16px),rgba(222,204,178,.12)}
+.fe-plus{width:40px;height:40px;margin-top:8px;border-radius:50%;display:grid;place-items:center;font-size:1.7rem;font-weight:300;line-height:1;
+  background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.4)}
+
+/* ---------------------------------------------------------------------
+   THÈMES DE GENRE : tout passe par data-genre="…"
+   Chaque genre = 1 ligne de variables : --g1/--g2 (dégradé), --g-ink (texte), --g-ico (emoji en filigrane),
+   --g-pat (motif : dégradés ou SVG), --g-po (opacité du motif), --g-ts (ombre du texte).
+   Ajouter un genre = ajouter une ligne ici (et une entrée dans GENRES en JS). Sert aux cartes du profil ET aux boutons de la modale.
+   --------------------------------------------------------------------- */
+.gtheme{color:var(--g-ink,#fff);background:linear-gradient(155deg,var(--g1,#555),var(--g2,#111))}
+.gtheme::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--g-pat,none);opacity:var(--g-po,.55);pointer-events:none}
+.gtheme::after{content:var(--g-ico,'');position:absolute;right:-.12em;bottom:-.18em;z-index:-1;font-size:var(--g-icz,4.2rem);line-height:1;
+  opacity:.24;transform:rotate(-14deg);pointer-events:none}
+[data-genre="horreur"]{--g1:#3a0508;--g2:#030102;--g-ink:#ff6a5c;--g-ico:'🔪';--g-po:.5;
+  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23fff' stroke-width='.7'%3E%3Cpath d='M0 0L140.0 0.0M0 0L135.2 36.2M0 0L121.2 70.0M0 0L99.0 99.0M0 0L70.0 121.2M0 0L36.2 135.2M0 0L0.0 140.0M14.0 0.0Q11.9 1.6 13.5 3.6Q11.1 4.6 12.1 7.0Q9.6 7.3 9.9 9.9Q7.3 9.6 7.0 12.1Q4.6 11.1 3.6 13.5Q1.6 11.9 0.0 14.0M28.0 0.0Q23.9 3.1 27.0 7.2Q22.2 9.2 24.2 14.0Q19.1 14.7 19.8 19.8Q14.7 19.1 14.0 24.2Q9.2 22.2 7.2 27.0Q3.1 23.9 0.0 28.0M44.0 0.0Q37.5 4.9 42.5 11.4Q35.0 14.5 38.1 22.0Q30.0 23.0 31.1 31.1Q23.0 30.0 22.0 38.1Q14.5 35.0 11.4 42.5Q4.9 37.5 0.0 44.0M62.0 0.0Q52.9 7.0 59.9 16.0Q49.3 20.4 53.7 31.0Q42.3 32.5 43.8 43.8Q32.5 42.3 31.0 53.7Q20.4 49.3 16.0 59.9Q7.0 52.9 0.0 62.0M82.0 0.0Q69.9 9.2 79.2 21.2Q65.2 27.0 71.0 41.0Q55.9 42.9 58.0 58.0Q42.9 55.9 41.0 71.0Q27.0 65.2 21.2 79.2Q9.2 69.9 0.0 82.0M104.0 0.0Q88.7 11.7 100.5 26.9Q82.6 34.2 90.1 52.0Q71.0 54.4 73.5 73.5Q54.4 71.0 52.0 90.1Q34.2 82.6 26.9 100.5Q11.7 88.7 0.0 104.0'/%3E%3C/svg%3E") 0 0/62% auto no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23ff2b2b' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M38 18Q58 46 70 86M54 12Q72 42 84 80M70 10Q84 36 94 70'/%3E%3C/svg%3E") 100% 100%/46% auto no-repeat,radial-gradient(120% 90% at 100% 100%,rgba(160,0,0,.55),transparent 60%)}
+[data-genre="scifi"]{--g1:#0b0f3a;--g2:#1e0536;--g-ink:#8ff6ff;--g-ico:'🚀';--g-po:.9;--g-ts:0 0 8px rgba(0,240,255,.8),0 0 18px rgba(255,0,220,.5);
+  --g-pat:radial-gradient(1px 1px at 12% 22%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 38% 12%,#bff 99%,transparent),radial-gradient(1px 1px at 64% 30%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 84% 16%,#fbf 99%,transparent),radial-gradient(1px 1px at 26% 52%,#fff 99%,transparent),radial-gradient(1px 1px at 72% 50%,#bff 99%,transparent),radial-gradient(1.5px 1.5px at 50% 40%,#fff 99%,transparent),linear-gradient(transparent 74%,rgba(255,0,220,.55) 74.5%,transparent 76.5%),repeating-linear-gradient(90deg,transparent 0 22px,rgba(0,240,255,.18) 22px 23px) 0 100%/100% 25% no-repeat}
+[data-genre="comedie"]{--g1:#ffd93b;--g2:#ff8a1f;--g-ink:#3a1200;--g-ico:'😂';--g-ts:0 1px 0 rgba(255,255,255,.45);--g-po:.75;
+  --g-pat:radial-gradient(circle at 20% 30%,#ff3fa4 2px,transparent 2.6px) 0 0/38px 32px,radial-gradient(circle at 70% 70%,#2ee6ff 2px,transparent 2.6px) 0 0/30px 36px,radial-gradient(4px 1.6px at 45% 55%,#7b3cff 99%,transparent) 11px 7px/34px 28px,radial-gradient(1.6px 4px at 60% 40%,#fff 99%,transparent) 0 0/26px 30px}
+[data-genre="action"]{--g1:#ff6a1a;--g2:#6e0a00;--g-ink:#fff2c2;--g-ico:'💥';
+  --g-pat:repeating-linear-gradient(115deg,rgba(255,255,255,.14) 0 5px,transparent 5px 17px),radial-gradient(70% 90% at 100% 0,rgba(255,220,80,.6),transparent 60%)}
+[data-genre="aventure"]{--g1:#3a6b3e;--g2:#10261a;--g-ink:#ffe39a;--g-ico:'🧭';--g-po:.6;
+  --g-pat:repeating-radial-gradient(circle at 82% 18%,transparent 0 9px,rgba(255,236,180,.22) 9px 10px)}
+[data-genre="animation"]{--g1:#6ec6ff;--g2:#b07bff;--g-ink:#fff;--g-ico:'🎨';--g-po:.7;
+  --g-pat:radial-gradient(circle at 18% 78%,rgba(255,255,140,.7) 0 16%,transparent 17%),radial-gradient(circle at 88% 22%,rgba(255,140,200,.7) 0 20%,transparent 21%),radial-gradient(circle at 60% 110%,rgba(120,255,200,.6) 0 26%,transparent 27%)}
+[data-genre="crime"]{--g1:#2a2a2a;--g2:#080808;--g-ink:#f5c518;--g-ico:'🔍';--g-po:.85;
+  --g-pat:repeating-linear-gradient(160deg,transparent 0 8px,rgba(0,0,0,.85) 8px 16px) 0 0/100% 100%,linear-gradient(160deg,transparent 56%,#f5c518 56% 70%,transparent 70%)}
+[data-genre="documentaire"]{--g1:#3f6262;--g2:#101e1e;--g-ink:#d9fff5;--g-ico:'🌍';
+  --g-pat:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),radial-gradient(60% 80% at 0 0,rgba(180,255,230,.25),transparent 60%)}
+[data-genre="drame"]{--g1:#2e3268;--g2:#0a0b1e;--g-ink:#cfd8ff;--g-ico:'🎭';--g-po:.8;
+  --g-pat:repeating-linear-gradient(100deg,rgba(190,210,255,.16) 0 1px,transparent 1px 13px)}
+[data-genre="familial"]{--g1:#ffb27a;--g2:#e0645a;--g-ink:#fff;--g-ico:'🏡';
+  --g-pat:radial-gradient(circle,rgba(255,255,255,.35) 2px,transparent 2.6px) 0 0/18px 18px}
+[data-genre="fantastique"]{--g1:#4b2080;--g2:#12052a;--g-ink:#ecd2ff;--g-ico:'🐉';--g-po:.9;--g-ts:0 0 10px rgba(200,140,255,.7);
+  --g-pat:radial-gradient(2px 2px at 20% 30%,#ffe9a8 99%,transparent),radial-gradient(1.5px 1.5px at 60% 18%,#fff 99%,transparent),radial-gradient(2px 2px at 80% 55%,#ffe9a8 99%,transparent),radial-gradient(1.5px 1.5px at 35% 70%,#fff 99%,transparent),radial-gradient(70% 70% at 80% 100%,rgba(170,90,255,.45),transparent 70%)}
+[data-genre="histoire"]{--g1:#d8b878;--g2:#7a5224;--g-ink:#2a1606;--g-ico:'🏛️';--g-ts:0 1px 0 rgba(255,240,200,.5);--g-po:.6;
+  --g-pat:repeating-linear-gradient(0deg,rgba(90,50,10,.12) 0 1px,transparent 1px 7px),radial-gradient(120% 120% at 50% 50%,transparent 55%,rgba(60,30,5,.6))}
+[data-genre="musique"]{--g1:#d11f86;--g2:#3a0533;--g-ink:#fff0fa;--g-ico:'🎸';--g-po:.35;
+  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath fill='%23fff' d='M14 30a4 3 0 1 1-2-2.6V10l14-3v17a4 3 0 1 1-2-2.6V11.5l-10 2.2z'/%3E%3C/svg%3E") 0 0/44px 44px}
+[data-genre="mystere"]{--g1:#145566;--g2:#071820;--g-ink:#bafff0;--g-ico:'🔮';--g-po:.7;
+  --g-pat:radial-gradient(60% 40% at 20% 80%,rgba(200,255,240,.25),transparent 70%),radial-gradient(50% 35% at 80% 30%,rgba(200,255,240,.18),transparent 70%)}
+[data-genre="romance"]{--g1:#ff7aa6;--g2:#9c1446;--g-ink:#fff;--g-ico:'🌹';--g-po:.22;
+  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cpath fill='%23fff' d='M15 23C5 16 5 9 10 8c2.5-.5 4.3 1 5 2.5C15.7 9 17.5 7.5 20 8c5 1 5 8-5 15z'/%3E%3C/svg%3E") 0 0/26px 26px}
+[data-genre="thriller"]{--g1:#2a2a2e;--g2:#050505;--g-ink:#ff4a4a;--g-ico:'👁️';--g-po:.9;
+  --g-pat:linear-gradient(transparent 47%,rgba(255,40,40,.75) 48.5% 49.5%,transparent 51%),radial-gradient(80% 60% at 50% 48%,rgba(255,30,30,.18),transparent 70%)}
+[data-genre="guerre"]{--g1:#5d5c3a;--g2:#262614;--g-ink:#ece6b4;--g-ico:'🎖️';--g-po:.5;
+  --g-pat:radial-gradient(28% 22% at 20% 30%,#2f2f1a 98%,transparent),radial-gradient(24% 30% at 70% 60%,#7a7448 98%,transparent),radial-gradient(20% 18% at 45% 85%,#2f2f1a 98%,transparent),radial-gradient(22% 16% at 85% 15%,#3e3d22 98%,transparent)}
+[data-genre="western"]{--g1:#f08b3c;--g2:#6b2410;--g-ink:#fff1d6;--g-ico:'🤠';--g-po:.8;
+  --g-pat:radial-gradient(circle at 78% 92%,#ffd27a 0 17%,transparent 18%),repeating-linear-gradient(0deg,transparent 0 10px,rgba(120,30,0,.18) 10px 12px)}
+
+/* ---------- Carte Réalisateur : projecteur + bords de pellicule + polaroid + signature dorée ---------- */
+.dir-body{display:flex;flex-direction:column;align-items:center;padding:34px 22px 18px;
+  background:radial-gradient(55% 75% at 50% 0,rgba(255,226,160,.22),transparent 72%),linear-gradient(180deg,#24090f,#0c0305)}
+.dir-body::before,.dir-body::after{content:'';position:absolute;top:0;bottom:0;width:7px;z-index:-1;   /* perforations de pellicule */
+  background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(236,226,210,.32) 5px 11px,transparent 11px 16px)}
+.dir-body::before{left:7px}
+.dir-body::after{right:7px}
+.d-label{position:absolute;top:11px;left:0;right:0;text-align:center;color:#f6c453;font-size:.6rem;font-weight:800;letter-spacing:.16em}
+.polaroid{position:relative;width:128px;margin:6px 0 0;padding:8px 8px 26px;border-radius:3px;background:#f3ead8;
+  transform:rotate(-3deg);box-shadow:0 12px 24px rgba(0,0,0,.55)}
+.polaroid::before{content:'';position:absolute;top:-9px;left:50%;width:54px;height:18px;margin-left:-27px;   /* scotch */
+  background:rgba(255,246,214,.55);transform:rotate(4deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.polaroid img,.polaroid .ph{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#2a1a1c}
+.polaroid .ph{display:grid;place-items:end center;overflow:hidden;background:radial-gradient(80% 60% at 50% 0,#4a2a2e,#1a0c0e)}
+.polaroid .ph svg{width:92%;height:auto;fill:rgba(255,236,214,.3)}
+.d-plus{position:absolute;right:-13px;bottom:-11px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.6rem;font-weight:400;line-height:1;color:#2b1403;background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);
+  box-shadow:0 4px 10px rgba(0,0,0,.5);transform:rotate(3deg)}
+.d-name{max-width:100%;margin-top:14px;font-family:'Dancing Script',cursive;font-weight:700;font-size:1.9rem;line-height:1.15;text-align:center;
+  background:linear-gradient(180deg,#fff0b8,#f6c453 50%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.fav-dir.empty .d-name{background:none;color:rgba(255,240,220,.45);filter:none;font-size:1.6rem}
+
+/* ---------- Modales de choix (genre / réalisateur) : thème bordeaux du profil ---------- */
+.pickmodal.favmodal{background:linear-gradient(180deg,#3a0c14,#14040a)}
+.fm-pane{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 22px)}
+.fm-pane[hidden]{display:none}
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gtile{position:relative;isolation:isolate;overflow:hidden;height:76px;border:0;border-radius:14px;padding:0 12px;text-align:left;cursor:pointer;
+  --g-icz:3.1rem;font-family:'Limelight','Bricolage Grotesque',serif;font-size:1.08rem;line-height:1.05;text-shadow:var(--g-ts,0 2px 6px rgba(0,0,0,.5));
+  box-shadow:0 6px 14px rgba(0,0,0,.4);transition:transform .15s ease}
+.gtile:active{transform:scale(.96)}
+.gtile.on{box-shadow:0 0 0 2.5px #f6c453,0 0 18px rgba(246,196,83,.45)}
+.gtile-tag{position:absolute;top:7px;right:7px;padding:2px 7px;border-radius:99px;font-family:'Bricolage Grotesque',sans-serif;font-size:.6rem;font-weight:800;
+  letter-spacing:.06em;text-shadow:none;background:#f6c453;color:#2b1403}
+.fm-search{position:sticky;top:-10px;z-index:2;margin:-10px -14px 8px;padding:10px 14px 10px;background:linear-gradient(#36101a 70%,rgba(54,16,26,0))}
+.favmodal .search{margin-top:0}
+.favmodal .search input{background:rgba(255,255,255,.06);color:#fff3e4;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3)}
+.favmodal .search input::placeholder{color:rgba(255,220,200,.5)}
+.favmodal .search input:focus{background:rgba(246,196,83,.12);box-shadow:inset 0 0 0 1.5px #f6c453}
+.favmodal .search .sicon{color:rgba(255,220,200,.6)}
+.favmodal .search .sclear{color:#fff3e4;background:rgba(255,255,255,.08)}
+.drow{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:8px;padding:10px;border:0;border-radius:14px;text-align:left;cursor:pointer;
+  background:rgba(255,255,255,.045);color:#fff3e4;box-shadow:inset 0 0 0 1px rgba(255,140,120,.18)}
+.drow:active{background:rgba(246,196,83,.12)}
+.drow.on{box-shadow:inset 0 0 0 2px #f6c453}
+.drow img,.drow .d-ph{flex:none;width:52px;height:52px;border-radius:50%;object-fit:cover;background:#2a1418;box-shadow:0 0 0 2px #d4af37}
+.drow .d-ph{display:grid;place-items:center;font-weight:800;color:#f6c453}
+.d-txt{flex:1;min-width:0}
+.d-txt b{display:block;font-weight:800;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-txt small{display:block;margin-top:2px;color:rgba(255,230,210,.6);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-dept{flex:none;padding:3px 8px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.06em;background:rgba(246,196,83,.14);color:#f6c453}
+.d-dept.other{background:rgba(255,255,255,.07);color:rgba(255,230,210,.6)}
+.fm-msg{margin:30px 12px;text-align:center;color:rgba(255,230,210,.65);line-height:1.45}
 
 /* =====================================================================
    SÉLECTION D'UN FILM (même grille que la Vidéothèque)
@@ -1321,6 +1458,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <h3 class="pm-h" id="tfTitle">TOP FILMS</h3>
         <div class="filmstrip" id="filmstrip"></div>
       </section>
+      <!-- Favoris : genre n°1, genre n°2, réalisateur -->
+      <section class="pm-section" aria-labelledby="favTitle">
+        <h3 class="pm-h" id="favTitle">FAVORIS</h3>
+        <div class="favgrid" id="favGrid"></div>
+      </section>
       </div>
     </div>
   </div>
@@ -1350,6 +1492,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       </label>
     </header>
     <div class="view-col pick-list" id="pickList"></div>
+  </div>
+
+  <!-- Choix d'un favori : grille de genres OU recherche de réalisateur -->
+  <div class="pickmodal favmodal hidden" id="favModal" role="dialog" aria-modal="true" aria-labelledby="favMTitle">
+    <div class="pick-head">
+      <button class="pm-iconbtn" id="favClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <h3 id="favMTitle">Genre</h3>
+      <span class="spacer"></span>
+    </div>
+    <div class="fm-pane" id="gPane"><div class="ggrid" id="gGrid"></div></div>
+    <div class="fm-pane" id="dPane" hidden>
+      <div class="fm-search">
+        <label class="search">
+          <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
+          <input id="dSearch" type="text" placeholder="Rechercher un réalisateur…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher un réalisateur">
+          <button class="sclear" id="dClear" type="button" aria-label="Effacer la recherche" hidden>×</button>
+        </label>
+      </div>
+      <div id="dList"></div>
+    </div>
   </div>
 
   <div class="infomodal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
@@ -2601,6 +2763,7 @@ function openProfile(){
   if(profileOpen || !canNavigate()) return;            // pas pendant l'ouverture d'un booster
   profileOpen = true;
   renderTopFilms();
+  renderFavs();
   profileModal.classList.remove('hidden');
   void profileModal.offsetWidth;
   profileModal.classList.add('on');
@@ -2621,14 +2784,14 @@ const TOP_N = 4;
 let topFilms = store.get('topFilms', []);
 topFilms = Array.from({length:TOP_N}, (_, i) => topFilms[i] ?? null);
 const filmstrip = $('#filmstrip');
-let editSlot = null;                                   // case en mode édition (null = aucune)
+let editKey = null;                                    // élément en mode édition : 'top:0'…'top:3', 'genre:0', 'genre:1', 'director' (null = aucun)
 function renderTopFilms(){
   const col = getCol();
-  editSlot = null;
+  stopEditing();
   filmstrip.innerHTML = topFilms.map((id, i) => {
     const c = id != null ? col[id] : null;
     return c
-      ? `<div class="tf-slot filled" role="button" tabindex="0" data-i="${i}" aria-label="Top ${i + 1} : ${esc(c.title)} (modifier)">${cardHTML(c)}
+      ? `<div class="tf-slot filled" role="button" tabindex="0" data-i="${i}" data-ek="top:${i}" aria-label="Top ${i + 1} : ${esc(c.title)} (modifier)">${cardHTML(c)}
           <div class="tf-edit">
             <button class="tf-btn tf-del" type="button" tabindex="-1" aria-label="Retirer ${esc(c.title)} du Top Films"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg></button>
             <button class="tf-btn tf-pen" type="button" tabindex="-1" aria-label="Remplacer ${esc(c.title)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg></button>
@@ -2636,15 +2799,15 @@ function renderTopFilms(){
       : `<div class="tf-slot" role="button" tabindex="0" data-i="${i}" aria-label="Ajouter un film en position ${i + 1}"><span class="tf-plus" aria-hidden="true">+</span></div>`;
   }).join('');
 }
-function setEditing(i){
-  editSlot = i;
-  filmstrip.querySelectorAll('.tf-slot').forEach(el => {
-    const on = +el.dataset.i === i;
+function setEditing(key){
+  editKey = key;
+  profileModal.querySelectorAll('[data-ek]').forEach(el => {
+    const on = el.dataset.ek === key;
     el.classList.toggle('is-editing', on);
     el.querySelectorAll('.tf-btn').forEach(b => b.tabIndex = on ? 0 : -1);   // icônes atteignables au clavier seulement en édition
   });
 }
-const stopEditing = () => { if(editSlot !== null) setEditing(null); };
+function stopEditing(){ if(editKey !== null) setEditing(null); }
 function removeTopFilm(i){
   topFilms[i] = null;
   store.set('topFilms', topFilms);
@@ -2658,8 +2821,8 @@ filmstrip.addEventListener('click', e => {
   if(e.target.closest('.tf-del')){ removeTopFilm(i); return; }                    // poubelle
   if(e.target.closest('.tf-pen')){ stopEditing(); openPicker(i); return; }        // crayon → choisir un remplaçant
   if(!slot.classList.contains('filled')){ stopEditing(); openPicker(i); return; } // case vide : « + »
-  if(editSlot === i){ stopEditing(); return; }         // appui sur la carte floutée, hors des icônes : retour à la normale
-  setEditing(i); buzz(6);                              // case remplie : mode édition
+  if(editKey === 'top:' + i){ stopEditing(); return; }   // appui sur la carte floutée, hors des icônes : retour à la normale
+  setEditing('top:' + i); buzz(6);                     // case remplie : mode édition
 });
 filmstrip.addEventListener('keydown', e => {
   if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tf-slot')){ e.preventDefault(); e.target.click(); }
@@ -2768,15 +2931,167 @@ function chooseTopFilm(i, id){
   buzz(10);
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && pickModal.classList.contains('on')) closePicker(); });
+
+/* =====================================================================
+   FAVORIS : 2 genres + 1 réalisateur (localStorage 'favs')
+   ===================================================================== */
+// Liste des genres (id = valeur de data-genre → thème CSS ; tmdb = identifiant du genre TMDB, pour plus tard)
+const GENRES = [
+  {id:'action', tmdb:28, label:'Action'},            {id:'aventure', tmdb:12, label:'Aventure'},
+  {id:'animation', tmdb:16, label:'Animation'},      {id:'comedie', tmdb:35, label:'Comédie'},
+  {id:'crime', tmdb:80, label:'Crime'},              {id:'documentaire', tmdb:99, label:'Documentaire'},
+  {id:'drame', tmdb:18, label:'Drame'},              {id:'familial', tmdb:10751, label:'Familial'},
+  {id:'fantastique', tmdb:14, label:'Fantastique'},  {id:'histoire', tmdb:36, label:'Histoire'},
+  {id:'horreur', tmdb:27, label:'Horreur'},          {id:'musique', tmdb:10402, label:'Musique'},
+  {id:'mystere', tmdb:9648, label:'Mystère'},        {id:'romance', tmdb:10749, label:'Romance'},
+  {id:'scifi', tmdb:878, label:'Science-Fiction'},   {id:'thriller', tmdb:53, label:'Thriller'},
+  {id:'guerre', tmdb:10752, label:'Guerre'},         {id:'western', tmdb:37, label:'Western'}
+];
+const GENRE_BY = Object.fromEntries(GENRES.map(g => [g.id, g]));
+const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>', DIR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><ellipse cx="40" cy="39" rx="16" ry="6"/><circle cx="41" cy="33" r="2.5"/><circle cx="42" cy="51" r="13"/><path d="M10 125c0-30 12-48 32-50 14 1 22 8 27 18l-9 6-4-2 3 28z"/><path d="M58 79 66 64l7 3-7 17z"/><path d="M55 50 90 36v38L55 60z"/><rect x="51" y="50" width="6" height="10" rx="2"/><path d="M64 60h6l-2 9h-4z"/></svg>';
+const personImg = (path, size = 'w185') => `https://image.tmdb.org/t/p/${size}${path}`;
+
+let favs = store.get('favs', null) || {};
+favs = {genres:[favs.genres?.[0] ?? null, favs.genres?.[1] ?? null], director:favs.director || null};
+const saveFavs = () => store.set('favs', favs);
+const favGrid = $('#favGrid');
+const editBtns = name => `<div class="tf-edit">
+    <button class="tf-btn tf-del" type="button" tabindex="-1" aria-label="Retirer ${esc(name)}">${ICON_TRASH}</button>
+    <button class="tf-btn tf-pen" type="button" tabindex="-1" aria-label="Changer ${esc(name)}">${ICON_PEN}</button></div>`;
+
+function renderFavs(){
+  stopEditing();
+  const genreCard = i => {
+    const G = GENRE_BY[favs.genres[i]];
+    return G
+      ? `<div class="fav-card fav-genre filled" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Genre n°${i + 1} : ${G.label} (modifier)">
+           <div class="fav-body gtheme" data-genre="${G.id}"><span class="g-rank">GENRE N°${i + 1}</span><b class="g-name">${G.label}</b></div>${editBtns(G.label)}</div>`
+      : `<div class="fav-card fav-genre empty" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Choisir le genre n°${i + 1}">
+           <div class="fav-body fav-empty"><span class="g-rank">GENRE N°${i + 1}</span><span class="fe-plus" aria-hidden="true">+</span></div></div>`;
+  };
+  const D = favs.director;
+  const dirCard = D
+    ? `<div class="fav-card fav-dir filled" role="button" tabindex="0" data-ek="director" aria-label="Réalisateur favori : ${esc(D.name)} (modifier)">
+         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
+           <figure class="polaroid">${D.photo ? `<img src="${personImg(D.photo, 'h632')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">` : `<div class="ph">${DIR_SILHOUETTE}</div>`}</figure>
+           <b class="d-name">${esc(D.name)}</b></div>${editBtns(D.name)}</div>`
+    : `<div class="fav-card fav-dir empty" role="button" tabindex="0" data-ek="director" aria-label="Choisir un réalisateur favori">
+         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
+           <figure class="polaroid"><div class="ph">${DIR_SILHOUETTE}</div><span class="d-plus" aria-hidden="true">+</span></figure>
+           <b class="d-name">À choisir…</b></div></div>`;
+  favGrid.innerHTML = genreCard(0) + genreCard(1) + dirCard;
+}
+function clearFav(kind, i){
+  if(kind === 'genre') favs.genres[i] = null; else favs.director = null;
+  saveFavs(); renderFavs(); buzz(10);
+}
+favGrid.addEventListener('click', e => {
+  const card = e.target.closest('.fav-card');
+  if(!card) return;
+  const key = card.dataset.ek, [kind, n] = key.split(':'), i = +n || 0;
+  if(e.target.closest('.tf-del')){ clearFav(kind, i); return; }                              // poubelle
+  if(e.target.closest('.tf-pen') || card.classList.contains('empty')){ stopEditing(); openFavModal(kind, i); return; }   // crayon ou « + »
+  if(editKey === key){ stopEditing(); return; }        // appui sur la carte floutée hors des icônes
+  setEditing(key); buzz(6);
+});
+favGrid.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('fav-card')){ e.preventDefault(); e.target.click(); }
+});
+
+/* ---------- Modale de choix ---------- */
+const favModal = $('#favModal'), gPane = $('#gPane'), dPane = $('#dPane'), gGrid = $('#gGrid');
+const dSearch = $('#dSearch'), dClear = $('#dClear'), dList = $('#dList');
+let favMode = null, favIdx = 0;
+function openFavModal(kind, i){
+  favMode = kind; favIdx = i;
+  $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : 'Réalisateur favori';
+  gPane.hidden = kind !== 'genre'; dPane.hidden = kind === 'genre';
+  if(kind === 'genre'){ renderGenreGrid(); gPane.scrollTop = 0; }
+  else{ dSearch.value = ''; dQuery = ''; dClear.hidden = true; dResults = []; dSeq++; renderDirList(); dPane.scrollTop = 0; }
+  favModal.classList.remove('hidden'); void favModal.offsetWidth; favModal.classList.add('on');
+}
+function closeFavModal(){
+  favModal.classList.remove('on'); dSearch.blur(); clearTimeout(dTimer); dSeq++;
+  setTimeout(() => { if(!favModal.classList.contains('on')) favModal.classList.add('hidden'); }, 300);
+  favMode = null;
+}
+$('#favClose').addEventListener('click', closeFavModal);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && favModal.classList.contains('on')) closeFavModal(); });
+
+// Genres : grille de boutons, chacun déjà habillé de son thème
+function renderGenreGrid(){
+  gGrid.innerHTML = GENRES.map(G => {
+    const pos = favs.genres.indexOf(G.id);
+    return `<button class="gtile gtheme${pos === favIdx ? ' on' : ''}" type="button" data-genre="${G.id}">${G.label}` +
+      (pos >= 0 ? `<span class="gtile-tag">N°${pos + 1}</span>` : '') + `</button>`;
+  }).join('');
+}
+gGrid.addEventListener('click', e => {
+  const b = e.target.closest('.gtile');
+  if(!b) return;
+  const id = b.dataset.genre, j = favs.genres.indexOf(id);
+  if(j >= 0 && j !== favIdx) favs.genres[j] = favs.genres[favIdx];   // genre déjà dans l'autre case : les deux s'échangent
+  favs.genres[favIdx] = id;
+  saveFavs(); renderFavs(); closeFavModal(); buzz(10);
+});
+
+// Réalisateur : recherche TMDB (/search/person), réalisateurs en premier
+const DEPT = {Directing:'Réalisation', Acting:'Jeu', Writing:'Scénario', Production:'Production', Sound:'Musique', Camera:'Image', Editing:'Montage'};
+let dQuery = '', dResults = [], dSeq = 0, dTimer = null;
+function renderDirList(msg){
+  if(msg){ dList.innerHTML = `<p class="fm-msg">${msg}</p>`; return; }
+  if(!dQuery.trim()){ dList.innerHTML = '<p class="fm-msg">Tape le nom d\'un réalisateur<br>(ex. Nolan, Varda, Kubrick, Miyazaki…)</p>'; return; }
+  if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">Aucun résultat pour « ${esc(dQuery.trim())} ».</p>`; return; }
+  dList.innerHTML = dResults.map(p => {
+    const known = (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0, 3).join(' · ');
+    const initials = p.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('');
+    const dir = p.known_for_department === 'Directing';
+    return `<button class="drow${favs.director && favs.director.id === p.id ? ' on' : ''}" type="button" data-pid="${p.id}">` +
+      (p.profile_path ? `<img src="${personImg(p.profile_path)}" alt="" loading="lazy" decoding="async">` : `<span class="d-ph">${esc(initials)}</span>`) +
+      `<span class="d-txt"><b>${esc(p.name)}</b><small>${esc(known)}</small></span>` +
+      `<span class="d-dept${dir ? '' : ' other'}">${esc(DEPT[p.known_for_department] || p.known_for_department || '—')}</span></button>`;
+  }).join('');
+}
+async function searchDirectors(q){
+  const seq = ++dSeq;
+  try{
+    const r = await tmdb('/search/person', {query:q, language:'fr-FR', include_adult:'false'});
+    if(seq !== dSeq) return;                            // une recherche plus récente a été lancée
+    dResults = (r.results || []).filter(p => p.name)
+      .sort((a, b) => (b.known_for_department === 'Directing') - (a.known_for_department === 'Directing') || (b.popularity || 0) - (a.popularity || 0))
+      .slice(0, 20);
+    renderDirList();
+  }catch(err){
+    if(seq === dSeq) renderDirList(esc(err.message || 'Recherche impossible pour le moment.'));
+  }
+}
+dSearch.addEventListener('input', () => {
+  dQuery = dSearch.value; dClear.hidden = !dQuery;
+  clearTimeout(dTimer); dSeq++;
+  if(!dQuery.trim()){ dResults = []; renderDirList(); return; }
+  renderDirList('Recherche…');
+  dTimer = setTimeout(() => searchDirectors(dQuery.trim()), 350);   // on attend une courte pause dans la frappe
+});
+dClear.addEventListener('click', () => { dSearch.value = ''; dSearch.dispatchEvent(new Event('input')); dSearch.focus(); });
+dSearch.addEventListener('keydown', e => { if(e.key === 'Enter') dSearch.blur(); });
+dList.addEventListener('click', e => {
+  const b = e.target.closest('.drow');
+  if(!b) return;
+  const p = dResults.find(x => String(x.id) === b.dataset.pid);
+  if(!p) return;
+  favs.director = {id:p.id, name:p.name, photo:p.profile_path || null};
+  saveFavs(); renderFavs(); closeFavModal(); buzz(10);
+});
+
 // Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
 profileModal.addEventListener('click', e => {
   if(!e.target.isConnected) return;                    // élément qui vient d'être redessiné (ex. poubelle) : ce n'est pas un appui « dehors »
-  if(!e.target.closest('.tf-slot.is-editing')) stopEditing();   // appui en dehors de la carte en édition : elle redevient normale
+  if(!e.target.closest('.is-editing')) stopEditing();  // appui en dehors de l'élément en édition : il redevient normal
   if(e.target.closest('#pmClose') || !e.target.closest('.pm-panel')) closeProfile();
 });
 document.addEventListener('keydown', e => {
-  if(!profileOpen || e.key !== 'Escape' || pickModal.classList.contains('on')) return;
-  if(editSlot !== null){ stopEditing(); return; }      // Échap : d'abord on quitte le mode édition
+  if(!profileOpen || e.key !== 'Escape' || pickModal.classList.contains('on') || favModal.classList.contains('on')) return;
+  if(editKey !== null){ stopEditing(); return; }       // Échap : d'abord on quitte le mode édition
   closeProfile();
 });
 
