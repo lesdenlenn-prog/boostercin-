@@ -147,15 +147,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .28s ease}
 .pm-panel{position:absolute;
   inset:max(4vh, calc(env(safe-area-inset-top,0px) + 20px)) 5vw max(4vh, calc(env(safe-area-inset-bottom,0px) + 20px));   /* plus haut qu'avant */
-  max-width:540px;margin:0 auto;border-radius:20px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
-  display:flex;flex-direction:column;align-items:center;padding:26px 0 24px;
+  max-width:540px;margin:0 auto;border-radius:20px;overflow:hidden;              /* le cadre ne défile pas : seul .pm-scroll défile */
   background:linear-gradient(180deg,#5c1520 0%,#3a0c14 55%,#22070c 100%);   /* bordeaux du thème */
-  box-shadow:inset 0 0 0 2px rgba(216,176,138,.45),0 24px 60px rgba(0,0,0,.6);
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
   opacity:0;transform:scale(.94);transition:opacity .28s ease,transform .32s cubic-bezier(.2,.9,.2,1)}
+/* Bordure dorée dessinée PAR-DESSUS tout le contenu (pellicule comprise) : jamais interrompue.
+   Couleur opaque : elle garde exactement la même teinte sur le bordeaux et sur le noir de la pellicule. */
+.pm-panel::after{content:'';position:absolute;inset:0;z-index:10;border:2px solid #d4af37;border-radius:inherit;pointer-events:none}
+.pm-scroll{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;align-items:center;padding:26px 0 24px}
 .pmodal.on .pm-back{opacity:1}
 .pmodal.on .pm-panel{opacity:1;transform:none}
 /* boutons ronds du coin : même style que les encadrés du HUD */
-.pm-iconbtn{position:absolute;top:12px;width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:99px;
+.pm-iconbtn{position:absolute;z-index:3;top:12px;width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:99px;
   background:rgba(30,3,9,.8);color:#ffe3da;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
 .pm-iconbtn:active{background:rgba(60,8,18,.85)}
 .pm-iconbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -188,11 +192,33 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:rgba(222,204,178,.32);box-shadow:inset 0 0 0 1px rgba(255,240,220,.18),inset 0 8px 16px rgba(0,0,0,.25);
   display:grid;place-items:center;color:rgba(255,244,228,.85)}
 .tf-slot:active{transform:scale(.97)}
+.tf-slot:focus-visible{outline:2px solid #fff3e4;outline-offset:3px}
 .tf-plus{font-size:2.2rem;font-weight:300;line-height:1}
-.tf-slot .card{position:absolute;inset:0;width:100%;height:100%;border-radius:6px}   /* la carte remplit la case sans la déformer */
-.tf-slot .card .meta{font-size:.5rem;padding:12px 4px 3px}
-.tf-slot .card .meta b{font-size:.58rem}
-.tf-slot .card .badge{display:none}
+/* Case remplie : la carte déborde légèrement pour que son contour de rareté reste entier */
+.tf-slot.filled{overflow:visible;background:none;box-shadow:none}
+.tf-slot .card{position:absolute;inset:0;width:100%;height:100%;border-radius:6px;   /* la carte remplit la case sans la déformer */
+  box-shadow:0 0 0 2px var(--rc)}                                                   /* contour de rareté, comme dans la Vidéothèque */
+.tf-slot .card.r-epic{box-shadow:0 0 0 2px var(--rc),0 0 10px -2px var(--rc)}
+.tf-slot .card.r-legendary{box-shadow:0 0 0 2px var(--rc),0 0 12px 1px rgba(246,196,83,.55)}
+.tf-slot .card.r-ultra{box-shadow:0 0 0 2px var(--rc),0 0 0 4px var(--ultra-out),0 0 12px 2px rgba(91,30,255,.5)}
+/* Miniature épurée : uniquement le titre */
+.tf-slot .card .meta{padding:14px 4px 4px;text-align:center}
+.tf-slot .card .meta b{margin:0;font-size:.58rem;line-height:1.2}
+.tf-slot .card .meta .row,.tf-slot .card .badge{display:none}
+/* Mode édition : film flouté et presque noir et blanc + poubelle / crayon par-dessus */
+.tf-slot .card img,.tf-slot .card .meta{transition:filter .22s ease,transform .22s ease}
+.tf-slot.is-editing .card img{filter:blur(4px) grayscale(.85) brightness(.7);transform:scale(1.12)}   /* agrandie : pas de bords flous */
+.tf-slot.is-editing .card .meta{filter:blur(3px) grayscale(.85)}
+.tf-slot.is-editing:active{transform:none}
+.tf-edit{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:6px;
+  opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}
+.tf-slot.is-editing .tf-edit{opacity:1;visibility:visible}
+.tf-btn{flex:none;width:31px;height:31px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;
+  background:rgba(20,5,9,.82);color:#fff3e4;box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.5),0 4px 10px rgba(0,0,0,.5);
+  transform:scale(.6);transition:transform .25s cubic-bezier(.3,1.5,.5,1)}
+.tf-slot.is-editing .tf-btn{transform:none}
+.tf-btn:active{background:rgba(70,14,24,.9)}
+.tf-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* =====================================================================
    SÉLECTION D'UN FILM (même grille que la Vidéothèque)
@@ -200,8 +226,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pickmodal{position:absolute;inset:0;z-index:88;display:flex;flex-direction:column;background:#02050f;
   opacity:0;transform:translateY(16px);transition:opacity .25s ease,transform .3s cubic-bezier(.2,.9,.2,1)}
 .pickmodal.on{opacity:1;transform:none}
-.pick-head{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px;
-  border-bottom:1px solid rgba(70,130,255,.18)}
+.pick-head{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 4px}
+.pick-shead{position:relative;flex:none;padding-top:6px}   /* même barre que la Vidéothèque, fixe au-dessus de la grille */
 .pick-head h3{margin:0;flex:1;text-align:center;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:1.4rem;color:#fff1c4}
 .pick-head .pm-iconbtn{position:static;flex:none}
 .pick-head .spacer{flex:none;width:42px}
@@ -1285,6 +1311,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <div class="pm-panel">
       <button class="pm-iconbtn pm-close" id="pmClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
       <button class="pm-iconbtn pm-settings" id="pmSettings" type="button" aria-label="Paramètres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14.1 2.5h-4.2l-.4 2.5a7.5 7.5 0 0 0-2.6 1.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.4 2.5h4.2l.4-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/></svg></button>
+      <div class="pm-scroll">
       <!-- En-tête -->
       <div class="pm-avatar"><div class="pm-photo" aria-hidden="true">🎞️</div></div>
       <h2 class="pm-name" id="pmTitle">Pseudo</h2>
@@ -1294,6 +1321,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <h3 class="pm-h" id="tfTitle">TOP FILMS</h3>
         <div class="filmstrip" id="filmstrip"></div>
       </section>
+      </div>
     </div>
   </div>
 
@@ -1304,6 +1332,23 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <h3 id="pickTitle">Choisis un film</h3>
       <span class="spacer"></span>
     </div>
+    <!-- Même barre de tri + recherche que la Vidéothèque (état indépendant) -->
+    <header class="shead pick-shead">
+      <div class="sortbar">
+        <button class="sb-btn sb-crit" id="pkCrit" type="button" aria-label="Trier par rareté (appuyer pour trier par note)">RARETÉ</button>
+        <button class="sb-btn sb-sq sb-dir" id="pkDir" type="button" aria-label="Ordre décroissant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19.3 19a.8.8 0 0 1-1.1 1L12 16.4 5.8 20a.8.8 0 0 1-1.1-1z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <div class="sb-filter">
+          <button class="sb-btn sb-sq sb-filt" id="pkFilt" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="pkDrop" aria-label="Filtrer par rareté"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 8.5h9"/><circle cx="17.5" cy="8.5" r="1.7" fill="currentColor" stroke="none"/><circle cx="6.5" cy="15.5" r="1.7" fill="currentColor" stroke="none"/><path d="M11 15.5h9"/></svg></button>
+          <div class="fdrop" id="pkDrop" role="group" aria-label="Raretés affichées" hidden></div>
+        </div>
+        <span class="sb-status" id="pkStatus" role="status"></span>
+      </div>
+      <label class="search">
+        <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
+        <input id="pkSearch" type="text" placeholder="Rechercher un film…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher un film à ajouter">
+        <button class="sclear" id="pkClear" type="button" aria-label="Effacer la recherche" hidden>×</button>
+      </label>
+    </header>
     <div class="view-col pick-list" id="pickList"></div>
   </div>
 
@@ -2153,15 +2198,17 @@ const normTitle = c => { let n = nameCache.get(c.id); if(n === undefined){ n = n
 
 const ratingOf = c => (typeof c.rating === 'number' && c.rating > 0) ? c.rating : null;   // note TMDB /10 (null = inconnue)
 
-function shelfData(){
-  const q = norm(query);
-  const sel = sortState.rarities;
+function shelfData(){ return sortFilter(sortState, query); }
+// Filtre (raretés + recherche) puis tri : utilisé par la Vidéothèque ET par la sélection du Top Films
+function sortFilter(st, rawQuery){
+  const q = norm(rawQuery);
+  const sel = st.rarities;
   // 1. filtre : raretés cochées (aucune = toutes) + recherche
   const list = Object.values(getCol())
     .filter(c => (!sel.size || sel.has(c.rarity)) && (!q || normTitle(c).includes(q)));
   // 2. tri : critère × sens ; à égalité, ordre de popularité TMDB (rang)
-  const sign = sortState.dir === 'desc' ? 1 : -1;
-  if(sortState.by === 'rarity'){
+  const sign = st.dir === 'desc' ? 1 : -1;
+  if(st.by === 'rarity'){
     // tierIdx : 0 = Ultra-légendaire … 5 = Commune → décroissant = de la plus rare à la plus commune
     list.sort((a, b) => sign * (tierIdx(a.rarity) - tierIdx(b.rarity)) || a.rank - b.rank);
   }else{
@@ -2230,13 +2277,14 @@ function renderSortBar(){
   sbDir.setAttribute('aria-label', sortState.dir === 'asc' ? 'Ordre croissant' : 'Ordre décroissant');
   sbFilt.classList.toggle('active', sortState.rarities.size > 0);
 }
-function renderFilterMenu(){
+function renderFilterMenu(){ fdrop.innerHTML = filterMenuHTML(sortState); }
+function filterMenuHTML(st){
   const all = Object.values(getCol());
-  const sel = sortState.rarities;
+  const sel = st.rarities;
   const opt = (value, label, n, checked, cls = '') =>
     `<label class="fopt ${cls}"><input type="checkbox" value="${value}" ${checked ? 'checked' : ''}><span class="fchk"></span>` +
     (value !== 'all' ? `<span class="fdot"></span>` : '') + `<span>${label}</span><span class="fn">${n}</span></label>`;
-  fdrop.innerHTML = opt('all', 'Toutes', all.length, sel.size === 0, 'all') +
+  return opt('all', 'Toutes', all.length, sel.size === 0, 'all') +
     TIERS.map(t => opt(t.id, t.label, all.filter(c => c.rarity === t.id).length, sel.has(t.id), 'r-' + t.id)).join('');
 }
 
@@ -2573,44 +2621,137 @@ const TOP_N = 4;
 let topFilms = store.get('topFilms', []);
 topFilms = Array.from({length:TOP_N}, (_, i) => topFilms[i] ?? null);
 const filmstrip = $('#filmstrip');
+let editSlot = null;                                   // case en mode édition (null = aucune)
 function renderTopFilms(){
   const col = getCol();
+  editSlot = null;
   filmstrip.innerHTML = topFilms.map((id, i) => {
     const c = id != null ? col[id] : null;
     return c
-      ? `<button class="tf-slot" type="button" data-i="${i}" aria-label="Top ${i + 1} : ${esc(c.title)} (changer)">${cardHTML(c)}</button>`
-      : `<button class="tf-slot" type="button" data-i="${i}" aria-label="Ajouter un film en position ${i + 1}"><span class="tf-plus" aria-hidden="true">+</span></button>`;
+      ? `<div class="tf-slot filled" role="button" tabindex="0" data-i="${i}" aria-label="Top ${i + 1} : ${esc(c.title)} (modifier)">${cardHTML(c)}
+          <div class="tf-edit">
+            <button class="tf-btn tf-del" type="button" tabindex="-1" aria-label="Retirer ${esc(c.title)} du Top Films"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg></button>
+            <button class="tf-btn tf-pen" type="button" tabindex="-1" aria-label="Remplacer ${esc(c.title)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg></button>
+          </div></div>`
+      : `<div class="tf-slot" role="button" tabindex="0" data-i="${i}" aria-label="Ajouter un film en position ${i + 1}"><span class="tf-plus" aria-hidden="true">+</span></div>`;
   }).join('');
+}
+function setEditing(i){
+  editSlot = i;
+  filmstrip.querySelectorAll('.tf-slot').forEach(el => {
+    const on = +el.dataset.i === i;
+    el.classList.toggle('is-editing', on);
+    el.querySelectorAll('.tf-btn').forEach(b => b.tabIndex = on ? 0 : -1);   // icônes atteignables au clavier seulement en édition
+  });
+}
+const stopEditing = () => { if(editSlot !== null) setEditing(null); };
+function removeTopFilm(i){
+  topFilms[i] = null;
+  store.set('topFilms', topFilms);
+  renderTopFilms();                                    // la case redevient vide : pellicule + « + »
+  buzz(10);
 }
 filmstrip.addEventListener('click', e => {
   const slot = e.target.closest('.tf-slot');
-  if(slot) openPicker(+slot.dataset.i);                // « + » (ou carte déjà placée) → modale de sélection
+  if(!slot) return;
+  const i = +slot.dataset.i;
+  if(e.target.closest('.tf-del')){ removeTopFilm(i); return; }                    // poubelle
+  if(e.target.closest('.tf-pen')){ stopEditing(); openPicker(i); return; }        // crayon → choisir un remplaçant
+  if(!slot.classList.contains('filled')){ stopEditing(); openPicker(i); return; } // case vide : « + »
+  if(editSlot === i){ stopEditing(); return; }         // appui sur la carte floutée, hors des icônes : retour à la normale
+  setEditing(i); buzz(6);                              // case remplie : mode édition
+});
+filmstrip.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tf-slot')){ e.preventDefault(); e.target.click(); }
 });
 
-/* ---------- Modale de sélection (grille de la Vidéothèque) ---------- */
+/* ---------- Modale de sélection : grille de la Vidéothèque + recherche + tri + filtres ---------- */
 const pickModal = $('#pickModal'), pickList = $('#pickList');
-let pickSlot = null;
+const pkCrit = $('#pkCrit'), pkDir = $('#pkDir'), pkFilt = $('#pkFilt'), pkDrop = $('#pkDrop'), pkSearch = $('#pkSearch'), pkClear = $('#pkClear'), pkStatus = $('#pkStatus');
+const pickState = {by:'rarity', dir:'desc', rarities:new Set()};   // indépendant de la Vidéothèque
+let pickSlot = null, pickQuery = '';
+function renderPickBar(){
+  const byRating = pickState.by === 'rating';
+  pkCrit.textContent = byRating ? 'NOTE' : 'RARETÉ';
+  pkCrit.setAttribute('aria-label', byRating ? 'Trier par note (appuyer pour trier par rareté)' : 'Trier par rareté (appuyer pour trier par note)');
+  pkDir.classList.toggle('up', pickState.dir === 'asc');
+  pkDir.setAttribute('aria-label', pickState.dir === 'asc' ? 'Ordre croissant' : 'Ordre décroissant');
+  pkFilt.classList.toggle('active', pickState.rarities.size > 0);
+  if(!pkDrop.hidden) pkDrop.innerHTML = filterMenuHTML(pickState);
+}
+function renderPickList(){
+  const col = getCol();
+  if(!Object.keys(col).length){
+    pickList.innerHTML = '<p class="pick-empty">Ta vidéothèque est vide : ouvre des boosters pour obtenir des films !</p>';
+    return;
+  }
+  const films = sortFilter(pickState, pickQuery);
+  if(!films.length){
+    pickList.innerHTML = `<p class="pick-empty">${pickQuery.trim() ? `Aucun film ne correspond à « ${esc(pickQuery.trim())} ».` : 'Aucun film pour ces raretés.'}</p>`;
+    return;
+  }
+  const rows = chunk(films, SHELF.perRow);
+  pickList.innerHTML = `<div class="cabinet"><div class="scap"></div>${rows.map(row => `<div class="srow"><div class="niche">
+    <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
+    <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}</div>`).join('')}</div></div></div>`).join('')}</div>`;
+  pickList.scrollTop = 0;
+}
 function openPicker(slotIndex){
   pickSlot = slotIndex;
   $('#pickTitle').textContent = `Top film n° ${slotIndex + 1}`;
-  const films = Object.values(getCol()).sort((a, b) => tierIdx(a.rarity) - tierIdx(b.rarity) || a.rank - b.rank);
-  if(!films.length){
-    pickList.innerHTML = '<p class="pick-empty">Ta vidéothèque est vide : ouvre des boosters pour obtenir des films !</p>';
-  }else{
-    const rows = [];
-    for(let k = 0; k < films.length; k += 3) rows.push(films.slice(k, k + 3));
-    pickList.innerHTML = `<div class="cabinet"><div class="scap"></div>${rows.map(row => `<div class="srow"><div class="niche">
-      <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
-      <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}</div>`).join('')}</div></div></div>`).join('')}</div>`;
-  }
-  pickList.scrollTop = 0;
+  pickQuery = ''; pkSearch.value = ''; pkClear.hidden = true;   // la recherche repart à zéro, le tri choisi est conservé
+  closePickFilter();
+  renderPickBar(); renderPickList();
   pickModal.classList.remove('hidden'); void pickModal.offsetWidth; pickModal.classList.add('on');
+  if(pickState.by === 'rating') loadPickRatings();
 }
 function closePicker(){
   pickModal.classList.remove('on');
+  closePickFilter(); pkSearch.blur();
   setTimeout(() => { if(!pickModal.classList.contains('on')){ pickModal.classList.add('hidden'); pickList.innerHTML = ''; } }, 300);
   pickSlot = null;
 }
+// Tri par NOTE : on complète les notes manquantes (même mécanisme que la Vidéothèque) puis on redessine
+function loadPickRatings(){
+  pkStatus.textContent = 'Notes…';
+  ensureRatings().then(() => {
+    pkStatus.textContent = '';
+    if(pickModal.classList.contains('on') && pickState.by === 'rating') renderPickList();
+  });
+}
+pkCrit.addEventListener('click', () => {
+  pickState.by = pickState.by === 'rarity' ? 'rating' : 'rarity';
+  renderPickBar(); renderPickList();
+  if(pickState.by === 'rating') loadPickRatings();
+});
+pkDir.addEventListener('click', () => {
+  pickState.dir = pickState.dir === 'desc' ? 'asc' : 'desc';
+  renderPickBar(); renderPickList();
+});
+function openPickFilter(){ pkDrop.innerHTML = filterMenuHTML(pickState); pkDrop.hidden = false; pkFilt.setAttribute('aria-expanded', 'true'); }
+function closePickFilter(){ if(pkDrop.hidden) return; pkDrop.hidden = true; pkFilt.setAttribute('aria-expanded', 'false'); }
+pkFilt.addEventListener('click', () => { pkDrop.hidden ? openPickFilter() : closePickFilter(); });
+pkDrop.addEventListener('change', e => {
+  const box = e.target.closest('input[type="checkbox"]');
+  if(!box) return;
+  const sel = pickState.rarities;
+  if(box.value === 'all') sel.clear();
+  else if(box.checked) sel.add(box.value);
+  else sel.delete(box.value);
+  if(sel.size === TIERS.length) sel.clear();
+  renderPickBar(); renderPickList();
+});
+pickModal.addEventListener('click', e => { if(!pkDrop.hidden && !e.target.closest('.sb-filter')) closePickFilter(); });
+pkSearch.addEventListener('input', () => {
+  pickQuery = pkSearch.value;
+  pkClear.hidden = !pickQuery;
+  renderPickList();
+});
+pkClear.addEventListener('click', () => {
+  pkSearch.value = ''; pickQuery = ''; pkClear.hidden = true;
+  renderPickList(); pkSearch.focus();
+});
+pkSearch.addEventListener('keydown', e => { if(e.key === 'Enter') pkSearch.blur(); });
 $('#pickClose').addEventListener('click', closePicker);
 pickList.addEventListener('click', e => {
   const slot = e.target.closest('.slot[data-id]');
@@ -2629,9 +2770,15 @@ function chooseTopFilm(i, id){
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && pickModal.classList.contains('on')) closePicker(); });
 // Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
 profileModal.addEventListener('click', e => {
+  if(!e.target.isConnected) return;                    // élément qui vient d'être redessiné (ex. poubelle) : ce n'est pas un appui « dehors »
+  if(!e.target.closest('.tf-slot.is-editing')) stopEditing();   // appui en dehors de la carte en édition : elle redevient normale
   if(e.target.closest('#pmClose') || !e.target.closest('.pm-panel')) closeProfile();
 });
-document.addEventListener('keydown', e => { if(profileOpen && e.key === 'Escape' && !pickModal.classList.contains('on')) closeProfile(); });
+document.addEventListener('keydown', e => {
+  if(!profileOpen || e.key !== 'Escape' || pickModal.classList.contains('on')) return;
+  if(editSlot !== null){ stopEditing(); return; }      // Échap : d'abord on quitte le mode édition
+  closeProfile();
+});
 
 // Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
 document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => {
