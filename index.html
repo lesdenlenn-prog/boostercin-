@@ -10,7 +10,7 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Cinzel:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -221,122 +221,99 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .tf-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* =====================================================================
-   FAVORIS (sous le Top Films) : 2 genres côte à côte + réalisateur sur toute la largeur
+   FAVORIS (sous le Top Films) — charte des encadrés du HUD : fond sombre, liseré net, pilule / léger arrondi
    ===================================================================== */
-.favgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
-.fav-card{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 8px 18px rgba(0,0,0,.35);transition:transform .15s ease}
-.fav-card:active{transform:scale(.98)}
+.favgrid{display:flex;flex-direction:column;gap:12px;padding:0 14px}
+.fav-genres{display:flex;flex-wrap:wrap;gap:8px}
+.fav-card{position:relative;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
+.fav-card:active{transform:scale(.97)}
 .fav-card.is-editing:active{transform:none}
 .fav-card:focus-visible{outline:2px solid #fff3e4;outline-offset:3px}
-.fav-card::after{content:'';position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;   /* liseré fin par-dessus le décor */
-  box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.22)}
-.fav-card.empty::after{box-shadow:none;border:1.5px dashed rgba(255,240,220,.32)}
-.fav-genre{height:106px}
-.fav-dir{grid-column:1 / -1}
-.fav-body{position:absolute;inset:0;isolation:isolate;overflow:hidden;transition:filter .22s ease,transform .22s ease}
-.fav-dir .fav-body{position:relative;inset:auto}
+.fav-body{transition:filter .22s ease,transform .22s ease}
 /* Mode édition (même principe que le Top Films) : flou + quasi noir et blanc, poubelle / crayon par-dessus */
-.fav-card.is-editing .fav-body{filter:blur(4px) grayscale(.85) brightness(.7);transform:scale(1.08)}
+.fav-card.is-editing .fav-body{filter:blur(3px) grayscale(.85) brightness(.7);transform:scale(1.05)}
 .fav-card.is-editing .tf-edit{opacity:1;visibility:visible}
 .fav-card.is-editing .tf-btn{transform:none}
-.fav-card .tf-edit{gap:12px}
-.fav-card .tf-btn{width:42px;height:42px}
-.fav-card .tf-btn svg{width:20px;height:20px}
+.fav-card .tf-edit{gap:10px}
+.fav-dir .tf-btn{width:40px;height:40px}
+.fav-dir .tf-btn svg{width:19px;height:19px}
+.gtag-card{border-radius:99px}
+.gtag-card .tf-edit{gap:6px}
+.gtag-card .tf-btn{width:28px;height:28px}
+.gtag-card .tf-btn svg{width:14px;height:14px}
 
-/* Libellés communs */
-.g-rank{position:absolute;top:10px;left:12px;font-size:.6rem;font-weight:800;letter-spacing:.14em;opacity:.78}
-.g-name{position:absolute;left:12px;right:10px;bottom:10px;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;
-  font-size:1.22rem;line-height:1.05;text-shadow:var(--g-ts,0 2px 6px rgba(0,0,0,.5))}
+/* ---------- Badge de genre : pilule sombre + pictogramme ; la couleur suit data-genre ---------- */
+.gtag{display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 16px 0 6px;border:0;border-radius:99px;
+  font:800 .84rem/1 'Bricolage Grotesque',system-ui,sans-serif;color:#fff3e4;white-space:nowrap;letter-spacing:.01em;
+  background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px var(--gc,rgba(255,140,120,.3)),0 6px 16px rgba(0,0,0,.28)}
+@supports (color:color-mix(in srgb,red 50%,blue)){
+  .gtag{background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 22%,transparent),transparent 78%),rgba(30,3,9,.8);   /* teinte du genre, discrète */
+    box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gc) 55%,transparent),0 6px 16px rgba(0,0,0,.28)}
+  .g-ico{background:color-mix(in srgb,var(--gc) 16%,rgba(0,0,0,.35));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gc) 45%,transparent)}
+}
+.g-ico{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.35)}
+.g-ico::before{content:'';width:16px;height:16px;background:var(--gc,#d8b08a);
+  -webkit-mask:var(--gi) center/contain no-repeat;mask:var(--gi) center/contain no-repeat}
+/* Case vide : même pilule, liseré pointillé, « + » */
+.gtag.is-empty{color:rgba(255,236,220,.6);font-weight:500;background:rgba(30,3,9,.5);box-shadow:none;outline:1.5px dashed rgba(255,140,120,.35);outline-offset:-1.5px}
+.gtag.is-empty .g-ico{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,140,120,.3);color:#ffe3da;font-size:1.15rem;font-weight:400}
+.gtag.is-empty .g-ico::before{display:none}
+/* Une ligne par genre : couleur d'accent + pictogramme (ajouter un genre = ajouter une ligne) */
+[data-genre="action"]{--gc:#ff8a3d;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E")}
+[data-genre="aventure"]{--gc:#7fcf7a;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m15.5 8.5-2 5-5 2 2-5z'/%3E%3C/svg%3E")}
+[data-genre="animation"]{--gc:#62c8ff;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 4 10.5 13.5'/%3E%3Cpath d='M9 14.5c-2 0-3.5 1.5-3.5 3.5 0 1-1 2-2 2 1.5 1 3 1.2 4.5 1.2A3.6 3.6 0 0 0 11.6 17c0-1.4-1.1-2.5-2.6-2.5z'/%3E%3C/svg%3E")}
+[data-genre="comedie"]{--gc:#ffd23f;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8 14s1.5 2.2 4 2.2 4-2.2 4-2.2'/%3E%3Cpath d='M9 9.5h.01M15 9.5h.01'/%3E%3C/svg%3E")}
+[data-genre="crime"]{--gc:#a9b4c4;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m20 20-4.8-4.8'/%3E%3C/svg%3E")}
+[data-genre="documentaire"]{--gc:#4fd1c5;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cellipse cx='12' cy='12' rx='4' ry='9'/%3E%3Cpath d='M3 12h18'/%3E%3C/svg%3E")}
+[data-genre="drame"]{--gc:#8f9dff;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5c3.5 1.6 12.5 1.6 16 0v6a8 8 0 0 1-16 0z'/%3E%3Cpath d='M8 10.5h2M14 10.5h2'/%3E%3Cpath d='M9 16.2c1.6-1.3 4.4-1.3 6 0'/%3E%3C/svg%3E")}
+[data-genre="familial"]{--gc:#ffab85;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11 12 4l9 7'/%3E%3Cpath d='M5.5 9.5V20h13V9.5'/%3E%3Cpath d='M10 20v-5h4v5'/%3E%3C/svg%3E")}
+[data-genre="fantastique"]{--gc:#c89bff;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 20 11-11'/%3E%3Cpath d='m17 3 .9 2.1L20 6l-2.1.9L17 9l-.9-2.1L14 6l2.1-.9z'/%3E%3C/svg%3E")}
+[data-genre="histoire"]{--gc:#d2ad74;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 21h18'/%3E%3Cpath d='M12 3 4 8h16z'/%3E%3Cpath d='M6 11v7M10 11v7M14 11v7M18 11v7'/%3E%3C/svg%3E")}
+[data-genre="horreur"]{--gc:#e5484d;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3a7 7 0 0 0-7 7c0 2.5 1.2 4.2 3 5.2V19h8v-3.8c1.8-1 3-2.7 3-5.2a7 7 0 0 0-7-7z'/%3E%3Cpath d='M9.2 11h.01M14.8 11h.01M10.5 19v2M13.5 19v2'/%3E%3C/svg%3E")}
+[data-genre="musique"]{--gc:#ff6bbd;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18V5l11-2v13'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Ccircle cx='17' cy='16' r='3'/%3E%3C/svg%3E")}
+[data-genre="mystere"]{--gc:#7fd8f2;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E")}
+[data-genre="romance"]{--gc:#ff86a6;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20s-7.5-4.6-7.5-10.2A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z'/%3E%3C/svg%3E")}
+[data-genre="scifi"]{--gc:#45e3ff;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.6'/%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='3.3' transform='rotate%28-22 12 12%29'/%3E%3C/svg%3E")}
+[data-genre="thriller"]{--gc:#f2724b;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E")}
+[data-genre="guerre"]{--gc:#b3ad74;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 5 6v5c0 4.6 3 8.2 7 10 4-1.8 7-5.4 7-10V6z'/%3E%3C/svg%3E")}
+[data-genre="western"]{--gc:#e3a35a;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 16.5c3.5 2.2 14.5 2.2 18 0'/%3E%3Cpath d='M7 16c0-5.5 1.6-8.5 3-8.5 1 0 1.2 1 2 1s1-1 2-1c1.4 0 3 3 3 8.5'/%3E%3C/svg%3E")}
 
-/* Case vide : attente élégante + « + » */
-.fav-empty{color:rgba(255,244,228,.85);display:grid;place-items:center;
-  background:repeating-linear-gradient(135deg,rgba(255,240,220,.035) 0 8px,transparent 8px 16px),rgba(222,204,178,.12)}
-.fe-plus{width:40px;height:40px;margin-top:8px;border-radius:50%;display:grid;place-items:center;font-size:1.7rem;font-weight:300;line-height:1;
-  background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.4)}
-
-/* ---------------------------------------------------------------------
-   THÈMES DE GENRE : tout passe par data-genre="…"
-   Chaque genre = 1 ligne de variables : --g1/--g2 (dégradé), --g-ink (texte), --g-ico (emoji en filigrane),
-   --g-pat (motif : dégradés ou SVG), --g-po (opacité du motif), --g-ts (ombre du texte).
-   Ajouter un genre = ajouter une ligne ici (et une entrée dans GENRES en JS). Sert aux cartes du profil ET aux boutons de la modale.
-   --------------------------------------------------------------------- */
-.gtheme{color:var(--g-ink,#fff);background:linear-gradient(155deg,var(--g1,#555),var(--g2,#111))}
-.gtheme::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--g-pat,none);opacity:var(--g-po,.55);pointer-events:none}
-.gtheme::after{content:var(--g-ico,'');position:absolute;right:-.12em;bottom:-.18em;z-index:-1;font-size:var(--g-icz,4.2rem);line-height:1;
-  opacity:.24;transform:rotate(-14deg);pointer-events:none}
-[data-genre="horreur"]{--g1:#3a0508;--g2:#030102;--g-ink:#ff6a5c;--g-ico:'🔪';--g-po:.5;
-  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23fff' stroke-width='.7'%3E%3Cpath d='M0 0L140.0 0.0M0 0L135.2 36.2M0 0L121.2 70.0M0 0L99.0 99.0M0 0L70.0 121.2M0 0L36.2 135.2M0 0L0.0 140.0M14.0 0.0Q11.9 1.6 13.5 3.6Q11.1 4.6 12.1 7.0Q9.6 7.3 9.9 9.9Q7.3 9.6 7.0 12.1Q4.6 11.1 3.6 13.5Q1.6 11.9 0.0 14.0M28.0 0.0Q23.9 3.1 27.0 7.2Q22.2 9.2 24.2 14.0Q19.1 14.7 19.8 19.8Q14.7 19.1 14.0 24.2Q9.2 22.2 7.2 27.0Q3.1 23.9 0.0 28.0M44.0 0.0Q37.5 4.9 42.5 11.4Q35.0 14.5 38.1 22.0Q30.0 23.0 31.1 31.1Q23.0 30.0 22.0 38.1Q14.5 35.0 11.4 42.5Q4.9 37.5 0.0 44.0M62.0 0.0Q52.9 7.0 59.9 16.0Q49.3 20.4 53.7 31.0Q42.3 32.5 43.8 43.8Q32.5 42.3 31.0 53.7Q20.4 49.3 16.0 59.9Q7.0 52.9 0.0 62.0M82.0 0.0Q69.9 9.2 79.2 21.2Q65.2 27.0 71.0 41.0Q55.9 42.9 58.0 58.0Q42.9 55.9 41.0 71.0Q27.0 65.2 21.2 79.2Q9.2 69.9 0.0 82.0M104.0 0.0Q88.7 11.7 100.5 26.9Q82.6 34.2 90.1 52.0Q71.0 54.4 73.5 73.5Q54.4 71.0 52.0 90.1Q34.2 82.6 26.9 100.5Q11.7 88.7 0.0 104.0'/%3E%3C/svg%3E") 0 0/62% auto no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23ff2b2b' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M38 18Q58 46 70 86M54 12Q72 42 84 80M70 10Q84 36 94 70'/%3E%3C/svg%3E") 100% 100%/46% auto no-repeat,radial-gradient(120% 90% at 100% 100%,rgba(160,0,0,.55),transparent 60%)}
-[data-genre="scifi"]{--g1:#0b0f3a;--g2:#1e0536;--g-ink:#8ff6ff;--g-ico:'🚀';--g-po:.9;--g-ts:0 0 8px rgba(0,240,255,.8),0 0 18px rgba(255,0,220,.5);
-  --g-pat:radial-gradient(1px 1px at 12% 22%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 38% 12%,#bff 99%,transparent),radial-gradient(1px 1px at 64% 30%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 84% 16%,#fbf 99%,transparent),radial-gradient(1px 1px at 26% 52%,#fff 99%,transparent),radial-gradient(1px 1px at 72% 50%,#bff 99%,transparent),radial-gradient(1.5px 1.5px at 50% 40%,#fff 99%,transparent),linear-gradient(transparent 74%,rgba(255,0,220,.55) 74.5%,transparent 76.5%),repeating-linear-gradient(90deg,transparent 0 22px,rgba(0,240,255,.18) 22px 23px) 0 100%/100% 25% no-repeat}
-[data-genre="comedie"]{--g1:#ffd93b;--g2:#ff8a1f;--g-ink:#3a1200;--g-ico:'😂';--g-ts:0 1px 0 rgba(255,255,255,.45);--g-po:.75;
-  --g-pat:radial-gradient(circle at 20% 30%,#ff3fa4 2px,transparent 2.6px) 0 0/38px 32px,radial-gradient(circle at 70% 70%,#2ee6ff 2px,transparent 2.6px) 0 0/30px 36px,radial-gradient(4px 1.6px at 45% 55%,#7b3cff 99%,transparent) 11px 7px/34px 28px,radial-gradient(1.6px 4px at 60% 40%,#fff 99%,transparent) 0 0/26px 30px}
-[data-genre="action"]{--g1:#ff6a1a;--g2:#6e0a00;--g-ink:#fff2c2;--g-ico:'💥';
-  --g-pat:repeating-linear-gradient(115deg,rgba(255,255,255,.14) 0 5px,transparent 5px 17px),radial-gradient(70% 90% at 100% 0,rgba(255,220,80,.6),transparent 60%)}
-[data-genre="aventure"]{--g1:#3a6b3e;--g2:#10261a;--g-ink:#ffe39a;--g-ico:'🧭';--g-po:.6;
-  --g-pat:repeating-radial-gradient(circle at 82% 18%,transparent 0 9px,rgba(255,236,180,.22) 9px 10px)}
-[data-genre="animation"]{--g1:#6ec6ff;--g2:#b07bff;--g-ink:#fff;--g-ico:'🎨';--g-po:.7;
-  --g-pat:radial-gradient(circle at 18% 78%,rgba(255,255,140,.7) 0 16%,transparent 17%),radial-gradient(circle at 88% 22%,rgba(255,140,200,.7) 0 20%,transparent 21%),radial-gradient(circle at 60% 110%,rgba(120,255,200,.6) 0 26%,transparent 27%)}
-[data-genre="crime"]{--g1:#2a2a2a;--g2:#080808;--g-ink:#f5c518;--g-ico:'🔍';--g-po:.85;
-  --g-pat:repeating-linear-gradient(160deg,transparent 0 8px,rgba(0,0,0,.85) 8px 16px) 0 0/100% 100%,linear-gradient(160deg,transparent 56%,#f5c518 56% 70%,transparent 70%)}
-[data-genre="documentaire"]{--g1:#3f6262;--g2:#101e1e;--g-ink:#d9fff5;--g-ico:'🌍';
-  --g-pat:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),radial-gradient(60% 80% at 0 0,rgba(180,255,230,.25),transparent 60%)}
-[data-genre="drame"]{--g1:#2e3268;--g2:#0a0b1e;--g-ink:#cfd8ff;--g-ico:'🎭';--g-po:.8;
-  --g-pat:repeating-linear-gradient(100deg,rgba(190,210,255,.16) 0 1px,transparent 1px 13px)}
-[data-genre="familial"]{--g1:#ffb27a;--g2:#e0645a;--g-ink:#fff;--g-ico:'🏡';
-  --g-pat:radial-gradient(circle,rgba(255,255,255,.35) 2px,transparent 2.6px) 0 0/18px 18px}
-[data-genre="fantastique"]{--g1:#4b2080;--g2:#12052a;--g-ink:#ecd2ff;--g-ico:'🐉';--g-po:.9;--g-ts:0 0 10px rgba(200,140,255,.7);
-  --g-pat:radial-gradient(2px 2px at 20% 30%,#ffe9a8 99%,transparent),radial-gradient(1.5px 1.5px at 60% 18%,#fff 99%,transparent),radial-gradient(2px 2px at 80% 55%,#ffe9a8 99%,transparent),radial-gradient(1.5px 1.5px at 35% 70%,#fff 99%,transparent),radial-gradient(70% 70% at 80% 100%,rgba(170,90,255,.45),transparent 70%)}
-[data-genre="histoire"]{--g1:#d8b878;--g2:#7a5224;--g-ink:#2a1606;--g-ico:'🏛️';--g-ts:0 1px 0 rgba(255,240,200,.5);--g-po:.6;
-  --g-pat:repeating-linear-gradient(0deg,rgba(90,50,10,.12) 0 1px,transparent 1px 7px),radial-gradient(120% 120% at 50% 50%,transparent 55%,rgba(60,30,5,.6))}
-[data-genre="musique"]{--g1:#d11f86;--g2:#3a0533;--g-ink:#fff0fa;--g-ico:'🎸';--g-po:.35;
-  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath fill='%23fff' d='M14 30a4 3 0 1 1-2-2.6V10l14-3v17a4 3 0 1 1-2-2.6V11.5l-10 2.2z'/%3E%3C/svg%3E") 0 0/44px 44px}
-[data-genre="mystere"]{--g1:#145566;--g2:#071820;--g-ink:#bafff0;--g-ico:'🔮';--g-po:.7;
-  --g-pat:radial-gradient(60% 40% at 20% 80%,rgba(200,255,240,.25),transparent 70%),radial-gradient(50% 35% at 80% 30%,rgba(200,255,240,.18),transparent 70%)}
-[data-genre="romance"]{--g1:#ff7aa6;--g2:#9c1446;--g-ink:#fff;--g-ico:'🌹';--g-po:.22;
-  --g-pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cpath fill='%23fff' d='M15 23C5 16 5 9 10 8c2.5-.5 4.3 1 5 2.5C15.7 9 17.5 7.5 20 8c5 1 5 8-5 15z'/%3E%3C/svg%3E") 0 0/26px 26px}
-[data-genre="thriller"]{--g1:#2a2a2e;--g2:#050505;--g-ink:#ff4a4a;--g-ico:'👁️';--g-po:.9;
-  --g-pat:linear-gradient(transparent 47%,rgba(255,40,40,.75) 48.5% 49.5%,transparent 51%),radial-gradient(80% 60% at 50% 48%,rgba(255,30,30,.18),transparent 70%)}
-[data-genre="guerre"]{--g1:#5d5c3a;--g2:#262614;--g-ink:#ece6b4;--g-ico:'🎖️';--g-po:.5;
-  --g-pat:radial-gradient(28% 22% at 20% 30%,#2f2f1a 98%,transparent),radial-gradient(24% 30% at 70% 60%,#7a7448 98%,transparent),radial-gradient(20% 18% at 45% 85%,#2f2f1a 98%,transparent),radial-gradient(22% 16% at 85% 15%,#3e3d22 98%,transparent)}
-[data-genre="western"]{--g1:#f08b3c;--g2:#6b2410;--g-ink:#fff1d6;--g-ico:'🤠';--g-po:.8;
-  --g-pat:radial-gradient(circle at 78% 92%,#ffd27a 0 17%,transparent 18%),repeating-linear-gradient(0deg,transparent 0 10px,rgba(120,30,0,.18) 10px 12px)}
-
-/* ---------- Carte Réalisateur : projecteur + bords de pellicule + polaroid + signature dorée ---------- */
-.dir-body{display:flex;flex-direction:column;align-items:center;padding:34px 22px 18px;
-  background:radial-gradient(55% 75% at 50% 0,rgba(255,226,160,.22),transparent 72%),linear-gradient(180deg,#24090f,#0c0305)}
-.dir-body::before,.dir-body::after{content:'';position:absolute;top:0;bottom:0;width:7px;z-index:-1;   /* perforations de pellicule */
-  background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(236,226,210,.32) 5px 11px,transparent 11px 16px)}
-.dir-body::before{left:7px}
-.dir-body::after{right:7px}
-.d-label{position:absolute;top:11px;left:0;right:0;text-align:center;color:#f6c453;font-size:.6rem;font-weight:800;letter-spacing:.16em}
-.polaroid{position:relative;width:128px;margin:6px 0 0;padding:8px 8px 26px;border-radius:3px;background:#f3ead8;
-  transform:rotate(-3deg);box-shadow:0 12px 24px rgba(0,0,0,.55)}
-.polaroid::before{content:'';position:absolute;top:-9px;left:50%;width:54px;height:18px;margin-left:-27px;   /* scotch */
-  background:rgba(255,246,214,.55);transform:rotate(4deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
-.polaroid img,.polaroid .ph{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#2a1a1c}
-.polaroid .ph{display:grid;place-items:end center;overflow:hidden;background:radial-gradient(80% 60% at 50% 0,#4a2a2e,#1a0c0e)}
-.polaroid .ph svg{width:92%;height:auto;fill:rgba(255,236,214,.3)}
-.d-plus{position:absolute;right:-13px;bottom:-11px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
-  font-size:1.6rem;font-weight:400;line-height:1;color:#2b1403;background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);
-  box-shadow:0 4px 10px rgba(0,0,0,.5);transform:rotate(3deg)}
-.d-name{max-width:100%;margin-top:14px;font-family:'Dancing Script',cursive;font-weight:700;font-size:1.9rem;line-height:1.15;text-align:center;
-  background:linear-gradient(180deg,#fff0b8,#f6c453 50%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
-.fav-dir.empty .d-name{background:none;color:rgba(255,240,220,.45);filter:none;font-size:1.6rem}
+/* ---------- Carte Réalisateur : badge VIP à gauche, chaise de réalisateur à droite (le nom est sur le dossier) ---------- */
+.fav-dir{border-radius:16px}
+.dir-body{display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 16px 12px;border-radius:16px;
+  background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
+.fav-dir.empty .dir-body{box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.18),0 6px 16px rgba(0,0,0,.2)}
+/* Badge de plateau : pince, bandeau bordeaux, photo carrée aux bords nets, mention RÉALISATEUR */
+.vip{position:relative;flex:none;width:70px;margin-top:6px;padding:13px 6px 6px;border-radius:8px;
+  background:linear-gradient(180deg,#6a1724 0 8px,#f6efe2 8px,#e9dcc4);box-shadow:0 6px 14px rgba(0,0,0,.45)}
+.vip::before{content:'';position:absolute;top:-9px;left:50%;width:22px;height:14px;margin-left:-11px;border-radius:4px;   /* pince */
+  background:linear-gradient(#2a0a10,#2a0a10) center 4px/10px 3px no-repeat,linear-gradient(180deg,#e9dcc4,#c9b48f);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.vip img,.vip-ph{display:block;width:100%;aspect-ratio:1;border-radius:4px;object-fit:cover;background:#d9c39d;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.vip-ph{display:grid;place-items:end center;overflow:hidden}
+.vip-ph svg{width:86%;height:auto;fill:#b49567}
+.vip-role{display:block;margin-top:5px;text-align:center;font-size:.45rem;font-weight:800;letter-spacing:.14em;color:#4a0f19}
+.vip-photo{position:relative}
+.vip .d-plus{right:-13px;bottom:3px;width:24px;height:24px;font-size:1.1rem;transform:none}
+.d-plus{position:absolute;display:grid;place-items:center;border-radius:50%;line-height:1;color:#2b1403;
+  background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);box-shadow:0 3px 8px rgba(0,0,0,.5)}
+/* Chaise : SVG vectoriel (cadre doré, toile noire) ; le nom est posé en absolu sur la toile du dossier */
+.chair{position:relative;flex:1;min-width:0;max-width:172px;aspect-ratio:200 / 150}
+.chair svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.chair-name{position:absolute;left:19%;width:62%;top:10.67%;height:21.33%;padding:0 5%;   /* = rectangle de toile x 38→162, y 16→48 du SVG */
+  display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center}
+.chair-name b{font-family:'Cinzel','Limelight',serif;font-weight:700;font-size:14px;line-height:1;letter-spacing:.08em;white-space:nowrap;
+  text-transform:uppercase;text-align:center;background:linear-gradient(180deg,#fff0b8,#f6c453 55%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fav-dir.empty .chair-name b{background:none;color:rgba(255,236,220,.38);letter-spacing:.14em}
 
 /* ---------- Modales de choix (genre / réalisateur) : thème bordeaux du profil ---------- */
 .pickmodal.favmodal{background:linear-gradient(180deg,#3a0c14,#14040a)}
 .fm-pane{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 22px)}
 .fm-pane[hidden]{display:none}
 .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.gtile{position:relative;isolation:isolate;overflow:hidden;height:76px;border:0;border-radius:14px;padding:0 12px;text-align:left;cursor:pointer;
-  --g-icz:3.1rem;font-family:'Limelight','Bricolage Grotesque',serif;font-size:1.08rem;line-height:1.05;text-shadow:var(--g-ts,0 2px 6px rgba(0,0,0,.5));
-  box-shadow:0 6px 14px rgba(0,0,0,.4);transition:transform .15s ease}
-.gtile:active{transform:scale(.96)}
-.gtile.on{box-shadow:0 0 0 2.5px #f6c453,0 0 18px rgba(246,196,83,.45)}
-.gtile-tag{position:absolute;top:7px;right:7px;padding:2px 7px;border-radius:99px;font-family:'Bricolage Grotesque',sans-serif;font-size:.6rem;font-weight:800;
-  letter-spacing:.06em;text-shadow:none;background:#f6c453;color:#2b1403}
+.gpick{width:100%;height:46px;cursor:pointer;transition:transform .15s ease}
+.gpick:active{transform:scale(.96)}
+.gpick.on{box-shadow:inset 0 0 0 2px #f6c453,0 0 14px rgba(246,196,83,.35)}
+.gpick-tag{margin-left:auto;padding:3px 7px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.06em;background:#f6c453;color:#2b1403}
 .fm-search{position:sticky;top:-10px;z-index:2;margin:-10px -14px 8px;padding:10px 14px 10px;background:linear-gradient(#36101a 70%,rgba(54,16,26,0))}
 .favmodal .search{margin-top:0}
 .favmodal .search input{background:rgba(255,255,255,.06);color:#fff3e4;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3)}
@@ -2948,7 +2925,8 @@ const GENRES = [
   {id:'guerre', tmdb:10752, label:'Guerre'},         {id:'western', tmdb:37, label:'Western'}
 ];
 const GENRE_BY = Object.fromEntries(GENRES.map(g => [g.id, g]));
-const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>', DIR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><ellipse cx="40" cy="39" rx="16" ry="6"/><circle cx="41" cy="33" r="2.5"/><circle cx="42" cy="51" r="13"/><path d="M10 125c0-30 12-48 32-50 14 1 22 8 27 18l-9 6-4-2 3 28z"/><path d="M58 79 66 64l7 3-7 17z"/><path d="M55 50 90 36v38L55 60z"/><rect x="51" y="50" width="6" height="10" rx="2"/><path d="M64 60h6l-2 9h-4z"/></svg>';
+const DIR_CHAIR = '<svg viewBox="0 0 200 150" aria-hidden="true"><defs><linearGradient id="chairGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d27a"/><stop offset="1" stop-color="#b8862a"/></linearGradient></defs><g stroke="url(#chairGold)" stroke-width="6.5" stroke-linecap="round" fill="none"><path d="M54 97 148 143M146 97 52 143"/></g><g fill="url(#chairGold)"><rect x="40" y="7" width="7.5" height="92" rx="3"/><rect x="152.5" y="7" width="7.5" height="92" rx="3"/><rect x="25" y="61" width="52" height="7.5" rx="3.75"/><rect x="123" y="61" width="52" height="7.5" rx="3.75"/><circle cx="100" cy="120" r="4"/></g><rect x="38" y="16" width="124" height="32" rx="2" fill="#120407" stroke="#d4af37" stroke-width="1.4"/><path d="M43 82h114l-3 11q-54 9-108 0z" fill="#120407" stroke="#d4af37" stroke-width="1.4" stroke-linejoin="round"/></svg>', VIP_SILHOUETTE = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5"/><path d="M5 40c0-9.5 6.5-14.5 15-14.5S35 30.5 35 40z"/></svg>';
+const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>';
 const personImg = (path, size = 'w185') => `https://image.tmdb.org/t/p/${size}${path}`;
 
 let favs = store.get('favs', null) || {};
@@ -2964,23 +2942,39 @@ function renderFavs(){
   const genreCard = i => {
     const G = GENRE_BY[favs.genres[i]];
     return G
-      ? `<div class="fav-card fav-genre filled" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Genre n°${i + 1} : ${G.label} (modifier)">
-           <div class="fav-body gtheme" data-genre="${G.id}"><span class="g-rank">GENRE N°${i + 1}</span><b class="g-name">${G.label}</b></div>${editBtns(G.label)}</div>`
-      : `<div class="fav-card fav-genre empty" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Choisir le genre n°${i + 1}">
-           <div class="fav-body fav-empty"><span class="g-rank">GENRE N°${i + 1}</span><span class="fe-plus" aria-hidden="true">+</span></div></div>`;
+      ? `<div class="fav-card gtag-card filled" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Genre n°${i + 1} : ${G.label} (modifier)">
+           <span class="fav-body gtag" data-genre="${G.id}"><span class="g-ico" aria-hidden="true"></span>${G.label}</span>${editBtns(G.label)}</div>`
+      : `<div class="fav-card gtag-card empty" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Choisir le genre n°${i + 1}">
+           <span class="fav-body gtag is-empty"><span class="g-ico" aria-hidden="true">+</span>Genre n°${i + 1}</span></div>`;
   };
   const D = favs.director;
-  const dirCard = D
-    ? `<div class="fav-card fav-dir filled" role="button" tabindex="0" data-ek="director" aria-label="Réalisateur favori : ${esc(D.name)} (modifier)">
-         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
-           <figure class="polaroid">${D.photo ? `<img src="${personImg(D.photo, 'h632')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">` : `<div class="ph">${DIR_SILHOUETTE}</div>`}</figure>
-           <b class="d-name">${esc(D.name)}</b></div>${editBtns(D.name)}</div>`
-    : `<div class="fav-card fav-dir empty" role="button" tabindex="0" data-ek="director" aria-label="Choisir un réalisateur favori">
-         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
-           <figure class="polaroid"><div class="ph">${DIR_SILHOUETTE}</div><span class="d-plus" aria-hidden="true">+</span></figure>
-           <b class="d-name">À choisir…</b></div></div>`;
-  favGrid.innerHTML = genreCard(0) + genreCard(1) + dirCard;
+  const photo = D && D.photo
+    ? `<img src="${personImg(D.photo, 'w185')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">`
+    : `<div class="vip-ph">${VIP_SILHOUETTE}</div>`;
+  const dirCard = `<div class="fav-card fav-dir ${D ? 'filled' : 'empty'}" role="button" tabindex="0" data-ek="director"
+       aria-label="${D ? `Réalisateur favori : ${esc(D.name)} (modifier)` : 'Choisir un réalisateur favori'}">
+     <div class="fav-body dir-body">
+       <div class="vip"><div class="vip-photo">${photo}${D ? '' : '<span class="d-plus" aria-hidden="true">+</span>'}</div><span class="vip-role">RÉALISATEUR</span></div>
+       <div class="chair">${DIR_CHAIR}<span class="chair-name"><b>${D ? esc(D.name) : 'À choisir'}</b></span></div>
+     </div>${D ? editBtns(D.name) : ''}</div>`;
+  favGrid.innerHTML = `<div class="fav-genres">${genreCard(0) + genreCard(1)}</div>` + dirCard;
+  requestAnimationFrame(fitChairName);
 }
+// Le nom doit tenir sur la toile du dossier : on réduit la police si besoin (noms longs)
+function fitChairName(){
+  const box = favGrid.querySelector('.chair-name'), b = box && box.querySelector('b');
+  if(!b || !box.clientWidth) return;
+  const room = box.clientWidth * .9;                    // marge intérieure de la toile
+  const set = (f, ws, lh) => { b.style.fontSize = f + 'px'; b.style.whiteSpace = ws; b.style.lineHeight = lh; };
+  let fs = Math.min(15, box.clientHeight * .5);
+  set(fs, 'nowrap', '');
+  while(b.offsetWidth > room && fs > 9){ fs -= .5; set(fs, 'nowrap', ''); }
+  if(b.offsetWidth <= room) return;
+  fs = Math.min(11, box.clientHeight * .4);             // nom trop long pour une ligne lisible : deux lignes
+  set(fs, 'normal', '1.08');
+  while((b.offsetHeight > box.clientHeight * .92 || b.scrollWidth > room) && fs > 6){ fs -= .5; set(fs, 'normal', '1.08'); }
+}
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(profileOpen) fitChairName(); });
 function clearFav(kind, i){
   if(kind === 'genre') favs.genres[i] = null; else favs.director = null;
   saveFavs(); renderFavs(); buzz(10);
@@ -3022,12 +3016,12 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && favModal.cl
 function renderGenreGrid(){
   gGrid.innerHTML = GENRES.map(G => {
     const pos = favs.genres.indexOf(G.id);
-    return `<button class="gtile gtheme${pos === favIdx ? ' on' : ''}" type="button" data-genre="${G.id}">${G.label}` +
-      (pos >= 0 ? `<span class="gtile-tag">N°${pos + 1}</span>` : '') + `</button>`;
+    return `<button class="gtag gpick${pos === favIdx ? ' on' : ''}" type="button" data-genre="${G.id}"><span class="g-ico" aria-hidden="true"></span>${G.label}` +
+      (pos >= 0 ? `<span class="gpick-tag">N°${pos + 1}</span>` : '') + `</button>`;
   }).join('');
 }
 gGrid.addEventListener('click', e => {
-  const b = e.target.closest('.gtile');
+  const b = e.target.closest('.gpick');
   if(!b) return;
   const id = b.dataset.genre, j = favs.genres.indexOf(id);
   if(j >= 0 && j !== favIdx) favs.genres[j] = favs.genres[favIdx];   // genre déjà dans l'autre case : les deux s'échangent
