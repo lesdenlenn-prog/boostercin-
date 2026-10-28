@@ -10,7 +10,7 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -224,7 +224,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    FAVORIS (sous le Top Films) — charte des encadrés du HUD : fond sombre, liseré net, pilule / léger arrondi
    ===================================================================== */
 .favgrid{display:flex;flex-direction:column;gap:12px;padding:0 14px}
-.fav-genres{display:flex;flex-wrap:wrap;gap:8px}
+.fav-genres{display:flex;gap:10px;width:100%}
+.fav-genres .gtag-card{flex:1 1 0;min-width:0}                       /* chaque genre = exactement la moitié */
+.fav-genres .gtag{display:flex;width:100%;justify-content:center;padding:0 14px 0 6px}
+.fav-genres .g-ico{margin-right:auto}                                 /* pictogramme à gauche, libellé centré dans la place restante */
+.g-lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;margin-right:auto}
 .fav-card{position:relative;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
 .fav-card:active{transform:scale(.97)}
 .fav-card.is-editing:active{transform:none}
@@ -278,32 +282,32 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 [data-genre="guerre"]{--gc:#b3ad74;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 5 6v5c0 4.6 3 8.2 7 10 4-1.8 7-5.4 7-10V6z'/%3E%3C/svg%3E")}
 [data-genre="western"]{--gc:#e3a35a;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 16.5c3.5 2.2 14.5 2.2 18 0'/%3E%3Cpath d='M7 16c0-5.5 1.6-8.5 3-8.5 1 0 1.2 1 2 1s1-1 2-1c1.4 0 3 3 3 8.5'/%3E%3C/svg%3E")}
 
-/* ---------- Carte Réalisateur : badge VIP à gauche, chaise de réalisateur à droite (le nom est sur le dossier) ---------- */
-.fav-dir{border-radius:16px}
-.dir-body{display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 16px 12px;border-radius:16px;
-  background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
-.fav-dir.empty .dir-body{box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.18),0 6px 16px rgba(0,0,0,.2)}
-/* Badge de plateau : pince, bandeau bordeaux, photo carrée aux bords nets, mention RÉALISATEUR */
-.vip{position:relative;flex:none;width:70px;margin-top:6px;padding:13px 6px 6px;border-radius:8px;
-  background:linear-gradient(180deg,#6a1724 0 8px,#f6efe2 8px,#e9dcc4);box-shadow:0 6px 14px rgba(0,0,0,.45)}
-.vip::before{content:'';position:absolute;top:-9px;left:50%;width:22px;height:14px;margin-left:-11px;border-radius:4px;   /* pince */
-  background:linear-gradient(#2a0a10,#2a0a10) center 4px/10px 3px no-repeat,linear-gradient(180deg,#e9dcc4,#c9b48f);box-shadow:0 1px 3px rgba(0,0,0,.4)}
-.vip img,.vip-ph{display:block;width:100%;aspect-ratio:1;border-radius:4px;object-fit:cover;background:#d9c39d;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
-.vip-ph{display:grid;place-items:end center;overflow:hidden}
-.vip-ph svg{width:86%;height:auto;fill:#b49567}
-.vip-role{display:block;margin-top:5px;text-align:center;font-size:.45rem;font-weight:800;letter-spacing:.14em;color:#4a0f19}
-.vip-photo{position:relative}
-.vip .d-plus{right:-13px;bottom:3px;width:24px;height:24px;font-size:1.1rem;transform:none}
-.d-plus{position:absolute;display:grid;place-items:center;border-radius:50%;line-height:1;color:#2b1403;
-  background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);box-shadow:0 3px 8px rgba(0,0,0,.5)}
-/* Chaise : SVG vectoriel (cadre doré, toile noire) ; le nom est posé en absolu sur la toile du dossier */
-.chair{position:relative;flex:1;min-width:0;max-width:172px;aspect-ratio:200 / 150}
-.chair svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
-.chair-name{position:absolute;left:19%;width:62%;top:10.67%;height:21.33%;padding:0 5%;   /* = rectangle de toile x 38→162, y 16→48 du SVG */
-  display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center}
-.chair-name b{font-family:'Cinzel','Limelight',serif;font-weight:700;font-size:14px;line-height:1;letter-spacing:.08em;white-space:nowrap;
-  text-transform:uppercase;text-align:center;background:linear-gradient(180deg,#fff0b8,#f6c453 55%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent}
-.fav-dir.empty .chair-name b{background:none;color:rgba(255,236,220,.38);letter-spacing:.14em}
+/* ---------- Carte Réalisateur (design v43) ---------- */
+.fav-dir{border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.fav-dir::after{content:'';position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.22)}
+.fav-dir.empty::after{box-shadow:none;border:1.5px dashed rgba(255,240,220,.32)}
+.dir-body{position:relative;isolation:isolate;overflow:hidden}
+.dir-body{display:flex;flex-direction:column;align-items:center;padding:34px 22px 18px;
+  background:radial-gradient(55% 75% at 50% 0,rgba(255,226,160,.22),transparent 72%),linear-gradient(180deg,#24090f,#0c0305)}
+.dir-body::before,.dir-body::after{content:'';position:absolute;top:0;bottom:0;width:7px;z-index:-1;   /* perforations de pellicule */
+  background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(236,226,210,.32) 5px 11px,transparent 11px 16px)}
+.dir-body::before{left:7px}
+.dir-body::after{right:7px}
+.d-label{position:absolute;top:11px;left:0;right:0;text-align:center;color:#f6c453;font-size:.6rem;font-weight:800;letter-spacing:.16em}
+.polaroid{position:relative;width:128px;margin:6px 0 0;padding:8px 8px 26px;border-radius:3px;background:#f3ead8;
+  transform:rotate(-3deg);box-shadow:0 12px 24px rgba(0,0,0,.55)}
+.polaroid::before{content:'';position:absolute;top:-9px;left:50%;width:54px;height:18px;margin-left:-27px;   /* scotch */
+  background:rgba(255,246,214,.55);transform:rotate(4deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.polaroid img,.polaroid .ph{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#2a1a1c}
+.polaroid .ph{display:grid;place-items:end center;overflow:hidden;background:radial-gradient(80% 60% at 50% 0,#4a2a2e,#1a0c0e)}
+.polaroid .ph svg{width:92%;height:auto;fill:rgba(255,236,214,.3)}
+.d-plus{position:absolute;right:-13px;bottom:-11px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.6rem;font-weight:400;line-height:1;color:#2b1403;background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);
+  box-shadow:0 4px 10px rgba(0,0,0,.5);transform:rotate(3deg)}
+.d-name{max-width:100%;margin-top:14px;font-family:'Dancing Script',cursive;font-weight:700;font-size:1.9rem;line-height:1.15;text-align:center;
+  background:linear-gradient(180deg,#fff0b8,#f6c453 50%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.fav-dir.empty .d-name{background:none;color:rgba(255,240,220,.45);filter:none;font-size:1.6rem}
 
 /* ---------- Modales de choix (genre / réalisateur) : thème bordeaux du profil ---------- */
 .pickmodal.favmodal{background:linear-gradient(180deg,#3a0c14,#14040a)}
@@ -330,7 +334,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .d-txt{flex:1;min-width:0}
 .d-txt b{display:block;font-weight:800;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .d-txt small{display:block;margin-top:2px;color:rgba(255,230,210,.6);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.d-dept{flex:none;padding:3px 8px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.06em;background:rgba(246,196,83,.14);color:#f6c453}
+.d-dept{display:none;flex:none;padding:3px 8px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.06em;background:rgba(246,196,83,.14);color:#f6c453}
 .d-dept.other{background:rgba(255,255,255,.07);color:rgba(255,230,210,.6)}
 .fm-msg{margin:30px 12px;text-align:center;color:rgba(255,230,210,.65);line-height:1.45}
 
@@ -2925,7 +2929,7 @@ const GENRES = [
   {id:'guerre', tmdb:10752, label:'Guerre'},         {id:'western', tmdb:37, label:'Western'}
 ];
 const GENRE_BY = Object.fromEntries(GENRES.map(g => [g.id, g]));
-const DIR_CHAIR = '<svg viewBox="0 0 200 150" aria-hidden="true"><defs><linearGradient id="chairGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d27a"/><stop offset="1" stop-color="#b8862a"/></linearGradient></defs><g stroke="url(#chairGold)" stroke-width="6.5" stroke-linecap="round" fill="none"><path d="M54 97 148 143M146 97 52 143"/></g><g fill="url(#chairGold)"><rect x="40" y="7" width="7.5" height="92" rx="3"/><rect x="152.5" y="7" width="7.5" height="92" rx="3"/><rect x="25" y="61" width="52" height="7.5" rx="3.75"/><rect x="123" y="61" width="52" height="7.5" rx="3.75"/><circle cx="100" cy="120" r="4"/></g><rect x="38" y="16" width="124" height="32" rx="2" fill="#120407" stroke="#d4af37" stroke-width="1.4"/><path d="M43 82h114l-3 11q-54 9-108 0z" fill="#120407" stroke="#d4af37" stroke-width="1.4" stroke-linejoin="round"/></svg>', VIP_SILHOUETTE = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5"/><path d="M5 40c0-9.5 6.5-14.5 15-14.5S35 30.5 35 40z"/></svg>';
+const DIR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><ellipse cx="40" cy="39" rx="16" ry="6"/><circle cx="41" cy="33" r="2.5"/><circle cx="42" cy="51" r="13"/><path d="M10 125c0-30 12-48 32-50 14 1 22 8 27 18l-9 6-4-2 3 28z"/><path d="M58 79 66 64l7 3-7 17z"/><path d="M55 50 90 36v38L55 60z"/><rect x="51" y="50" width="6" height="10" rx="2"/><path d="M64 60h6l-2 9h-4z"/></svg>';
 const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>';
 const personImg = (path, size = 'w185') => `https://image.tmdb.org/t/p/${size}${path}`;
 
@@ -2943,38 +2947,22 @@ function renderFavs(){
     const G = GENRE_BY[favs.genres[i]];
     return G
       ? `<div class="fav-card gtag-card filled" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Genre n°${i + 1} : ${G.label} (modifier)">
-           <span class="fav-body gtag" data-genre="${G.id}"><span class="g-ico" aria-hidden="true"></span>${G.label}</span>${editBtns(G.label)}</div>`
+           <span class="fav-body gtag" data-genre="${G.id}"><span class="g-ico" aria-hidden="true"></span><span class="g-lbl">${G.label}</span></span>${editBtns(G.label)}</div>`
       : `<div class="fav-card gtag-card empty" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Choisir le genre n°${i + 1}">
-           <span class="fav-body gtag is-empty"><span class="g-ico" aria-hidden="true">+</span>Genre n°${i + 1}</span></div>`;
+           <span class="fav-body gtag is-empty"><span class="g-ico" aria-hidden="true">+</span><span class="g-lbl">Genre n°${i + 1}</span></span></div>`;
   };
   const D = favs.director;
-  const photo = D && D.photo
-    ? `<img src="${personImg(D.photo, 'w185')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">`
-    : `<div class="vip-ph">${VIP_SILHOUETTE}</div>`;
-  const dirCard = `<div class="fav-card fav-dir ${D ? 'filled' : 'empty'}" role="button" tabindex="0" data-ek="director"
-       aria-label="${D ? `Réalisateur favori : ${esc(D.name)} (modifier)` : 'Choisir un réalisateur favori'}">
-     <div class="fav-body dir-body">
-       <div class="vip"><div class="vip-photo">${photo}${D ? '' : '<span class="d-plus" aria-hidden="true">+</span>'}</div><span class="vip-role">RÉALISATEUR</span></div>
-       <div class="chair">${DIR_CHAIR}<span class="chair-name"><b>${D ? esc(D.name) : 'À choisir'}</b></span></div>
-     </div>${D ? editBtns(D.name) : ''}</div>`;
+  const dirCard = D
+    ? `<div class="fav-card fav-dir filled" role="button" tabindex="0" data-ek="director" aria-label="Réalisateur favori : ${esc(D.name)} (modifier)">
+         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
+           <figure class="polaroid">${D.photo ? `<img src="${personImg(D.photo, 'h632')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">` : `<div class="ph">${DIR_SILHOUETTE}</div>`}</figure>
+           <b class="d-name">${esc(D.name)}</b></div>${editBtns(D.name)}</div>`
+    : `<div class="fav-card fav-dir empty" role="button" tabindex="0" data-ek="director" aria-label="Choisir un réalisateur favori">
+         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
+           <figure class="polaroid"><div class="ph">${DIR_SILHOUETTE}</div><span class="d-plus" aria-hidden="true">+</span></figure>
+           <b class="d-name">À choisir…</b></div></div>`;
   favGrid.innerHTML = `<div class="fav-genres">${genreCard(0) + genreCard(1)}</div>` + dirCard;
-  requestAnimationFrame(fitChairName);
 }
-// Le nom doit tenir sur la toile du dossier : on réduit la police si besoin (noms longs)
-function fitChairName(){
-  const box = favGrid.querySelector('.chair-name'), b = box && box.querySelector('b');
-  if(!b || !box.clientWidth) return;
-  const room = box.clientWidth * .9;                    // marge intérieure de la toile
-  const set = (f, ws, lh) => { b.style.fontSize = f + 'px'; b.style.whiteSpace = ws; b.style.lineHeight = lh; };
-  let fs = Math.min(15, box.clientHeight * .5);
-  set(fs, 'nowrap', '');
-  while(b.offsetWidth > room && fs > 9){ fs -= .5; set(fs, 'nowrap', ''); }
-  if(b.offsetWidth <= room) return;
-  fs = Math.min(11, box.clientHeight * .4);             // nom trop long pour une ligne lisible : deux lignes
-  set(fs, 'normal', '1.08');
-  while((b.offsetHeight > box.clientHeight * .92 || b.scrollWidth > room) && fs > 6){ fs -= .5; set(fs, 'normal', '1.08'); }
-}
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(profileOpen) fitChairName(); });
 function clearFav(kind, i){
   if(kind === 'genre') favs.genres[i] = null; else favs.director = null;
   saveFavs(); renderFavs(); buzz(10);
@@ -3030,29 +3018,34 @@ gGrid.addEventListener('click', e => {
 });
 
 // Réalisateur : recherche TMDB (/search/person), réalisateurs en premier
-const DEPT = {Directing:'Réalisation', Acting:'Jeu', Writing:'Scénario', Production:'Production', Sound:'Musique', Camera:'Image', Editing:'Montage'};
 let dQuery = '', dResults = [], dSeq = 0, dTimer = null;
 function renderDirList(msg){
   if(msg){ dList.innerHTML = `<p class="fm-msg">${msg}</p>`; return; }
   if(!dQuery.trim()){ dList.innerHTML = '<p class="fm-msg">Tape le nom d\'un réalisateur<br>(ex. Nolan, Varda, Kubrick, Miyazaki…)</p>'; return; }
-  if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">Aucun résultat pour « ${esc(dQuery.trim())} ».</p>`; return; }
+  if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">Aucun réalisateur trouvé pour « ${esc(dQuery.trim())} ».</p>`; return; }
   dList.innerHTML = dResults.map(p => {
     const known = (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0, 3).join(' · ');
     const initials = p.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('');
-    const dir = p.known_for_department === 'Directing';
     return `<button class="drow${favs.director && favs.director.id === p.id ? ' on' : ''}" type="button" data-pid="${p.id}">` +
       (p.profile_path ? `<img src="${personImg(p.profile_path)}" alt="" loading="lazy" decoding="async">` : `<span class="d-ph">${esc(initials)}</span>`) +
-      `<span class="d-txt"><b>${esc(p.name)}</b><small>${esc(known)}</small></span>` +
-      `<span class="d-dept${dir ? '' : ' other'}">${esc(DEPT[p.known_for_department] || p.known_for_department || '—')}</span></button>`;
+      `<span class="d-txt"><b>${esc(p.name)}</b><small>${esc(known)}</small></span></button>`;
   }).join('');
 }
 async function searchDirectors(q){
   const seq = ++dSeq;
   try{
-    const r = await tmdb('/search/person', {query:q, language:'fr-FR', include_adult:'false'});
+    // /search/person mélange acteurs, scénaristes, producteurs… : on lit jusqu'à 3 pages de résultats
+    // puis on ne garde STRICTEMENT que known_for_department === 'Directing'.
+    const params = {query:q, language:'fr-FR', include_adult:'false'};
+    const first = await tmdb('/search/person', params);
     if(seq !== dSeq) return;                            // une recherche plus récente a été lancée
-    dResults = (r.results || []).filter(p => p.name)
-      .sort((a, b) => (b.known_for_department === 'Directing') - (a.known_for_department === 'Directing') || (b.popularity || 0) - (a.popularity || 0))
+    const more = Math.min(first.total_pages || 1, 3);
+    const rest = more > 1 ? await Promise.all(Array.from({length:more - 1}, (_, k) => tmdb('/search/person', {...params, page:k + 2}).catch(() => ({results:[]})))) : [];
+    if(seq !== dSeq) return;
+    const seen = new Set();
+    dResults = [first, ...rest].flatMap(r => r.results || [])
+      .filter(p => p.name && p.known_for_department === 'Directing' && !seen.has(p.id) && seen.add(p.id))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 20);
     renderDirList();
   }catch(err){
