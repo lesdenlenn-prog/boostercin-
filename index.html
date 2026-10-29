@@ -202,8 +202,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .st-box.r-legendary{--rc:#d4af37}
 .st-box.r-ultra{box-shadow:0 0 0 1px var(--ultra-out),0 6px 14px rgba(0,0,0,.28);   /* fin sur-contour violet, comme la carte */
   background:linear-gradient(to bottom,rgba(214,228,255,.72) 0%,rgba(150,170,215,.38) 45%,rgba(34,36,52,1) 100%)}   /* départ glacier plus clair */
-.st-box.r-ultra .st-name{color:#eef4ff}
-.st-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.64rem;font-weight:800;letter-spacing:0;color:var(--rc);
+.st-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.64rem;font-weight:800;letter-spacing:0;color:#eeecea;
   text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .st-frac{flex:none;font-size:.76rem;font-weight:800;color:#fff3e4;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .st-frac span{color:rgba(255,230,210,.55);font-weight:500}
@@ -500,6 +499,21 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   -webkit-tap-highlight-color:transparent}
 .zone.l{left:0}.zone.r{right:0}
 .arena.nav .zone{display:block}
+/* Boutons de suivi (style des encadrés du HUD) : sous la carte révélée, au-dessus des zones de toucher */
+.trackbar{display:none;gap:22px;justify-content:center}
+.arena .trackbar{position:absolute;left:50%;top:calc(50% + var(--cw) * .75 + 14px);transform:translateX(-50%);z-index:60}
+.arena.nav .trackbar{display:flex}
+.trk{width:64px;height:46px;display:grid;place-items:center;padding:0;border:1.5px solid rgba(255,140,120,.3);border-radius:99px;
+  background:rgba(30,3,9,.8);color:#ffe3da;box-shadow:0 6px 16px rgba(0,0,0,.32);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .12s ease}
+.trk:active{transform:scale(.9)}
+.trk svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.trk-love.on{color:#ff86ad;border-color:#ff86ad;background:rgba(110,16,44,.88)}
+.trk-love.on svg{fill:currentColor}
+.trk-seen.on{color:#86e3ad;border-color:#86e3ad;background:rgba(16,66,40,.88)}
+.trk-seen.on svg{stroke-width:2.6}
+.trk.pop{animation:trk-pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes trk-pop{40%{transform:scale(1.18)}}
 .homefoot{flex:none;min-height:132px;padding:4px 16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:46px}
 .actions:not(:has(button:not([hidden]))){display:none}
@@ -1010,6 +1024,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:var(--legendary);box-shadow:0 0 0 2px #0a1430}   /* pastille : un filtre de rareté est actif */
 .sb-filter{position:relative}   /* le menu se place juste sous le bouton filtre */
 .sb-status{margin-left:auto;font-size:.72rem;color:#7f9ae0;white-space:nowrap}
+/* Filtre « À voir » : tout à droite de la barre de tri ; fond bordeaux rosé quand il est actif */
+.sb-towatch{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:0 13px 0 11px;border-radius:99px;font-size:.78rem;letter-spacing:.03em}
+.sb-status:not(:empty) + .sb-towatch{margin-left:0}
+.sb-towatch svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linejoin:round}
+.sb-towatch.on{background:rgba(160,30,70,.55);color:#fff;box-shadow:inset 0 0 0 1.5px #ff86ad}
+.sb-towatch.on svg{fill:#ff86ad;stroke:#ff86ad}
 .sb-status:empty{display:none}
 /* Menu déroulant des raretés (position absolue sous le bouton filtre) */
 .fdrop{position:absolute;top:calc(100% + 8px);right:0;z-index:20;min-width:222px;white-space:nowrap;padding:6px;border-radius:14px;
@@ -1155,6 +1175,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .rate-num{font-weight:800;font-size:.85rem;color:#c9d6ff;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rate-num b{color:var(--legendary);font-size:.95rem}
 .rate-num.muted{color:#8ea2d8;font-weight:500;font-size:.85rem}
+.im-seen{margin-left:-4px;font-size:.72rem;font-weight:500;color:#c3c8d4;white-space:nowrap}   /* « ✔ vu » collé à la note, sans encadré */
+.im-seen[hidden]{display:none}
+.im-track{display:flex;flex:none;margin-top:14px}
+.im-track[hidden]{display:none}
 .im-panel{flex:none;width:100%;max-width:460px;border-radius:16px;padding:16px 18px 18px;outline:none;
   background:rgba(8,14,38,.84);box-shadow:inset 0 0 0 1px rgba(110,160,255,.22),0 18px 40px rgba(0,0,0,.45);
   -webkit-user-select:text;user-select:text;
@@ -1329,6 +1353,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <div class="arena" id="arena">
         <div class="zone l" data-side="-1" aria-hidden="true"></div>
         <div class="zone r" data-side="1" aria-hidden="true"></div>
+        <!-- Suivi pendant l'ouverture : cœur = à voir, check = déjà vu (un appui enregistre ET passe à la carte suivante) -->
+        <div class="trackbar" id="trackBar" role="group" aria-label="Suivi du film"><button class="trk trk-love" type="button" data-trk="toWatch" aria-label="À voir plus tard" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.6-7.6-10.4A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.8-7.6 10.4-7.6 10.4z"/></svg></button><button class="trk trk-seen" type="button" data-trk="watched" aria-label="Déjà vu" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button></div>
         <div class="stack" id="stack">
           <div class="deck-shadow"></div>
           <div class="deck" id="deck"></div>
@@ -1403,6 +1429,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
             <div class="fdrop" id="fdrop" role="group" aria-label="Raretés affichées" hidden></div>
           </div>
           <span class="sb-status" id="sbStatus" role="status"></span>
+          <button class="sb-btn sb-towatch" id="sbWatch" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.6-7.6-10.4A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.8-7.6 10.4-7.6 10.4z"/></svg><span>À voir</span></button>
         </div>
         <label class="search">
           <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
@@ -1579,7 +1606,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <div class="im-card" id="imCard"></div>
       <div class="im-rate" id="imRate" role="img" aria-label="Note">
         <div class="stars" id="imStars"><i class="star"></i><i class="star"></i><i class="star"></i><i class="star"></i><i class="star"></i></div>
-        <span class="rate-num" id="imRateNum"></span>
+        <span class="rate-num" id="imRateNum"></span><span class="im-seen" id="imSeen" hidden>✔ vu</span>
       </div>
       <section class="im-panel" id="imPanel" tabindex="-1">
         <h3 id="imTitle"></h3>
@@ -1588,6 +1615,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <h4>Synopsis</h4>
         <div class="im-syn" id="imSyn"></div>
       </section>
+      <div class="trackbar im-track" id="imTrack" role="group" aria-label="Suivi du film"><button class="trk trk-love" type="button" data-trk="toWatch" aria-label="À voir plus tard" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.6-7.6-10.4A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.8-7.6 10.4-7.6 10.4z"/></svg></button><button class="trk trk-seen" type="button" data-trk="watched" aria-label="Déjà vu" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button></div>
     </div>
   </div>
 
@@ -2008,10 +2036,12 @@ function startStack(){
   lastPayment = null;                          // ouverture réussie : paiement définitif
   arena.classList.add('nav');
   dotsEl.hidden = false; updateDots();
+  placeTrackBar();                             // boutons cœur / check juste sous la carte réellement affichée
   activateTop();
 }
 function updateDots(){
   [...dotsEl.children].forEach((d, i) => { d.className = i < idx ? 'done' : (i === idx ? 'cur' : ''); });
+  if(typeof updateTrackBar === 'function') updateTrackBar();   // boutons cœur / check = statut de la carte du dessus
 }
 function updateStack(){
   els.forEach((el, k) => {
@@ -2410,7 +2440,8 @@ let query = '';
 const sortState = {
   by: 'rarity',            // 'rarity' | 'rating'
   dir: 'desc',             // 'desc' (flèche bas) | 'asc' (flèche haut)
-  rarities: new Set()      // raretés cochées ; vide = « Toutes »
+  rarities: new Set(),     // raretés cochées ; vide = « Toutes »
+  toWatch: false           // filtre « À voir » (cœur) : se combine avec les raretés, la recherche et le tri
 };
 let shelfRows = [], shelfTotalRows = 0, shelfShown = 0;
 
@@ -2427,7 +2458,7 @@ function sortFilter(st, rawQuery){
   const sel = st.rarities;
   // 1. filtre : raretés cochées (aucune = toutes) + recherche
   const list = Object.values(getCol())
-    .filter(c => (!sel.size || sel.has(c.rarity)) && (!q || normTitle(c).includes(q)));
+    .filter(c => (!sel.size || sel.has(c.rarity)) && (!q || normTitle(c).includes(q)) && (!st.toWatch || c.isToWatch));
   // 2. tri : critère × sens ; à égalité, ordre de popularité TMDB (rang)
   const sign = st.dir === 'desc' ? 1 : -1;
   if(st.by === 'rarity'){
@@ -2516,6 +2547,14 @@ sbCrit.addEventListener('click', () => {
   sortState.by = sortState.by === 'rarity' ? 'rating' : 'rarity';
   renderSortBar(); renderShelfBody();
   if(sortState.by === 'rating') ensureRatings();
+});
+// Filtre « À voir » (interrupteur)
+const sbWatch = $('#sbWatch');
+sbWatch.addEventListener('click', () => {
+  sortState.toWatch = !sortState.toWatch;
+  sbWatch.classList.toggle('on', sortState.toWatch);
+  sbWatch.setAttribute('aria-pressed', sortState.toWatch);
+  renderShelfBody(); buzz(6);
 });
 // Bouton 2 : flèche bas (décroissant) ↔ flèche haut (croissant)
 sbDir.addEventListener('click', () => {
@@ -2763,6 +2802,7 @@ async function openInfo(liftEl, cardEl, c, onDone){
 
   imCard.innerHTML = (c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : '') + cardHTML(c, {count:c.count});
   fillPanel(c, null);
+  updateInfoTrack(c);
   infoModal.classList.remove('hidden');
   imScroll.scrollTop = 0;
 
@@ -2787,6 +2827,73 @@ async function openInfo(liftEl, cardEl, c, onDone){
   }
 }
 
+
+/* =====================================================================
+   SUIVI DES FILMS : isToWatch (cœur) / isWatched (check), stockés sur la carte de la collection.
+   Exclusion mutuelle : activer l'un retire l'autre.
+   ===================================================================== */
+function setFilmStatus(id, kind, on){
+  const col = getCol(), f = col[id];
+  if(!f) return null;
+  if(kind === 'toWatch'){ f.isToWatch = on; if(on) f.isWatched = false; }
+  else{ f.isWatched = on; if(on) f.isToWatch = false; }
+  store.set('collection', col);
+  shelfDirty = true;
+  return f;
+}
+function paintTrack(bar, f){
+  bar.querySelectorAll('.trk').forEach(b => {
+    const on = !!(f && (b.dataset.trk === 'toWatch' ? f.isToWatch : f.isWatched));
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  });
+}
+function popBtn(b){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+
+// --- Pendant l'ouverture : un appui = statut enregistré + passage à la carte suivante ---
+const trackBar = $('#trackBar');
+function placeTrackBar(){
+  const card = els[idx] && els[idx].querySelector('.card');
+  if(!card) return;
+  const r = card.getBoundingClientRect(), a = arena.getBoundingClientRect();
+  trackBar.style.top = Math.round(r.bottom - a.top + 14) + 'px';
+}
+window.addEventListener('resize', () => { if(state === 'stack') placeTrackBar(); });
+function updateTrackBar(){
+  const c = cards[idx];
+  paintTrack(trackBar, c ? getCol()[c.id] : null);
+}
+trackBar.addEventListener('click', e => {
+  const b = e.target.closest('.trk');
+  if(!b) return;
+  e.stopPropagation();                                 // pas de second déclenchement par un écouteur parent
+  if(state !== 'stack' || busy) return;
+  const c = cards[idx];
+  if(c) setFilmStatus(c.id, b.dataset.trk, true);      // (en mode démo, la carte n'est pas en collection : rien à enregistrer)
+  b.classList.add('on'); popBtn(b); buzz(8);
+  dismissTop(b.dataset.trk === 'toWatch' ? -1 : 1);    // même effet qu'un appui sur la carte : carte suivante
+});
+
+// --- Fiche d'un film (Vidéothèque / résumé) : cases à cocher ---
+const imTrack = $('#imTrack'), imSeen = $('#imSeen');
+let trackDirty = false;
+function updateInfoTrack(c){
+  const f = c ? getCol()[c.id] : null;
+  imTrack.hidden = !f;                                 // seulement pour un film possédé
+  paintTrack(imTrack, f);
+  imSeen.hidden = !(f && f.isWatched);
+}
+imTrack.addEventListener('click', e => {
+  const b = e.target.closest('.trk');
+  if(!b || !imOpen) return;
+  e.stopPropagation();
+  const id = imOpen.c.id, f = getCol()[id];
+  if(!f) return;
+  const kind = b.dataset.trk, on = !(kind === 'toWatch' ? f.isToWatch : f.isWatched);
+  setFilmStatus(id, kind, on);
+  updateInfoTrack(imOpen.c); popBtn(b); buzz(6);
+  trackDirty = true;
+});
+
 async function closeInfo(instant = false){
   if(!imOpen || imBusy) return;
   const {liftEl, cardEl, onDone} = imOpen;
@@ -2806,11 +2913,12 @@ async function closeInfo(instant = false){
   screenEl.classList.remove('im-open');
   if(onDone) onDone();
   imBusy = false;
+  if(trackDirty){ trackDirty = false; if(sortState.toWatch && state !== 'summary') renderShelfBody(); }   // filtre « À voir » actif : on met la liste à jour
 }
 
 // Fermeture : un appui n'importe où en dehors de la carte et du bloc synopsis
 infoModal.addEventListener('click', e => {
-  if(e.target.closest('.im-card, .im-rate, .im-panel')) return;
+  if(e.target.closest('.im-card, .im-rate, .im-panel, .im-track')) return;
   closeInfo();
 });
 document.addEventListener('keydown', e => { if(imOpen && e.key === 'Escape') closeInfo(); });
