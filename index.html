@@ -10,7 +10,7 @@
 <title>Boosters ciné</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -178,8 +178,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:radial-gradient(60% 2px at 50% 100%,rgba(255,243,228,.85),transparent) bottom/100% 2px no-repeat}   /* petit trait sous le pseudo */
 .pm-level{min-height:1.2em;margin:4px 0 0;color:#f6c453;font-weight:800;font-size:1rem;letter-spacing:.04em}
 /* Top Films : pellicule à 4 cases */
-.pm-section{width:100%;margin-top:18px}
-.pm-h{margin:0 0 8px 16px;color:#f6c453;font-weight:800;font-size:.8rem;letter-spacing:.14em}
+.pm-section{width:100%;margin-top:30px}            /* grands blocs bien séparés */
+.pm-h{margin:0 0 12px 16px;color:#f6c453;font-weight:800;font-size:.8rem;letter-spacing:.14em}
 .filmstrip{--perf:7px;position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
   padding:calc(var(--perf) + 10px) 12px;background:#0b0809;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.06),0 10px 24px rgba(0,0,0,.45)}
@@ -223,7 +223,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* =====================================================================
    FAVORIS (sous le Top Films) — charte des encadrés du HUD : fond sombre, liseré net, pilule / léger arrondi
    ===================================================================== */
-.favgrid{display:flex;flex-direction:column;gap:12px;padding:0 14px}
+.favgrid{display:flex;flex-direction:column;gap:24px;padding:0 14px}   /* genres ↕ réalisateur/acteur */
 .fav-genres{display:flex;gap:10px;width:100%}
 .fav-genres .gtag-card{flex:1 1 0;min-width:0}                       /* chaque genre = exactement la moitié */
 .fav-genres .gtag{display:flex;width:100%;justify-content:center;padding:0 14px 0 6px}
@@ -239,8 +239,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .fav-card.is-editing .tf-edit{opacity:1;visibility:visible}
 .fav-card.is-editing .tf-btn{transform:none}
 .fav-card .tf-edit{gap:10px}
-.fav-dir .tf-btn{width:40px;height:40px}
-.fav-dir .tf-btn svg{width:19px;height:19px}
+.fav-person .tf-btn{width:40px;height:40px}
+.fav-person .tf-btn svg{width:19px;height:19px}
 .gtag-card{border-radius:99px}
 .gtag-card .tf-edit{gap:6px}
 .gtag-card .tf-btn{width:28px;height:28px}
@@ -282,32 +282,37 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 [data-genre="guerre"]{--gc:#b3ad74;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 5 6v5c0 4.6 3 8.2 7 10 4-1.8 7-5.4 7-10V6z'/%3E%3C/svg%3E")}
 [data-genre="western"]{--gc:#e3a35a;--gi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 16.5c3.5 2.2 14.5 2.2 18 0'/%3E%3Cpath d='M7 16c0-5.5 1.6-8.5 3-8.5 1 0 1.2 1 2 1s1-1 2-1c1.4 0 3 3 3 8.5'/%3E%3C/svg%3E")}
 
-/* ---------- Carte Réalisateur (design v43) ---------- */
-.fav-dir{border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.35)}
-.fav-dir::after{content:'';position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.22)}
-.fav-dir.empty::after{box-shadow:none;border:1.5px dashed rgba(255,240,220,.32)}
-.dir-body{position:relative;isolation:isolate;overflow:hidden}
-.dir-body{display:flex;flex-direction:column;align-items:center;padding:34px 22px 18px;
-  background:radial-gradient(55% 75% at 50% 0,rgba(255,226,160,.22),transparent 72%),linear-gradient(180deg,#24090f,#0c0305)}
-.dir-body::before,.dir-body::after{content:'';position:absolute;top:0;bottom:0;width:7px;z-index:-1;   /* perforations de pellicule */
-  background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(236,226,210,.32) 5px 11px,transparent 11px 16px)}
-.dir-body::before{left:7px}
-.dir-body::after{right:7px}
-.d-label{position:absolute;top:11px;left:0;right:0;text-align:center;color:#f6c453;font-size:.6rem;font-weight:800;letter-spacing:.16em}
-.polaroid{position:relative;width:128px;margin:6px 0 0;padding:8px 8px 26px;border-radius:3px;background:#f3ead8;
+/* ---------- Cartes Réalisateur / Acteur : deux polaroids côte à côte (flex:1 chacun) ---------- */
+.fav-people{display:flex;gap:15px;width:100%}
+.fav-person{flex:1 1 0;min-width:0;border-radius:14px;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.fav-person::after{content:'';position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,240,220,.22)}
+.fav-person.empty::after{box-shadow:none;border:1.5px dashed rgba(255,240,220,.32)}
+.person-body{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:32px 17px 18px;
+  background:radial-gradient(60% 70% at 50% 0,rgba(255,226,160,.2),transparent 72%),linear-gradient(180deg,#24090f,#0c0305)}
+.person-body::before,.person-body::after{content:'';position:absolute;top:0;bottom:0;width:6px;z-index:-1;   /* perforations de pellicule */
+  background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(236,226,210,.3) 5px 10px,transparent 10px 15px)}
+.person-body::before{left:5px}
+.person-body::after{right:5px}
+.d-label{position:absolute;top:11px;left:0;right:0;text-align:center;color:#f6c453;font-size:.56rem;font-weight:800;letter-spacing:.14em;white-space:nowrap}
+/* Polaroid : photo + bande blanche du bas où s'inscrit le nom */
+.polaroid{position:relative;width:100%;max-width:132px;margin:4px 0 0;padding:7px 7px 0;border-radius:3px;background:#f3ead8;
   transform:rotate(-3deg);box-shadow:0 12px 24px rgba(0,0,0,.55)}
-.polaroid::before{content:'';position:absolute;top:-9px;left:50%;width:54px;height:18px;margin-left:-27px;   /* scotch */
+.fav-person + .fav-person .polaroid{transform:rotate(2.5deg)}   /* l'acteur penche de l'autre côté */
+.polaroid::before{content:'';position:absolute;top:-9px;left:50%;width:46px;height:16px;margin-left:-23px;   /* scotch */
   background:rgba(255,246,214,.55);transform:rotate(4deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .polaroid img,.polaroid .ph{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#2a1a1c}
 .polaroid .ph{display:grid;place-items:end center;overflow:hidden;background:radial-gradient(80% 60% at 50% 0,#4a2a2e,#1a0c0e)}
 .polaroid .ph svg{width:92%;height:auto;fill:rgba(255,236,214,.3)}
-.d-plus{position:absolute;right:-13px;bottom:-11px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
-  font-size:1.6rem;font-weight:400;line-height:1;color:#2b1403;background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);
-  box-shadow:0 4px 10px rgba(0,0,0,.5);transform:rotate(3deg)}
-.d-name{max-width:100%;margin-top:14px;font-family:'Dancing Script',cursive;font-weight:700;font-size:1.9rem;line-height:1.15;text-align:center;
-  background:linear-gradient(180deg,#fff0b8,#f6c453 50%,#c8902a);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
-.fav-dir.empty .d-name{background:none;color:rgba(255,240,220,.45);filter:none;font-size:1.6rem}
+.pol-name{height:38px;display:flex;align-items:center;justify-content:center;padding:0 2px;text-align:center}
+.pol-name span{font:800 .74rem/1.12 'Bricolage Grotesque',system-ui,sans-serif;color:#2a1418;letter-spacing:.005em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.fav-person.empty .pol-name span{font-weight:500;color:rgba(42,20,24,.45)}
+.d-plus{position:absolute;right:-12px;bottom:28px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.35rem;font-weight:400;line-height:1;color:#2b1403;background:linear-gradient(160deg,#fff0b8,#f6c453 50%,#d9a232);
+  box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.fav-person .tf-btn{width:38px;height:38px}
+.fav-person .tf-btn svg{width:18px;height:18px}
+.fm-sub{margin:4px 2px 10px;color:#f6c453;font-size:.66rem;font-weight:800;letter-spacing:.14em}
 
 /* ---------- Modales de choix (genre / réalisateur) : thème bordeaux du profil ---------- */
 .pickmodal.favmodal{background:linear-gradient(180deg,#3a0c14,#14040a)}
@@ -2930,11 +2935,12 @@ const GENRES = [
 ];
 const GENRE_BY = Object.fromEntries(GENRES.map(g => [g.id, g]));
 const DIR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><ellipse cx="40" cy="39" rx="16" ry="6"/><circle cx="41" cy="33" r="2.5"/><circle cx="42" cy="51" r="13"/><path d="M10 125c0-30 12-48 32-50 14 1 22 8 27 18l-9 6-4-2 3 28z"/><path d="M58 79 66 64l7 3-7 17z"/><path d="M55 50 90 36v38L55 60z"/><rect x="51" y="50" width="6" height="10" rx="2"/><path d="M64 60h6l-2 9h-4z"/></svg>';
+const ACTOR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><circle cx="50" cy="56" r="16"/><path d="M14 125c0-28 16-45 36-45s36 17 36 45z"/><path d="m80 16 3 7 7.5.6-5.7 4.8 1.8 7.4L80 31.8l-6.6 4 1.8-7.4-5.7-4.8 7.5-.6z"/></svg>';
 const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>';
 const personImg = (path, size = 'w185') => `https://image.tmdb.org/t/p/${size}${path}`;
 
 let favs = store.get('favs', null) || {};
-favs = {genres:[favs.genres?.[0] ?? null, favs.genres?.[1] ?? null], director:favs.director || null};
+favs = {genres:[favs.genres?.[0] ?? null, favs.genres?.[1] ?? null], director:favs.director || null, actor:favs.actor || null};
 const saveFavs = () => store.set('favs', favs);
 const favGrid = $('#favGrid');
 const editBtns = name => `<div class="tf-edit">
@@ -2951,20 +2957,23 @@ function renderFavs(){
       : `<div class="fav-card gtag-card empty" role="button" tabindex="0" data-ek="genre:${i}" aria-label="Choisir le genre n°${i + 1}">
            <span class="fav-body gtag is-empty"><span class="g-ico" aria-hidden="true">+</span><span class="g-lbl">Genre n°${i + 1}</span></span></div>`;
   };
-  const D = favs.director;
-  const dirCard = D
-    ? `<div class="fav-card fav-dir filled" role="button" tabindex="0" data-ek="director" aria-label="Réalisateur favori : ${esc(D.name)} (modifier)">
-         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
-           <figure class="polaroid">${D.photo ? `<img src="${personImg(D.photo, 'h632')}" alt="Photo de ${esc(D.name)}" decoding="async" draggable="false">` : `<div class="ph">${DIR_SILHOUETTE}</div>`}</figure>
-           <b class="d-name">${esc(D.name)}</b></div>${editBtns(D.name)}</div>`
-    : `<div class="fav-card fav-dir empty" role="button" tabindex="0" data-ek="director" aria-label="Choisir un réalisateur favori">
-         <div class="fav-body dir-body"><span class="d-label">RÉALISATEUR FAVORI</span>
-           <figure class="polaroid"><div class="ph">${DIR_SILHOUETTE}</div><span class="d-plus" aria-hidden="true">+</span></figure>
-           <b class="d-name">À choisir…</b></div></div>`;
-  favGrid.innerHTML = `<div class="fav-genres">${genreCard(0) + genreCard(1)}</div>` + dirCard;
+  const personCard = kind => {
+    const P = PEOPLE[kind], X = favs[kind];
+    const photo = X && X.photo
+      ? `<img src="${personImg(X.photo, 'h632')}" alt="Photo de ${esc(X.name)}" decoding="async" draggable="false">`
+      : `<div class="ph">${P.sil}</div>`;
+    return `<div class="fav-card fav-person ${X ? 'filled' : 'empty'}" role="button" tabindex="0" data-ek="${kind}"
+        aria-label="${X ? `${P.title} : ${esc(X.name)} (modifier)` : `Choisir un ${P.title.toLowerCase()}`}">
+      <div class="fav-body person-body"><span class="d-label">${P.label}</span>
+        <figure class="polaroid">${photo}${X ? '' : '<span class="d-plus" aria-hidden="true">+</span>'}
+          <figcaption class="pol-name"><span>${X ? esc(X.name) : 'À choisir…'}</span></figcaption></figure>
+      </div>${X ? editBtns(X.name) : ''}</div>`;
+  };
+  favGrid.innerHTML = `<div class="fav-genres">${genreCard(0) + genreCard(1)}</div>` +
+    `<div class="fav-people">${personCard('director') + personCard('actor')}</div>`;
 }
 function clearFav(kind, i){
-  if(kind === 'genre') favs.genres[i] = null; else favs.director = null;
+  if(kind === 'genre') favs.genres[i] = null; else favs[kind] = null;   // 'director' | 'actor'
   saveFavs(); renderFavs(); buzz(10);
 }
 favGrid.addEventListener('click', e => {
@@ -2986,10 +2995,15 @@ const dSearch = $('#dSearch'), dClear = $('#dClear'), dList = $('#dList');
 let favMode = null, favIdx = 0;
 function openFavModal(kind, i){
   favMode = kind; favIdx = i;
-  $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : 'Réalisateur favori';
+  $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : PEOPLE[kind].title;
   gPane.hidden = kind !== 'genre'; dPane.hidden = kind === 'genre';
   if(kind === 'genre'){ renderGenreGrid(); gPane.scrollTop = 0; }
-  else{ dSearch.value = ''; dQuery = ''; dClear.hidden = true; dResults = []; dSeq++; renderDirList(); dPane.scrollTop = 0; }
+  else{
+    dSearch.value = ''; dQuery = ''; dClear.hidden = true; dResults = []; dSeq++;
+    dSearch.placeholder = PEOPLE[kind].ph; dSearch.setAttribute('aria-label', PEOPLE[kind].ph.replace('…', ''));
+    renderDirList(); dPane.scrollTop = 0;
+    loadSuggestions(kind);                             // Top 10 affiché avant toute saisie
+  }
   favModal.classList.remove('hidden'); void favModal.offsetWidth; favModal.classList.add('on');
 }
 function closeFavModal(){
@@ -3017,25 +3031,73 @@ gGrid.addEventListener('click', e => {
   saveFavs(); renderFavs(); closeFavModal(); buzz(10);
 });
 
-// Réalisateur : recherche TMDB (/search/person), réalisateurs en premier
-let dQuery = '', dResults = [], dSeq = 0, dTimer = null;
+/* ---------- Réalisateur / Acteur : suggestions (Top 10) + recherche stricte par métier ---------- */
+const PEOPLE = {
+  director:{dept:'Directing', title:'Réalisateur favori', label:'RÉALISATEUR FAVORI', ph:'Rechercher un réalisateur…', hint:'Tape le nom d’un réalisateur.', none:'Aucun réalisateur trouvé', sil:DIR_SILHOUETTE},
+  actor:   {dept:'Acting',    title:'Acteur favori',      label:'ACTEUR FAVORI',      ph:'Rechercher un acteur…',      hint:'Tape le nom d’un acteur.',      none:'Aucun acteur trouvé',      sil:ACTOR_SILHOUETTE}
+};
+// /person/popular contient surtout des acteurs : pour les réalisateurs on lit plus de pages,
+// et si ça ne suffit pas pour en avoir 10, on complète avec quelques grands noms (retrouvés via /search/person).
+const DIRECTOR_BACKUP = ['Christopher Nolan', 'Steven Spielberg', 'Quentin Tarantino', 'Martin Scorsese', 'Denis Villeneuve', 'Hayao Miyazaki',
+  'David Fincher', 'Ridley Scott', 'James Cameron', 'Stanley Kubrick', 'Wes Anderson', 'Tim Burton', 'Alfred Hitchcock', 'Peter Jackson'];
+const SUGGEST_TTL = 24 * 3600 * 1000;
+let suggestCache = store.get('peopleSuggest', null);
+if(!suggestCache || Date.now() - suggestCache.t > SUGGEST_TTL) suggestCache = {t:Date.now(), director:null, actor:null};
+const suggestJobs = {};
+const slimPerson = p => ({id:p.id, name:p.name, profile_path:p.profile_path || null, popularity:p.popularity || 0,
+  known_for:(p.known_for || []).slice(0, 3).map(k => ({title:k.title || k.name}))});
+function loadSuggestions(kind){
+  if(suggestCache[kind]) return Promise.resolve(suggestCache[kind]);
+  if(suggestJobs[kind]) return suggestJobs[kind];
+  const dept = PEOPLE[kind].dept, seen = new Set(), keep = p => p && p.name && p.known_for_department === dept && !seen.has(p.id) && seen.add(p.id);
+  suggestJobs[kind] = (async () => {
+    const pages = kind === 'actor' ? [1, 2] : [1, 2, 3, 4, 5];
+    let errors = 0;
+    const res = await Promise.all(pages.map(pg => tmdb('/person/popular', {language:'fr-FR', page:pg}).catch(e => { errors++; return {results:[]}; })));
+    if(errors === pages.length) throw new Error('Suggestions indisponibles pour le moment.');
+    let list = res.flatMap(r => r.results || []).filter(keep).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    if(kind === 'director' && list.length < 10){
+      const found = await Promise.all(DIRECTOR_BACKUP.map(n => tmdb('/search/person', {query:n, language:'fr-FR', include_adult:'false'})
+        .then(r => (r.results || []).find(p => p.known_for_department === 'Directing')).catch(() => null)));
+      list = list.concat(found.filter(keep));
+    }
+    suggestCache[kind] = list.slice(0, 10).map(slimPerson);
+    store.set('peopleSuggest', suggestCache);
+    return suggestCache[kind];
+  })().finally(() => { delete suggestJobs[kind]; });
+  suggestJobs[kind].then(() => { if(favMode === kind && !dQuery.trim()) renderDirList(); })
+                   .catch(err => { if(favMode === kind && !dQuery.trim()) renderDirList(esc(err.message)); });
+  return suggestJobs[kind];
+}
+
+let dQuery = '', dResults = [], dShown = [], dSeq = 0, dTimer = null;
 function renderDirList(msg){
+  const P = PEOPLE[favMode] || PEOPLE.director;
+  dShown = [];
   if(msg){ dList.innerHTML = `<p class="fm-msg">${msg}</p>`; return; }
-  if(!dQuery.trim()){ dList.innerHTML = '<p class="fm-msg">Tape le nom d\'un réalisateur<br>(ex. Nolan, Varda, Kubrick, Miyazaki…)</p>'; return; }
-  if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">Aucun réalisateur trouvé pour « ${esc(dQuery.trim())} ».</p>`; return; }
-  dList.innerHTML = dResults.map(p => {
+  let head = '';
+  if(!dQuery.trim()){
+    const sug = suggestCache[favMode];
+    if(!sug){ dList.innerHTML = '<p class="fm-msg">Chargement des suggestions…</p>'; return; }
+    if(!sug.length){ dList.innerHTML = `<p class="fm-msg">${P.hint}</p>`; return; }
+    dShown = sug; head = '<p class="fm-sub">LES PLUS POPULAIRES</p>';
+  }else{
+    if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">${P.none} pour « ${esc(dQuery.trim())} ».</p>`; return; }
+    dShown = dResults;
+  }
+  const cur = favs[favMode];
+  dList.innerHTML = head + dShown.map(p => {
     const known = (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0, 3).join(' · ');
     const initials = p.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('');
-    return `<button class="drow${favs.director && favs.director.id === p.id ? ' on' : ''}" type="button" data-pid="${p.id}">` +
+    return `<button class="drow${cur && cur.id === p.id ? ' on' : ''}" type="button" data-pid="${p.id}">` +
       (p.profile_path ? `<img src="${personImg(p.profile_path)}" alt="" loading="lazy" decoding="async">` : `<span class="d-ph">${esc(initials)}</span>`) +
       `<span class="d-txt"><b>${esc(p.name)}</b><small>${esc(known)}</small></span></button>`;
   }).join('');
 }
-async function searchDirectors(q){
-  const seq = ++dSeq;
+async function searchPeople(q, kind){
+  const seq = ++dSeq, dept = PEOPLE[kind].dept;
   try{
-    // /search/person mélange acteurs, scénaristes, producteurs… : on lit jusqu'à 3 pages de résultats
-    // puis on ne garde STRICTEMENT que known_for_department === 'Directing'.
+    // /search/person mélange tous les métiers : on lit jusqu'à 3 pages puis on ne garde STRICTEMENT que le bon known_for_department
     const params = {query:q, language:'fr-FR', include_adult:'false'};
     const first = await tmdb('/search/person', params);
     if(seq !== dSeq) return;                            // une recherche plus récente a été lancée
@@ -3044,7 +3106,7 @@ async function searchDirectors(q){
     if(seq !== dSeq) return;
     const seen = new Set();
     dResults = [first, ...rest].flatMap(r => r.results || [])
-      .filter(p => p.name && p.known_for_department === 'Directing' && !seen.has(p.id) && seen.add(p.id))
+      .filter(p => p.name && p.known_for_department === dept && !seen.has(p.id) && seen.add(p.id))
       .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, 20);
     renderDirList();
@@ -3055,18 +3117,19 @@ async function searchDirectors(q){
 dSearch.addEventListener('input', () => {
   dQuery = dSearch.value; dClear.hidden = !dQuery;
   clearTimeout(dTimer); dSeq++;
-  if(!dQuery.trim()){ dResults = []; renderDirList(); return; }
+  if(!dQuery.trim()){ dResults = []; renderDirList(); return; }   // champ vidé : retour au Top 10
   renderDirList('Recherche…');
-  dTimer = setTimeout(() => searchDirectors(dQuery.trim()), 350);   // on attend une courte pause dans la frappe
+  const kind = favMode;
+  dTimer = setTimeout(() => searchPeople(dQuery.trim(), kind), 350);   // on attend une courte pause dans la frappe
 });
 dClear.addEventListener('click', () => { dSearch.value = ''; dSearch.dispatchEvent(new Event('input')); dSearch.focus(); });
 dSearch.addEventListener('keydown', e => { if(e.key === 'Enter') dSearch.blur(); });
 dList.addEventListener('click', e => {
   const b = e.target.closest('.drow');
-  if(!b) return;
-  const p = dResults.find(x => String(x.id) === b.dataset.pid);
+  if(!b || !PEOPLE[favMode]) return;
+  const p = dShown.find(x => String(x.id) === b.dataset.pid);
   if(!p) return;
-  favs.director = {id:p.id, name:p.name, photo:p.profile_path || null};
+  favs[favMode] = {id:p.id, name:p.name, photo:p.profile_path || null};
   saveFavs(); renderFavs(); closeFavModal(); buzz(10);
 });
 
