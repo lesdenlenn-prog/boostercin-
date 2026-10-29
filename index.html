@@ -181,6 +181,22 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pm-section{width:100%;margin-top:30px}            /* grands blocs bien séparés */
 .pm-ideal{margin-top:56px}                     /* gros espace sous la pellicule Top Films */
 .pm-wish{margin-top:44px}
+.pm-stats{margin-top:44px;padding:0 14px}
+.pm-stats .pm-h{margin-left:2px}
+.st-total{width:60%;min-width:200px;margin:0 auto 14px;padding:12px 14px;border-radius:16px;text-align:center;
+  background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55),0 6px 16px rgba(0,0,0,.28);color:#fff3e4}
+.st-total .st-k{font-size:.82rem;font-weight:800;letter-spacing:.02em;color:#f6c453}
+.st-total .st-v{font-size:1.15rem;font-weight:800;font-variant-numeric:tabular-nums}
+.st-total small{display:block;margin-top:2px;font-size:.66rem;color:rgba(255,230,210,.55);font-variant-numeric:tabular-nums}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.st-box{padding:10px 12px;border-radius:14px;background:rgba(30,3,9,.8);border:2px solid var(--rc);
+  box-shadow:0 6px 16px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:3px}
+.st-box.r-legendary{border-color:#d4af37}
+.st-box.r-ultra{box-shadow:0 0 0 2px var(--ultra-out),0 6px 16px rgba(0,0,0,.28)}   /* glacier + sur-contour violet, comme la carte */
+.st-name{font-size:.72rem;font-weight:800;letter-spacing:.04em;color:var(--rc)}
+.st-box.r-legendary .st-name{color:#d4af37}
+.st-frac{font-size:.98rem;font-weight:800;color:#fff3e4;font-variant-numeric:tabular-nums}
+.st-frac span{color:rgba(255,230,210,.55);font-weight:500}
 .pm-h{margin:0 0 12px 16px;color:#f6c453;font-weight:800;font-size:.8rem;letter-spacing:.14em}
 .filmstrip{--perf:7px;position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
   padding:calc(var(--perf) + 10px) 12px;background:#0b0809;
@@ -324,7 +340,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .filmstrip.ws{--slotw:calc((100% - 48px) / 4);                   /* = largeur exacte d'une case du Top Films */
   grid-template-columns:1fr repeat(3,var(--slotw)) 1fr;padding-left:0;padding-right:0}   /* la bande noire perforée reste pleine largeur */
 /* Côtés : un aplat beige uni (bords droits, collé au bord de l'écran) à la place des bouts de cases coupées */
-.ws-end{pointer-events:none;background:#e5dcc5;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.15)}
+.ws-end{pointer-events:none;background:rgba(20,20,20,.6);   /* sombre et translucide : effet de profondeur autour des cartes */
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),inset 0 10px 18px rgba(0,0,0,.55)}
 .card.r-wish{--rc:#e9dcc4}                     /* film pas encore obtenu : rareté inconnue → liseré crème neutre */
 .tf-got{position:absolute;top:4px;right:4px;z-index:3;padding:2px 5px;border-radius:99px;font-size:.46rem;font-weight:800;letter-spacing:.06em;
   background:#f6c453;color:#2b1403;box-shadow:0 2px 4px rgba(0,0,0,.4)}
@@ -1477,6 +1494,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <section class="pm-section pm-wish" aria-labelledby="wsTitle">
         <h3 class="pm-h" id="wsTitle">LISTE DE SOUHAITS</h3>
         <div class="filmstrip ws" id="wishstrip"></div>
+      </section>
+      <!-- Statistiques de collection -->
+      <section class="pm-section pm-stats" aria-labelledby="stTitle">
+        <h3 class="pm-h" id="stTitle">STATISTIQUES</h3>
+        <div class="st-total" id="stTotal"></div>
+        <div class="st-grid" id="stGrid"></div>
       </section>
       </div>
     </div>
@@ -2790,6 +2813,7 @@ function openProfile(){
   renderTopFilms();
   renderFavs();
   renderWishlist();
+  renderStats();
   profileModal.classList.remove('hidden');
   void profileModal.offsetWidth;
   profileModal.classList.add('on');
@@ -3294,6 +3318,26 @@ wList.addEventListener('click', e => {
   store.set('wishlist', wishlist);
   renderWishlist(); closeFavModal(); buzz(10);
 });
+
+
+/* =====================================================================
+   STATISTIQUES : films possédés / films disponibles, au total et par rareté
+   Total disponible d'une rareté = taille de sa tranche de classement (ex. Légendaire : rangs 16 à 300 = 285 films).
+   ===================================================================== */
+const nf = n => n.toLocaleString('fr-FR');
+function renderStats(){
+  const owned = Object.values(getCol());
+  const totalAll = TIERS[TIERS.length - 1].ranks[1];                                // 30 000
+  $('#stTotal').innerHTML = `<span class="st-k">Films obtenus : </span><span class="st-v">${nf(owned.length)}</span>` +
+    `<small>sur ${nf(totalAll)} films du jeu</small>`;
+  $('#stGrid').innerHTML = TIERS.map(t => {                                          // de la plus rare à la plus commune
+    const have = owned.filter(c => c.rarity === t.id).length;
+    const total = t.ranks[1] - t.ranks[0] + 1;
+    return `<div class="st-box r-${t.id}" role="group" aria-label="${t.label} : ${have} sur ${total}">
+      <span class="st-name">${t.label}</span>
+      <span class="st-frac">${nf(have)} <span>/ ${nf(total)}</span></span></div>`;
+  }).join('');
+}
 
 // Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
 profileModal.addEventListener('click', e => {
