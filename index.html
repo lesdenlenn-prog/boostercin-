@@ -179,6 +179,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pm-level{min-height:1.2em;margin:4px 0 0;color:#f6c453;font-weight:800;font-size:1rem;letter-spacing:.04em}
 /* Top Films : pellicule à 4 cases */
 .pm-section{width:100%;margin-top:30px}            /* grands blocs bien séparés */
+.pm-ideal{margin-top:56px}                     /* gros espace sous la pellicule Top Films */
+.pm-wish{margin-top:44px}
 .pm-h{margin:0 0 12px 16px;color:#f6c453;font-weight:800;font-size:.8rem;letter-spacing:.14em}
 .filmstrip{--perf:7px;position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
   padding:calc(var(--perf) + 10px) 12px;background:#0b0809;
@@ -187,6 +189,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:repeating-linear-gradient(90deg,transparent 0 5px,rgba(236,226,210,.85) 5px 11px,transparent 11px 16px);
   -webkit-mask:linear-gradient(#000 0 0);border-radius:1px}
 .filmstrip::before{top:5px}
+.filmstrip::before,.filmstrip::after{   /* trous répartis sur toute la largeur : jamais de trou coupé aux extrémités */
+  background:linear-gradient(90deg,transparent 0 5px,rgba(236,226,210,.85) 5px 11px,transparent 11px) 0 0/16px 100% space no-repeat}
 .filmstrip::after{bottom:5px}
 .tf-slot{position:relative;aspect-ratio:2/3;border:0;padding:0;border-radius:6px;overflow:hidden;cursor:pointer;   /* mêmes proportions qu'une carte */
   background:rgba(222,204,178,.32);box-shadow:inset 0 0 0 1px rgba(255,240,220,.18),inset 0 8px 16px rgba(0,0,0,.25);
@@ -316,6 +320,29 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 /* ---------- Modales de choix (genre / réalisateur) : thème bordeaux du profil ---------- */
 .pickmodal.favmodal{background:linear-gradient(180deg,#3a0c14,#14040a)}
+/* ---------- Liste de souhaits : 3 cases de la taille du Top Films, centrées ; extrémités pleines (beige uni) ---------- */
+.filmstrip.ws{--slotw:calc((100% - 48px) / 4);                   /* = largeur exacte d'une case du Top Films */
+  --endw:calc((100% - 3 * var(--slotw) - 32px) / 2);              /* largeur de chaque extrémité */
+  grid-template-columns:1fr repeat(3,var(--slotw)) 1fr;padding-left:0;padding-right:0;
+  /* bande noire seulement autour des 3 cases ; extrémités = beige uni, sur toute la hauteur */
+  background:linear-gradient(90deg,#e5dcc5 0 var(--endw),#0b0809 var(--endw) calc(100% - var(--endw)),#e5dcc5 calc(100% - var(--endw)))}
+.filmstrip.ws::before,.filmstrip.ws::after{left:calc(var(--endw) + 4px);right:calc(var(--endw) + 4px)}   /* perforations uniquement sur la partie noire */
+.ws-end{pointer-events:none}
+.card.r-wish{--rc:#e9dcc4}                     /* film pas encore obtenu : rareté inconnue → liseré crème neutre */
+.tf-got{position:absolute;top:4px;right:4px;z-index:3;padding:2px 5px;border-radius:99px;font-size:.46rem;font-weight:800;letter-spacing:.06em;
+  background:#f6c453;color:#2b1403;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+/* Modale « souhait » : grille d'affiches issues de tout le catalogue */
+.wgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px}
+.wcard{position:relative;display:flex;flex-direction:column;gap:5px;padding:0;border:0;background:none;color:#fff3e4;text-align:left;cursor:pointer}
+.wcard img,.wcard .w-noimg{display:block;width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;background:#2a1418;
+  box-shadow:0 0 0 1.5px rgba(255,240,220,.18),0 6px 14px rgba(0,0,0,.45)}
+.wcard:active img{transform:scale(.97)}
+.wcard b{font-size:.72rem;font-weight:800;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wcard small{margin-top:-3px;font-size:.64rem;color:rgba(255,230,210,.55)}
+.wcard.on img{box-shadow:0 0 0 2.5px #f6c453,0 0 16px rgba(246,196,83,.4)}
+.wcard.owned{cursor:default;opacity:.45}
+.w-tag{position:absolute;top:6px;left:6px;padding:2px 6px;border-radius:99px;font-size:.55rem;font-weight:800;letter-spacing:.05em;background:#f6c453;color:#2b1403}
+.wcard.owned .w-tag{background:rgba(20,5,9,.85);color:#fff3e4;box-shadow:inset 0 0 0 1px rgba(255,240,220,.4)}
 .fm-pane{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 22px)}
 .fm-pane[hidden]{display:none}
 .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1445,9 +1472,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <div class="filmstrip" id="filmstrip"></div>
       </section>
       <!-- Favoris : genre n°1, genre n°2, réalisateur -->
-      <section class="pm-section" aria-labelledby="favTitle">
-        <h3 class="pm-h" id="favTitle">FAVORIS</h3>
+      <section class="pm-section pm-ideal" aria-labelledby="favTitle">
+        <h3 class="pm-h" id="favTitle">MON FILM IDÉAL</h3>
         <div class="favgrid" id="favGrid"></div>
+      </section>
+      <!-- Liste de souhaits : pellicule à 3 cases centrées, films cherchés dans tout le catalogue du jeu -->
+      <section class="pm-section pm-wish" aria-labelledby="wsTitle">
+        <h3 class="pm-h" id="wsTitle">LISTE DE SOUHAITS</h3>
+        <div class="filmstrip ws" id="wishstrip"></div>
       </section>
       </div>
     </div>
@@ -1497,6 +1529,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         </label>
       </div>
       <div id="dList"></div>
+    </div>
+    <div class="fm-pane" id="wPane" hidden>
+      <div class="fm-search">
+        <label class="search">
+          <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>
+          <input id="wSearch" type="text" placeholder="Rechercher un film…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Rechercher un film dans tout le catalogue">
+          <button class="sclear" id="wClear" type="button" aria-label="Effacer la recherche" hidden>×</button>
+        </label>
+      </div>
+      <div id="wList"></div>
     </div>
   </div>
 
@@ -2750,6 +2792,7 @@ function openProfile(){
   profileOpen = true;
   renderTopFilms();
   renderFavs();
+  renderWishlist();
   profileModal.classList.remove('hidden');
   void profileModal.offsetWidth;
   profileModal.classList.add('on');
@@ -2992,12 +3035,14 @@ favGrid.addEventListener('keydown', e => {
 /* ---------- Modale de choix ---------- */
 const favModal = $('#favModal'), gPane = $('#gPane'), dPane = $('#dPane'), gGrid = $('#gGrid');
 const dSearch = $('#dSearch'), dClear = $('#dClear'), dList = $('#dList');
+const wPane = $('#wPane'), wSearch = $('#wSearch'), wClear = $('#wClear'), wList = $('#wList');
 let favMode = null, favIdx = 0;
 function openFavModal(kind, i){
   favMode = kind; favIdx = i;
-  $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : PEOPLE[kind].title;
-  gPane.hidden = kind !== 'genre'; dPane.hidden = kind === 'genre';
+  $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : kind === 'wish' ? `Souhait n° ${i + 1}` : PEOPLE[kind].title;
+  gPane.hidden = kind !== 'genre'; dPane.hidden = !PEOPLE[kind]; wPane.hidden = kind !== 'wish';
   if(kind === 'genre'){ renderGenreGrid(); gPane.scrollTop = 0; }
+  else if(kind === 'wish'){ wSearch.value = ''; wQuery = ''; wClear.hidden = true; wResults = []; wSeq++; renderWishList(); wPane.scrollTop = 0; loadWishTrending(); }
   else{
     dSearch.value = ''; dQuery = ''; dClear.hidden = true; dResults = []; dSeq++;
     dSearch.placeholder = PEOPLE[kind].ph; dSearch.setAttribute('aria-label', PEOPLE[kind].ph.replace('…', ''));
@@ -3008,6 +3053,7 @@ function openFavModal(kind, i){
 }
 function closeFavModal(){
   favModal.classList.remove('on'); dSearch.blur(); clearTimeout(dTimer); dSeq++;
+  wSearch.blur(); clearTimeout(wTimer); wSeq++;
   setTimeout(() => { if(!favModal.classList.contains('on')) favModal.classList.add('hidden'); }, 300);
   favMode = null;
 }
@@ -3033,15 +3079,15 @@ gGrid.addEventListener('click', e => {
 
 /* ---------- Réalisateur / Acteur : suggestions (Top 10) + recherche stricte par métier ---------- */
 const PEOPLE = {
-  director:{dept:'Directing', title:'Réalisateur favori', label:'RÉALISATEUR FAVORI', ph:'Rechercher un réalisateur…', hint:'Tape le nom d’un réalisateur.', none:'Aucun réalisateur trouvé', sil:DIR_SILHOUETTE},
-  actor:   {dept:'Acting',    title:'Acteur favori',      label:'ACTEUR FAVORI',      ph:'Rechercher un acteur…',      hint:'Tape le nom d’un acteur.',      none:'Aucun acteur trouvé',      sil:ACTOR_SILHOUETTE}
+  director:{dept:'Directing', title:'Réalisateur favori', label:'RÉALISATEUR FAVORI', ph:'Rechercher un réalisateur…', hint:'Tape le nom d’un réalisateur.', none:'Aucun réalisateur trouvé', sil:DIR_SILHOUETTE, max:10, head:'LES PLUS POPULAIRES'},
+  actor:   {dept:'Acting',    title:'Acteur favori',      label:'ACTEUR FAVORI',      ph:'Rechercher un acteur…',      hint:'Tape le nom d’un acteur.',      none:'Aucun acteur trouvé',      sil:ACTOR_SILHOUETTE, max:24, head:'TENDANCES DU MOMENT'}
 };
 // /person/popular contient surtout des acteurs : pour les réalisateurs on lit plus de pages,
 // et si ça ne suffit pas pour en avoir 10, on complète avec quelques grands noms (retrouvés via /search/person).
 const DIRECTOR_BACKUP = ['Christopher Nolan', 'Steven Spielberg', 'Quentin Tarantino', 'Martin Scorsese', 'Denis Villeneuve', 'Hayao Miyazaki',
   'David Fincher', 'Ridley Scott', 'James Cameron', 'Stanley Kubrick', 'Wes Anderson', 'Tim Burton', 'Alfred Hitchcock', 'Peter Jackson'];
 const SUGGEST_TTL = 24 * 3600 * 1000;
-let suggestCache = store.get('peopleSuggest', null);
+let suggestCache = store.get('peopleSuggest2', null);   // v47 : nouvelle liste (24 acteurs)
 if(!suggestCache || Date.now() - suggestCache.t > SUGGEST_TTL) suggestCache = {t:Date.now(), director:null, actor:null};
 const suggestJobs = {};
 const slimPerson = p => ({id:p.id, name:p.name, profile_path:p.profile_path || null, popularity:p.popularity || 0,
@@ -3051,18 +3097,21 @@ function loadSuggestions(kind){
   if(suggestJobs[kind]) return suggestJobs[kind];
   const dept = PEOPLE[kind].dept, seen = new Set(), keep = p => p && p.name && p.known_for_department === dept && !seen.has(p.id) && seen.add(p.id);
   suggestJobs[kind] = (async () => {
-    const pages = kind === 'actor' ? [1, 2] : [1, 2, 3, 4, 5];
+    // Acteurs : tendances de la semaine + 3 pages de « populaires » ; réalisateurs : 5 pages de « populaires »
+    const calls = kind === 'actor'
+      ? [['/trending/person/week', {language:'fr-FR'}], ...[1, 2, 3].map(pg => ['/person/popular', {language:'fr-FR', page:pg}])]
+      : [1, 2, 3, 4, 5].map(pg => ['/person/popular', {language:'fr-FR', page:pg}]);
     let errors = 0;
-    const res = await Promise.all(pages.map(pg => tmdb('/person/popular', {language:'fr-FR', page:pg}).catch(e => { errors++; return {results:[]}; })));
-    if(errors === pages.length) throw new Error('Suggestions indisponibles pour le moment.');
+    const res = await Promise.all(calls.map(([path, prm]) => tmdb(path, prm).catch(e => { errors++; return {results:[]}; })));
+    if(errors === calls.length) throw new Error('Suggestions indisponibles pour le moment.');
     let list = res.flatMap(r => r.results || []).filter(keep).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
     if(kind === 'director' && list.length < 10){
       const found = await Promise.all(DIRECTOR_BACKUP.map(n => tmdb('/search/person', {query:n, language:'fr-FR', include_adult:'false'})
         .then(r => (r.results || []).find(p => p.known_for_department === 'Directing')).catch(() => null)));
       list = list.concat(found.filter(keep));
     }
-    suggestCache[kind] = list.slice(0, 10).map(slimPerson);
-    store.set('peopleSuggest', suggestCache);
+    suggestCache[kind] = list.slice(0, PEOPLE[kind].max).map(slimPerson);   // 10 réalisateurs, 24 acteurs
+    store.set('peopleSuggest2', suggestCache);
     return suggestCache[kind];
   })().finally(() => { delete suggestJobs[kind]; });
   suggestJobs[kind].then(() => { if(favMode === kind && !dQuery.trim()) renderDirList(); })
@@ -3080,7 +3129,7 @@ function renderDirList(msg){
     const sug = suggestCache[favMode];
     if(!sug){ dList.innerHTML = '<p class="fm-msg">Chargement des suggestions…</p>'; return; }
     if(!sug.length){ dList.innerHTML = `<p class="fm-msg">${P.hint}</p>`; return; }
-    dShown = sug; head = '<p class="fm-sub">LES PLUS POPULAIRES</p>';
+    dShown = sug; head = `<p class="fm-sub">${P.head}</p>`;
   }else{
     if(!dResults.length){ dList.innerHTML = `<p class="fm-msg">${P.none} pour « ${esc(dQuery.trim())} ».</p>`; return; }
     dShown = dResults;
@@ -3131,6 +3180,122 @@ dList.addEventListener('click', e => {
   if(!p) return;
   favs[favMode] = {id:p.id, name:p.name, photo:p.profile_path || null};
   saveFavs(); renderFavs(); closeFavModal(); buzz(10);
+});
+
+
+/* =====================================================================
+   LISTE DE SOUHAITS : 3 films que le joueur n'a pas encore (localStorage 'wishlist')
+   Recherche dans TOUT le catalogue du jeu (TMDB /search/movie), pas dans la vidéothèque.
+   ===================================================================== */
+const WISH_N = 3;
+let wishlist = store.get('wishlist', []);
+wishlist = Array.from({length:WISH_N}, (_, i) => wishlist[i] || null);   // {id, title, year, poster} ou null
+const wishstrip = $('#wishstrip');
+function wishCardHTML(w){
+  return `<div class="card r-wish" title="${esc(w.title)}">
+    <img src="${imgUrl(w)}" alt="Affiche de ${esc(w.title)}" decoding="async" draggable="false">
+    <div class="meta"><b>${esc(w.title)}</b></div></div>`;
+}
+function renderWishlist(){
+  stopEditing();
+  const col = getCol();
+  wishstrip.innerHTML = '<div class="ws-end l" aria-hidden="true"></div>' + wishlist.map((w, i) => w
+    ? `<div class="tf-slot filled" role="button" tabindex="0" data-i="${i}" data-ek="wish:${i}" aria-label="Souhait ${i + 1} : ${esc(w.title)} (modifier)">${wishCardHTML(w)}
+        ${col[w.id] ? '<span class="tf-got">OBTENU</span>' : ''}${editBtns(w.title)}</div>`
+    : `<div class="tf-slot" role="button" tabindex="0" data-i="${i}" aria-label="Ajouter un film à la liste de souhaits (case ${i + 1})"><span class="tf-plus" aria-hidden="true">+</span></div>`
+  ).join('') + '<div class="ws-end r" aria-hidden="true"></div>';
+}
+wishstrip.addEventListener('click', e => {
+  const slot = e.target.closest('.tf-slot');
+  if(!slot) return;
+  const i = +slot.dataset.i;
+  if(e.target.closest('.tf-del')){ wishlist[i] = null; store.set('wishlist', wishlist); renderWishlist(); buzz(10); return; }   // poubelle
+  if(e.target.closest('.tf-pen') || !slot.classList.contains('filled')){ stopEditing(); openFavModal('wish', i); return; }      // crayon ou « + »
+  if(editKey === 'wish:' + i){ stopEditing(); return; }
+  setEditing('wish:' + i); buzz(6);
+});
+wishstrip.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tf-slot')){ e.preventDefault(); e.target.click(); }
+});
+
+/* ---------- Catalogue du jeu ----------
+   Le jeu = les 30 000 films les plus votés de TMDB. Le 30 000e a N votes (seuil mis en cache 7 jours) :
+   un film est « dans le jeu » s'il a au moins N votes (et une affiche). */
+let poolMinVotes = null;
+function getPoolMinVotes(){
+  if(poolMinVotes != null) return Promise.resolve(poolMinVotes);
+  const seg = Math.ceil(Math.ceil(TIERS[TIERS.length - 1].ranks[1] / 20) / SEG_PAGES);   // = 3 → dernier film du 3e segment
+  return getThreshold(seg).then(v => (poolMinVotes = v), () => 0);                      // en cas d'échec : pas de seuil
+}
+const inPool = (m, min) => m && m.poster_path && (m.vote_count || 0) >= min;
+const slimMovie = m => ({id:m.id, title:m.title || m.original_title || '', year:(m.release_date || '').slice(0, 4), poster:m.poster_path});
+
+let wQuery = '', wResults = [], wShown = [], wTrending = null, wSeq = 0, wTimer = null;
+function loadWishTrending(){
+  if(wTrending){ renderWishList(); return; }
+  Promise.all([tmdb('/trending/movie/week', {language:'fr-FR'}), getPoolMinVotes()])
+    .then(([r, min]) => { wTrending = (r.results || []).filter(m => inPool(m, min)).map(slimMovie); })
+    .catch(() => { wTrending = []; })
+    .then(() => { if(favMode === 'wish' && !wQuery.trim()) renderWishList(); });
+}
+function renderWishList(msg){
+  wShown = [];
+  if(msg){ wList.innerHTML = `<p class="fm-msg">${msg}</p>`; return; }
+  let head = '';
+  if(!wQuery.trim()){
+    if(!wTrending){ wList.innerHTML = '<p class="fm-msg">Chargement des tendances…</p>'; return; }
+    if(!wTrending.length){ wList.innerHTML = '<p class="fm-msg">Tape le titre d’un film que tu aimerais obtenir.</p>'; return; }
+    wShown = wTrending; head = '<p class="fm-sub">TENDANCES DE LA SEMAINE</p>';
+  }else{
+    if(!wResults.length){ wList.innerHTML = `<p class="fm-msg">Aucun film du jeu ne correspond à « ${esc(wQuery.trim())} ».</p>`; return; }
+    wShown = wResults;
+  }
+  const col = getCol();
+  wList.innerHTML = head + '<div class="wgrid">' + wShown.map(m => {
+    const owned = !!col[m.id], pos = wishlist.findIndex(w => w && w.id === m.id);
+    const tag = owned ? '<span class="w-tag">OBTENU</span>' : pos >= 0 ? `<span class="w-tag">N°${pos + 1}</span>` : '';
+    return `<button class="wcard${owned ? ' owned' : ''}${pos === favIdx ? ' on' : ''}" type="button" data-mid="${m.id}" ${owned ? 'aria-disabled="true"' : ''}>` +
+      `<img src="https://image.tmdb.org/t/p/w342${m.poster}" alt="" loading="lazy" decoding="async">${tag}` +
+      `<b>${esc(m.title)}</b><small>${esc(m.year || '—')}</small></button>`;
+  }).join('') + '</div>';
+}
+async function searchMovies(q){
+  const seq = ++wSeq;
+  try{
+    const params = {query:q, language:'fr-FR', include_adult:'false'};
+    const [first, min] = await Promise.all([tmdb('/search/movie', params), getPoolMinVotes()]);
+    if(seq !== wSeq) return;
+    const second = (first.total_pages || 1) > 1 ? await tmdb('/search/movie', {...params, page:2}).catch(() => ({results:[]})) : {results:[]};
+    if(seq !== wSeq) return;
+    const seen = new Set();
+    wResults = [...(first.results || []), ...(second.results || [])]
+      .filter(m => inPool(m, min) && !seen.has(m.id) && seen.add(m.id))     // uniquement les films qui existent dans le jeu
+      .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
+      .slice(0, 30).map(slimMovie);
+    renderWishList();
+  }catch(err){
+    if(seq === wSeq) renderWishList(esc(err.message || 'Recherche impossible pour le moment.'));
+  }
+}
+wSearch.addEventListener('input', () => {
+  wQuery = wSearch.value; wClear.hidden = !wQuery;
+  clearTimeout(wTimer); wSeq++;
+  if(!wQuery.trim()){ wResults = []; renderWishList(); return; }
+  renderWishList('Recherche…');
+  wTimer = setTimeout(() => searchMovies(wQuery.trim()), 350);
+});
+wClear.addEventListener('click', () => { wSearch.value = ''; wSearch.dispatchEvent(new Event('input')); wSearch.focus(); });
+wSearch.addEventListener('keydown', e => { if(e.key === 'Enter') wSearch.blur(); });
+wList.addEventListener('click', e => {
+  const b = e.target.closest('.wcard');
+  if(!b || favMode !== 'wish') return;
+  if(b.classList.contains('owned')){ buzz([6, 40, 6]); return; }          // déjà dans la vidéothèque : rien à souhaiter
+  const m = wShown.find(x => String(x.id) === b.dataset.mid);
+  if(!m) return;
+  wishlist = wishlist.map(w => (w && w.id === m.id ? null : w));          // un film n'occupe qu'une case
+  wishlist[favIdx] = m;
+  store.set('wishlist', wishlist);
+  renderWishlist(); closeFavModal(); buzz(10);
 });
 
 // Fermeture : la croix, ou n'importe quel appui en dehors du panneau (dans le flou)
