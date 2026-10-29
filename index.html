@@ -109,8 +109,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* Case profil : un peu plus grande, collée au bord gauche, fond presque transparent */
 /* Même structure que les filtres de la Vidéothèque (pilule, bordure nette 1,5 px), aux couleurs bordeaux de l'Accueil */
 .hud-profile{display:flex;align-items:center;gap:12px;   /* cercle photo centré verticalement, texte juste à droite */
-  min-height:58px;min-width:156px;margin-left:0;padding:0 26px 0 12px;   /* collé au bord gauche de l'écran */
-  border:1.5px solid rgba(255,140,120,.3);border-left:0;border-radius:0 99px 99px 0;     /* coins gauches droits : il fusionne avec le bord */
+  width:45%;min-height:68px;min-width:156px;margin-left:0;padding:8px 22px 8px 14px;   /* collé au bord gauche, ~45 % de la largeur */
+  border:1.5px solid rgba(255,140,120,.3);border-left:0;border-radius:0 12px 12px 0;     /* coins gauches droits ; à droite, arrondi léger */
   background:rgba(30,3,9,.8);color:#ffe3da;box-shadow:0 6px 16px rgba(0,0,0,.32);
   font-weight:800;font-size:1.25rem;letter-spacing:-.01em;text-shadow:0 1px 2px rgba(0,0,0,.45);
   transition:opacity .25s ease,visibility .25s}
@@ -178,10 +178,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:radial-gradient(60% 2px at 50% 100%,rgba(255,243,228,.85),transparent) bottom/100% 2px no-repeat}   /* petit trait sous le pseudo */
 .pm-level{min-height:1.2em;margin:4px 0 0;color:#f6c453;font-weight:800;font-size:1rem;letter-spacing:.04em}
 /* Top Films : pellicule à 4 cases */
-.pm-section{width:100%;margin-top:30px}            /* grands blocs bien séparés */
-.pm-ideal{margin-top:56px}                     /* gros espace sous la pellicule Top Films */
-.pm-wish{margin-top:44px}
-.pm-stats{margin-top:44px;padding:0 14px}
+.pm-section{width:100%;margin-top:44px}            /* grands blocs bien séparés (en-tête → Top Films) */
+.pm-ideal{margin-top:68px}                     /* gros espace sous la pellicule Top Films */
+.pm-wish{margin-top:64px}
+.pm-stats{margin-top:64px;padding:0 14px 16px}
 .pm-stats .pm-h{margin-left:2px}
 /* En-tête : deux pilules au style exact du HUD (Profil / Ressources), côte à côte */
 .st-head{display:flex;gap:10px;margin-bottom:14px}
@@ -200,7 +200,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     background:linear-gradient(to bottom,color-mix(in srgb,var(--rc) 40%,transparent) 0%,rgba(20,20,20,1) 100%),rgba(20,20,20,1)}
 }
 .st-box.r-legendary{--rc:#d4af37}
-.st-box.r-ultra{box-shadow:0 0 0 1px var(--ultra-out),0 6px 14px rgba(0,0,0,.28)}   /* fin sur-contour violet, comme la carte */
+.st-box.r-ultra{box-shadow:0 0 0 1px var(--ultra-out),0 6px 14px rgba(0,0,0,.28);   /* fin sur-contour violet, comme la carte */
+  background:linear-gradient(to bottom,rgba(214,228,255,.72) 0%,rgba(150,170,215,.38) 45%,rgba(34,36,52,1) 100%)}   /* départ glacier plus clair */
+.st-box.r-ultra .st-name{color:#eef4ff}
 .st-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.64rem;font-weight:800;letter-spacing:0;color:var(--rc);
   text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .st-frac{flex:none;font-size:.76rem;font-weight:800;color:#fff3e4;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.6)}
@@ -543,6 +545,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .en-time svg{flex:none;width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round}
 /* Mini-booster : rectangle vertical fin, doré uni, scellages PLATS en haut et en bas
    (alternance de petits rectangles dorés / dorés foncés) — accroché juste après la boîte */
+.en-pack.is-hidden{display:none}   /* aucun booster gratuit : le petit booster doré disparaît */
 .en-pack{position:absolute;left:calc(100% - 2px);top:50%;transform:translateY(-50%);width:19px;height:32px;
   display:grid;place-items:center;border-radius:1px;
   background:
@@ -3474,6 +3477,7 @@ function refundLastPayment(){
 }
 
 /* ---------- Affichage ---------- */
+const enPack = document.querySelector('.en-pack');
 const homeView = $('#view-home'), enCount = $('#enCount'), enTimer = $('#enTimer'), enFill = $('#enFill'), energyEl = $('#energy');
 const openBtn = $('#openBtn'), openSub = $('#openSub');
 function setStep(step){ homeView.dataset.step = step; }
@@ -3511,7 +3515,8 @@ function updateEnergyUI(){
   // elle ne reprend sa vraie valeur qu'au retour à l'Accueil (le localStorage, lui, est déjà à jour)
   const gaugeFrozen = ['rushing', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);
   if(!gaugeFrozen){
-    enCount.textContent = n > 0 ? n : '';              // 0 booster : le petit booster doré reste vide
+    enCount.textContent = n > 0 ? n : '';
+    enPack.classList.toggle('is-hidden', n === 0);      // 0 booster : le petit booster doré est masqué, il revient dès 1
     enTimer.textContent = full ? 'Plein' : hrMin(left);
     enFill.style.width = (full ? 100 : progress * 100).toFixed(2) + '%';   // UNE barre : 0 → 100 % sur 4 h, puis repart à 0
     energyEl.setAttribute('aria-label', `${n} booster${n > 1 ? 's' : ''} gratuit${n > 1 ? 's' : ''} sur ${ENERGY.max}` + (full ? '' : `, prochain dans ${hrMin(left)}`));
