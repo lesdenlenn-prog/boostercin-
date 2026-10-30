@@ -47,9 +47,10 @@ Déployé sur Vercel depuis ce dépôt GitHub (branche `main`).
 - Révélations Légendaire / Ultra très travaillées : **n'animer que `transform` et `opacity`**.
 
 ### Appels TMDB restants côté client
-Hors tirage, le client appelle encore TMDB avec la clé du joueur : détails d'un film (`getDetails`), recherche de
-personnes (`searchPeople`) et de films (`searchMovies`). Il faudra un proxy serveur (Edge Function) ou une autre solution,
-puisqu'aucune clé TMDB ne doit être dans `index.html`.
+Hors tirage, le client appelle encore TMDB avec la clé (facultative) du joueur : détails d'un film (`getDetails`),
+recherche de personnes (`searchPeople`), tendances et recherche de films (`loadWishTrending`, `searchMovies`, seuil
+`getPoolMinVotes`). Décision : la liste de souhaits lira la table `films` (4c), le reste passera par une Edge Function
+`tmdb` (4d). Aucune clé TMDB ne doit être dans `index.html`.
 
 ## Migration Supabase
 
@@ -68,8 +69,18 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
    `_state_json` (execute révoqué pour tous). Les cotes TIERS/DEMO_P sont dupliquées dans `_pick_rarity`.
    Tests manuels : `supabase/tests/open_booster.sql`. Reste à faire : fonctions admin (ressources, reset, mode démo)
    qui vérifient `profiles.is_admin`.
-4. Client : connexion anonyme au lancement, puis rattachement à un e-mail par code OTP
-   (`updateUser({ email })` puis `verifyOtp({ type: 'email_change' })` : même `user.id`, la collection est conservée).
+4. Client (`index.html`), découpé en morceaux testés en local (Live Server) avant chaque push :
+   - **4a + 4b** (fusionnés : indissociables) : supabase-js 2.118.0 (CDN jsDelivr), session anonyme au démarrage
+     (écran `#boot`), soldes/énergie/statistiques via `get_booster_state` → `applyState()`, collection chargée depuis
+     `collection` + `films` dans `colCache` (pagination par 1 000), ouverture via `open_booster` (`payForBooster`),
+     suivi à voir/vu écrit dans `collection`, outils admin (`.admin-only`, masqués si `is_admin` est faux).
+     La clé TMDB devient facultative (bouton « Clé TMDB » de la Vidéothèque) : synopsis, personnes, liste de souhaits.
+     Anciennes clés localStorage (`wallet`, `energy`, `collection`, `boostersOuverts`, `demo`, `rarity_model`) supprimées.
+   - 4c : Top Films, favoris, liste de souhaits dans `profiles` ; liste de souhaits cherchée dans la table `films`.
+   - 4d : Edge Function `tmdb` (détails de film, recherche de personnes), suppression de la clé TMDB côté client.
+   - 4e : rattachement à un e-mail par code OTP (8 chiffres ; `updateUser({ email })` puis
+     `verifyOtp({ type: 'email_change' })` : même `user.id`). Nécessite SMTP personnalisé + modèles d'e-mail.
+     4a à 4d ne doivent dépendre d'aucun e-mail.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.

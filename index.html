@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <style>
 :root{
   --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
@@ -425,6 +426,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 10px 24px -8px rgba(232,196,106,.6)}
 .shop-btn.gems{color:#fff;background:linear-gradient(180deg,#a66bff,#6d28e8 55%,#4a14b8);
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 10px 24px -8px rgba(124,58,237,.7)}
+.shop-soon{margin:0;color:#e9c9b4;text-align:center;max-width:28ch}   /* joueurs : les boutons du Magasin sont réservés à l'admin */
 
 .btn{min-height:46px;border:0;border-radius:12px;padding:0 22px;font-weight:800;color:#2b1403;
   background:linear-gradient(#fbeab0,#e8c46a 55%,#c89a3e);box-shadow:0 6px 18px -6px rgba(232,196,106,.6)}
@@ -433,7 +435,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .caption:empty{display:none}
 .caption .err{color:#ff9b9b}
 
-/* ================= CLÉ TMDB (écran initial) ================= */
+/* ================= CONNEXION (écran de démarrage) et CLÉ TMDB (facultative) ================= */
 .setup{position:absolute;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:var(--bg)}
 .setup-card{width:100%;max-width:420px;background:var(--surface);border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px var(--line)}
 .setup h2{margin:0 0 6px;font-size:1.15rem}
@@ -1312,13 +1314,24 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
 <main id="screen">
 
+  <!-- Démarrage : connexion à Supabase (session anonyme la 1re fois) -->
+  <section class="setup" id="boot">
+    <div class="setup-card">
+      <h2 id="bootTitle">Connexion…</h2>
+      <p class="err" id="bootStatus" role="status"></p>
+      <button class="btn" id="bootRetry" type="button" hidden>Réessayer</button>
+    </div>
+  </section>
+
+  <!-- Clé TMDB facultative : synopsis, recherche de personnes et liste de souhaits (en attendant le serveur) -->
   <section class="setup hidden" id="setup">
     <div class="setup-card">
-      <h2>Colle ta clé TMDB pour commencer</h2>
-      <p>Crée un compte gratuit sur themoviedb.org, puis demande une clé dans Paramètres, API. La clé v3 et le jeton v4 fonctionnent tous les deux. Elle reste dans ton navigateur.</p>
+      <h2>Clé TMDB (facultative)</h2>
+      <p>Elle sert encore au synopsis des films, à la recherche de réalisateurs et d'acteurs et à la liste de souhaits. Crée un compte gratuit sur themoviedb.org, puis demande une clé dans Paramètres, API. La clé v3 et le jeton v4 fonctionnent tous les deux. Elle reste dans ton navigateur.</p>
       <form id="keyForm">
         <input id="keyInput" type="password" autocomplete="off" placeholder="Clé API ou jeton d'accès" aria-label="Clé API TMDB" required>
         <button class="btn" type="submit">Enregistrer</button>
+        <button class="btn ghost" id="keyBack" type="button">Retour</button>
       </form>
       <p class="err" id="keyStatus" role="status"></p>
     </div>
@@ -1346,14 +1359,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <div class="track dragging" id="track" style="transform:translateX(-40%)">
     <section class="view view-shop" id="view-shop" aria-label="Magasin">
       <h2 class="shop-title">Magasin</h2>
-      <button class="shop-btn reels" type="button" data-reward="reels" data-amount="100">
+      <p class="shop-soon" id="shopSoon">La boutique ouvre bientôt.</p>
+      <!-- OUTILS DE TEST : réservés à l'admin (affichés seulement si profiles.is_admin) -->
+      <button class="shop-btn reels admin-only" type="button" data-reward="reels" data-amount="100" hidden>
         <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg><span>Obtenir 100 bobines</span>
       </button>
-      <button class="shop-btn gems" type="button" data-reward="gems" data-amount="100">
+      <button class="shop-btn gems admin-only" type="button" data-reward="gems" data-amount="100" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg><span>Obtenir 100 gemmes</span>
       </button>
-      <!-- OUTIL DE TEST (temporaire) : remet bobines, gemmes et boosters gratuits à 0 -->
-      <button class="dbg-reset" id="dbgReset" type="button">RESET RESSOURCES</button>
+      <!-- remet bobines, gemmes et boosters gratuits à 0 -->
+      <button class="dbg-reset admin-only" id="dbgReset" type="button" hidden>RESET RESSOURCES</button>
     </section>
     <section class="view view-ph" id="view-market" aria-label="Marché"><p>Menu en construction...</p></section>
     <section class="view view-home" id="view-home" data-step="idle">
@@ -1464,9 +1479,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 
       <footer class="sfoot">
         <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
-        <button id="demoBtn"></button>
-        <button id="changeKey">Changer de clé TMDB</button>
-        <button id="resetCol">Vider ma collection</button>
+        <button class="admin-only" id="demoBtn" hidden></button>
+        <button id="changeKey">Clé TMDB (synopsis et recherches)</button>
+        <button class="admin-only" id="resetCol" hidden>Vider ma collection</button>
       </footer>
     </section>
     <section class="view view-ph" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
@@ -1638,6 +1653,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
    ===================================================================== */
 const TIERS = [
   // 30 000 films classés par nombre de votes TMDB. ranks = [premier rang, dernier rang] de chaque rareté.
+  // Le tirage se fait sur le serveur (open_booster) : ces cotes y sont recopiées, à garder identiques.
   {id:'ultra',     label:'Ultra-légendaire', ranks:[1,15],         p:0.0005},  //     15 films : le top 15
   {id:'legendary', label:'Légendaire',       ranks:[16,300],       p:0.005},   //    285 films
   {id:'epic',      label:'Épique',           ranks:[301,1800],     p:0.025},   //  1 500 films
@@ -1645,7 +1661,6 @@ const TIERS = [
   {id:'uncommon',  label:'Peu commune',      ranks:[6001,15000],   p:0.28},    //  9 000 films
   {id:'common',    label:'Commune',          ranks:[15001,30000],  p:0.5995}   // 15 000 films
 ];
-const DEMO_P = {ultra:0.15, legendary:0.20, epic:0.25, rare:0.18, uncommon:0.12, common:0.10};
 const isLegendLike = r => r === 'legendary' || r === 'ultra';   // raretés qui ont la révélation spectaculaire
 
 const TIMING = {
@@ -1702,7 +1717,7 @@ function cancelWaapi(root){
 const buzz = p => { if(!RM && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } };
 
 /* =====================================================================
-   3. API TMDB ET TIRAGE
+   3. API TMDB (clé facultative : synopsis, personnes, liste de souhaits)
    ===================================================================== */
 async function tmdb(path, params = {}, keyOverride){
   const key = keyOverride || store.get('tmdb_key','');
@@ -1717,18 +1732,14 @@ async function tmdb(path, params = {}, keyOverride){
   return r.json();
 }
 
-/* TMDB limite /discover à 500 pages (10 000 films) par requête. Pour aller jusqu'à 1 500 pages, le classement
-   est découpé en « segments » de 500 pages :
-     segment 0 = pages   1 à  500 : requête normale
-     segment 1 = pages 501 à 1000 : même requête + vote_count.lte = nb de votes du dernier film du segment 0
-     segment 2 = pages 1001 à 1500 : idem avec le dernier film du segment 1
-   Ces seuils coûtent 1 requête chacun ; ils sont gardés 7 jours dans le navigateur et préchargés au démarrage.
-   (Les films à égalité pile sur un seuil peuvent apparaître des deux côtés : ils restent dans la même rareté.) */
+/* Seuil du catalogue pour la liste de souhaits (en attendant qu'elle lise la table films, étape 4c).
+   TMDB limite /discover à 500 pages (10 000 films) par requête : le classement est découpé en « segments » de 500 pages,
+   chacun avec vote_count.lte = nb de votes du dernier film du segment précédent.
+   Ces seuils coûtent 1 requête chacun ; ils sont gardés 7 jours dans le navigateur. */
 const SEG_PAGES = 500, THRESH_TTL = 7 * 24 * 3600 * 1000;
 let thresholds = store.get('vc_thresholds', null);
 if(!thresholds || Date.now() - thresholds.t > THRESH_TTL) thresholds = {t: Date.now(), v: []};
 const threshInflight = new Map();
-const pageCache = new Map();
 
 function discover(local, lte){
   const params = {sort_by:'vote_count.desc', include_adult:'false', language:'fr-FR', page:local};
@@ -1751,49 +1762,30 @@ function getThreshold(s){                      // s ≥ 1 : nb de votes du derni
   p.then(() => threshInflight.delete(s), () => threshInflight.delete(s));
   return p;
 }
-async function getPage(page){                  // page globale : 1 à 1 500
-  if(pageCache.has(page)) return pageCache.get(page);
-  const seg = Math.floor((page - 1) / SEG_PAGES), local = (page - 1) % SEG_PAGES + 1;
-  const lte = seg ? await getThreshold(seg) : null;
-  let d = await discover(local, lte);
-  if(!d.results.length && d.total_pages){       // sécurité si TMDB renvoie moins de pages que prévu
-    d = await discover(randInt(1, Math.min(d.total_pages, SEG_PAGES)), lte);
-  }
-  const films = d.results.map((m,i) => ({...m, rank:(page-1)*20 + i + 1}));
-  pageCache.set(page, films);
-  return films;
-}
-// préchargement discret des seuils pour que le 1er booster ne les attende pas
-function warmThresholds(){ if(store.get('tmdb_key','')) getThreshold(Math.ceil(Math.ceil(TIERS[TIERS.length-1].ranks[1] / 20) / SEG_PAGES) - 1).catch(() => {}); }
+/* =====================================================================
+   3 bis. SUPABASE : session, fonctions SQL, booster tiré par le serveur
+   Le serveur fait foi : tirage, bobines, gemmes, énergie et collection viennent de Supabase.
+   Seule la clé publique (publishable) est ici : tout le reste est protégé par la RLS et les fonctions SQL.
+   ===================================================================== */
+const sb = supabase.createClient('https://tubjlfbqadwgclhbfuco.supabase.co', 'sb_publishable_nFQ-gI89Abage0sXqTdZjg_9xW7j-QL');
+let userId = null;
+let player = {boostersOpened:0, demo:false, admin:false};   // dernier état connu du serveur (hors soldes et énergie)
+const demoOn = () => player.demo;
 
-const demoOn = () => store.get('demo', false);
-function pickTier(noCommon = false){
-  const pool = (noCommon ? TIERS.filter(t => t.id !== 'common') : TIERS)
-    .map(t => ({t, p: demoOn() ? DEMO_P[t.id] : t.p}));
-  const sum = pool.reduce((a,x) => a + x.p, 0);
-  let r = Math.random() * sum;
-  for(const x of pool){ r -= x.p; if(r < 0) return x.t; }
-  return pool[pool.length-1].t;
+const netMsg = m => /fetch|network|load failed/i.test(m || '') ? 'Impossible de joindre le serveur. Vérifie ta connexion.' : m;
+// Appel d'une fonction SQL (rpc) : l'erreur renvoyée devient un message lisible
+async function rpc(name, args){
+  const {data, error} = await sb.rpc(name, args);
+  if(error) throw new Error(netMsg(error.message) || 'Erreur du serveur. Réessaie dans un instant.');
+  return data;
 }
-
-async function drawBooster(){
-  const tiers = [pickTier(), pickTier(), pickTier(), pickTier(), pickTier(true)];
-  // un rang tiré au hasard dans la tranche de la rareté → la page TMDB qui le contient (20 films par page)
-  const pageNos = tiers.map(t => Math.ceil(randInt(t.ranks[0], t.ranks[1]) / 20));
-  const pages = await Promise.all(pageNos.map(getPage));
-  const used = new Set();
-  const cards = tiers.map((t,i) => {
-    // seuls les films de la page qui appartiennent à cette rareté (ex. page 1 : rangs 1-15 Ultra, 16-20 Légendaire)
-    const inTier = pages[i].filter(m => m.rank >= t.ranks[0] && m.rank <= t.ranks[1] && m.poster_path);
-    let pool = inTier.filter(m => !used.has(m.id));
-    if(!pool.length) pool = inTier.length ? inTier : pages[i].filter(m => m.poster_path);
-    const m = pool[randInt(0, pool.length-1)];
-    used.add(m.id);
-    return {id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path, rarity:t.id, rank:m.rank, votes:m.vote_count,
-            overview:m.overview || '',    // synopsis déjà fourni par /discover : affiché instantanément dans le sur-menu
-            rating:m.vote_average || 0};  // note TMDB /10 : sert au tri « NOTE » de la Vidéothèque
-  });
-  return cards.sort((a,b) => tierIdx(b.rarity) - tierIdx(a.rarity));   // la plus rare est révélée en dernier
+// Session gardée par le navigateur ; la 1re fois, compte anonyme (rattaché à un e-mail plus tard)
+async function ensureSession(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){ userId = session.user.id; return; }
+  const {data, error} = await sb.auth.signInAnonymously();
+  if(error) throw new Error(netMsg(error.message));
+  userId = data.user.id;
 }
 
 function preload(cards){
@@ -1801,37 +1793,43 @@ function preload(cards){
     const i = new Image(); i.onload = i.onerror = res; i.src = imgUrl(c, true); setTimeout(res, 4000);
   })));
 }
-function prefetchBooster(){
-  return drawBooster().then(async cards => { await preload(cards); return {cards}; }, error => ({error}));
+// Réponse d'open_booster → cartes du jeu (déjà triées : la plus rare en dernier), affiches préchargées
+function prepareBooster(res){
+  const cards = res.cards.map(c => ({id:c.id, title:c.title, year:c.year || '', poster:c.poster, rarity:c.rarity, rank:c.rank, votes:c.votes,
+    overview:c.overview || '',    // synopsis affiché instantanément dans le sur-menu
+    rating:c.rating || 0,         // note TMDB /10 : sert au tri « NOTE » de la Vidéothèque
+    count:c.count, isNew:c.is_new}));
+  return preload(cards).then(() => ({cards, demo:res.demo}));
 }
 
 /* =====================================================================
-   4. COLLECTION (données)
+   4. COLLECTION (données) : copie locale de la table collection, chargée au démarrage
    ===================================================================== */
-const getCol = () => store.get('collection', {});
+let colCache = {};
+const getCol = () => colCache;
 
-// Passage à 30 000 films : les cartes déjà obtenues sont reclassées d'après leur rang
-// (ex. un film classé 250e, auparavant Épique, devient Légendaire). Fait une seule fois.
-function tierForRank(rank){
-  return (TIERS.find(t => rank >= t.ranks[0] && rank <= t.ranks[1]) || TIERS[TIERS.length - 1]).id;
+const COL_SELECT = 'film_id,count,rarity,rank,is_to_watch,is_watched,films(title,year,poster_path,overview,vote_count,vote_average)';
+const colCard = r => ({id:r.film_id, title:r.films.title, year:r.films.year || '', poster:r.films.poster_path, rarity:r.rarity, rank:r.rank,
+  votes:r.films.vote_count, overview:r.films.overview || '', rating:r.films.vote_average || 0,
+  count:r.count, isToWatch:r.is_to_watch, isWatched:r.is_watched});
+async function loadCollection(){
+  const col = {}, PAGE = 1000;                    // le serveur renvoie au plus 1 000 lignes par requête
+  for(let from = 0; ; from += PAGE){
+    const {data, error} = await sb.from('collection').select(COL_SELECT).order('film_id').range(from, from + PAGE - 1);
+    if(error) throw new Error(netMsg(error.message));
+    data.forEach(r => { col[r.film_id] = colCard(r); });
+    if(data.length < PAGE) break;
+  }
+  colCache = col;
+  shelfDirty = true;
 }
-(function migrateRarity(){
-  if(store.get('rarity_model', 1) >= 3) return;   // v3 : ajout de l'Ultra-légendaire (top 15)
-  const col = getCol();
-  Object.values(col).forEach(c => { if(c.rank) c.rarity = tierForRank(c.rank); });
-  store.set('collection', col);
-  store.set('rarity_model', 3);
-})();
+// Cartes d'un booster ouvert : déjà enregistrées par le serveur, on met à jour la copie locale (rang, rareté, nombre)
 function addToCol(cards){
   shelfDirty = true;
-  const col = getCol();
-  const out = cards.map(c => {
-    const isNew = !col[c.id];
-    col[c.id] = isNew ? {...c, count:1} : {...col[c.id], ...c, count: col[c.id].count + 1};   // rang et rareté mis à jour à chaque nouveau tirage
-    return {...c, isNew};
+  cards.forEach(({isNew, ...c}) => {
+    const old = colCache[c.id];
+    colCache[c.id] = {...c, isToWatch: old ? old.isToWatch : false, isWatched: old ? old.isWatched : false};
   });
-  store.set('collection', col);
-  return out;
 }
 
 function cardHTML(c, {isNew=false, count=0, lazy=false, hi=false} = {}){
@@ -1927,7 +1925,7 @@ function zoomIn(){
   pack.classList.add('zoomed');
   setStep('select');
   updateEnergyUI();
-  pending = pending || prefetchBooster();      // tirage préparé en avance (conservé si le joueur fait « Retour »)
+  refreshState();                              // prix à jour avant de payer (le tirage, lui, se fait au paiement)
 }
 
 async function openPack(){
@@ -1936,10 +1934,9 @@ async function openPack(){
   pack.classList.add('opened'); pack.setAttribute('tabindex', '-1');
   ['--rx','--ry'].forEach(v => tilt.style.setProperty(v, '0deg'));
   try{
-    const res = await pending;
-    if(res.error) throw res.error;
-    store.set('boostersOuverts', (+store.get('boostersOuverts', 0) || 0) + 1);   // statistique : un booster de plus ouvert
-    cards = demoOn() ? res.cards.map(c => ({...c, isNew: !getCol()[c.id]})) : addToCol(res.cards);
+    const res = await pending;                   // booster déjà payé et tiré par le serveur (open_booster)
+    cards = res.cards;
+    if(!res.demo) addToCol(cards);               // mode démo : rien n'entre dans la collection
     buildStack();
 
     // 1. La ligne de déchirure traverse le haut du booster
@@ -1985,7 +1982,7 @@ async function openPack(){
 }
 
 function failOpen(msg){
-  refundLastPayment();                         // le booster payé n'a pas pu s'ouvrir : on rend la mise
+  refreshState();                              // soldes et énergie relus sur le serveur (un tirage échoué n'y débite rien)
   appEl.classList.remove('is-opening-booster', 'is-selecting');
   setStep('idle');
   resetPackVisuals(); clearStack();
@@ -2040,7 +2037,6 @@ function clearStack(){
 }
 function startStack(){
   state = 'stack'; busy = false;
-  lastPayment = null;                          // ouverture réussie : paiement définitif
   arena.classList.add('nav');
   dotsEl.hidden = false; updateDots();
   placeTrackBar();                             // boutons cœur / check juste sous la carte réellement affichée
@@ -2554,7 +2550,6 @@ function filterMenuHTML(st){
 sbCrit.addEventListener('click', () => {
   sortState.by = sortState.by === 'rarity' ? 'rating' : 'rarity';
   renderSortBar(); renderShelfBody();
-  if(sortState.by === 'rating') ensureRatings();
 });
 // Filtre « À voir » (interrupteur)
 const sbWatch = $('#sbWatch');
@@ -2592,38 +2587,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeFilter(); });
 
-/* ---------- Notes TMDB pour le tri par NOTE ----------
-   Les cartes tirées à partir de maintenant enregistrent leur note directement (fournie par /discover).
-   Pour les anciennes cartes, on va la chercher une fois (4 requêtes en parallèle) et on l'enregistre. */
-let ratingJob = null;
-function ensureRatings(){
-  if(ratingJob) return ratingJob;
-  const col = getCol();
-  const missing = Object.values(col).filter(c => ratingOf(c) === null && !c.ratingChecked);
-  if(!missing.length) return Promise.resolve();
-  let done = 0;
-  const show = () => { sbStatus.textContent = done < missing.length ? `Notes : ${done}/${missing.length}` : ''; };
-  show();
-  const queue = missing.slice();
-  const worker = async () => {
-    while(queue.length){
-      const c = queue.shift();
-      try{ const d = await getDetails(c); col[c.id].rating = d.vote || 0; }catch(e){}
-      col[c.id].ratingChecked = true;                    // évite de redemander un film sans note
-      done++; show();
-      if(done % 12 === 0 && sortState.by === 'rating'){ store.set('collection', col); renderShelfBody(); }   // affichage progressif
-    }
-  };
-  ratingJob = Promise.all([worker(), worker(), worker(), worker()]).then(() => {
-    // fusion avec la collection actuelle (un booster a pu être ouvert entre-temps)
-    const now = getCol();
-    Object.keys(now).forEach(id => { if(col[id] && ratingOf(now[id]) === null){ now[id].rating = col[id].rating; now[id].ratingChecked = true; } });
-    store.set('collection', now);
-    ratingJob = null; show();
-    if(sortState.by === 'rating') renderShelfBody();
-  });
-  return ratingJob;
-}
+// Tri par NOTE : la note TMDB de chaque carte vient de la table films (chargée avec la collection)
 
 function renderShelfBody(){
   selId = null;
@@ -2828,8 +2792,6 @@ async function openInfo(liftEl, cardEl, c, onDone){
   try{
     const d = await getDetails(c);
     if(imOpen && imOpen.c.id === c.id) fillPanel(c, d);
-    const col = getCol();                                  // on en profite pour mémoriser la note (tri « NOTE »)
-    if(col[c.id] && ratingOf(col[c.id]) === null && d.vote){ col[c.id].rating = d.vote; store.set('collection', col); }
   }catch(err){
     if(imOpen && imOpen.c.id === c.id) fillPanel(c, {error:true});
   }
@@ -2837,16 +2799,23 @@ async function openInfo(liftEl, cardEl, c, onDone){
 
 
 /* =====================================================================
-   SUIVI DES FILMS : isToWatch (cœur) / isWatched (check), stockés sur la carte de la collection.
-   Exclusion mutuelle : activer l'un retire l'autre.
+   SUIVI DES FILMS : isToWatch (cœur) / isWatched (check), colonnes is_to_watch / is_watched de la collection.
+   Exclusion mutuelle : activer l'un retire l'autre. Seules ces deux colonnes sont modifiables par le joueur.
    ===================================================================== */
 function setFilmStatus(id, kind, on){
-  const col = getCol(), f = col[id];
+  const f = getCol()[id];
   if(!f) return null;
+  const before = {isToWatch:f.isToWatch, isWatched:f.isWatched};
   if(kind === 'toWatch'){ f.isToWatch = on; if(on) f.isWatched = false; }
   else{ f.isWatched = on; if(on) f.isToWatch = false; }
-  store.set('collection', col);
   shelfDirty = true;
+  // affichage immédiat, enregistrement en arrière-plan ; en cas d'échec, on revient en arrière
+  sb.from('collection').update({is_to_watch:!!f.isToWatch, is_watched:!!f.isWatched}).eq('user_id', userId).eq('film_id', f.id)
+    .then(({error}) => {
+      if(!error) return;
+      Object.assign(f, before); shelfDirty = true;
+      if(imOpen && imOpen.c.id === f.id) updateInfoTrack(imOpen.c);
+    });
   return f;
 }
 function paintTrack(bar, f){
@@ -3045,7 +3014,6 @@ function openPicker(slotIndex){
   closePickFilter();
   renderPickBar(); renderPickList();
   pickModal.classList.remove('hidden'); void pickModal.offsetWidth; pickModal.classList.add('on');
-  if(pickState.by === 'rating') loadPickRatings();
 }
 function closePicker(){
   pickModal.classList.remove('on');
@@ -3053,18 +3021,9 @@ function closePicker(){
   setTimeout(() => { if(!pickModal.classList.contains('on')){ pickModal.classList.add('hidden'); pickList.innerHTML = ''; } }, 300);
   pickSlot = null;
 }
-// Tri par NOTE : on complète les notes manquantes (même mécanisme que la Vidéothèque) puis on redessine
-function loadPickRatings(){
-  pkStatus.textContent = 'Notes…';
-  ensureRatings().then(() => {
-    pkStatus.textContent = '';
-    if(pickModal.classList.contains('on') && pickState.by === 'rating') renderPickList();
-  });
-}
 pkCrit.addEventListener('click', () => {
   pickState.by = pickState.by === 'rarity' ? 'rating' : 'rarity';
   renderPickBar(); renderPickList();
-  if(pickState.by === 'rating') loadPickRatings();
 });
 pkDir.addEventListener('click', () => {
   pickState.dir = pickState.dir === 'desc' ? 'asc' : 'desc';
@@ -3457,7 +3416,7 @@ const nf = n => n.toLocaleString('fr-FR');
 function renderStats(){
   const owned = Object.values(getCol());
   const totalAll = TIERS[TIERS.length - 1].ranks[1];                                // 30 000
-  const opened = +store.get('boostersOuverts', 0) || 0;
+  const opened = player.boostersOpened;
   $('#stHead').innerHTML =
     `<div class="st-pill" role="group" aria-label="Films obtenus : ${owned.length} sur ${totalAll}"><span class="st-k">FILMS OBTENUS</span><span class="st-v">${nf(owned.length)}</span></div>` +
     `<div class="st-pill" role="group" aria-label="Boosters ouverts : ${opened}"><span class="st-k">BOOSTERS OUVERTS</span><span class="st-v">${nf(opened)}</span></div>`;
@@ -3488,43 +3447,25 @@ document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListene
   showView(b.dataset.goto);
 }));
 
-// Portefeuille : un total par ressource, sauvegardé dans le navigateur
-const savedWallet = store.get('wallet', {reels:0, gems:0});
-let reelsTotal = savedWallet.reels || 0;    // bobines
-let gemsTotal  = savedWallet.gems  || 0;    // gemmes
+// Portefeuille : copie locale des soldes du serveur (affichage seulement : toute dépense passe par open_booster)
+let reelsTotal = 0;    // bobines
+let gemsTotal  = 0;    // gemmes
 const valReels = $('#valReels'), valGems = $('#valGems');
 function renderWallet(bumped){
   valReels.textContent = reelsTotal.toLocaleString('fr-FR');
   valGems.textContent  = gemsTotal.toLocaleString('fr-FR');
   if(bumped){ bumped.classList.remove('bump'); void bumped.offsetWidth; bumped.classList.add('bump'); }   // petit rebond
 }
-function saveWallet(){
-  reelsTotal = Math.max(0, Math.floor(reelsTotal));    // jamais négatif, toujours entier
-  gemsTotal  = Math.max(0, Math.floor(gemsTotal));
-  store.set('wallet', {reels:reelsTotal, gems:gemsTotal});
-}
-function addResource(kind, amount){
-  if(!(amount > 0)) return;
-  if(kind === 'reels') reelsTotal += amount;
-  else if(kind === 'gems') gemsTotal += amount;
-  else return;
-  saveWallet();
-  renderWallet(kind === 'reels' ? valReels : valGems);
-}
-// Dépense : refusée (false) si le solde ne suffit pas → aucun compteur ne peut passer sous 0
-function spendResource(kind, amount){
-  if(!(amount >= 0)) return false;
-  if(kind === 'reels'){ if(reelsTotal < amount) return false; reelsTotal -= amount; }
-  else if(kind === 'gems'){ if(gemsTotal < amount) return false; gemsTotal -= amount; }
-  else return false;
-  saveWallet(); renderWallet();
-  return true;
-}
 renderWallet();
-// Magasin : chaque appui ajoute instantanément 100 à la ressource du bouton (data-reward / data-amount)
-document.querySelectorAll('.shop-btn').forEach(b => b.addEventListener('click', () => {
-  addResource(b.dataset.reward, +b.dataset.amount);
+// OUTILS DE TEST (admin) : en cas de refus du serveur, simple alerte
+const adminError = err => alert(err.message || 'Action refusée.');
+// Magasin : chaque appui ajoute 100 à la ressource du bouton (data-reward / data-amount), côté serveur
+document.querySelectorAll('.shop-btn').forEach(b => b.addEventListener('click', async () => {
   buzz(10);
+  try{
+    const st = await rpc('admin_add_resource', {p_kind:b.dataset.reward, p_amount:+b.dataset.amount});
+    applyState(st, {bump: b.dataset.reward === 'reels' ? valReels : valGems});
+  }catch(err){ adminError(err); }
 }));
 
 /* =====================================================================
@@ -3532,17 +3473,40 @@ document.querySelectorAll('.shop-btn').forEach(b => b.addEventListener('click', 
    - 6 boosters gratuits max (6 dès la 1re connexion), +1 toutes les 4 h, timer en pause quand c'est plein
    - plus de gratuit : on « paie le temps restant » en bobines, par heure ENTAMÉE (1 h = 15 bobines, 4 h = 60)
    - bobines manquantes : conversion de gemmes par LOT de 5 bobines (5 bobines = 2 gemmes)
-   Tout est horodaté dans localStorage : le compte à rebours continue quand l'appli est fermée.
+   Tout est calculé et enregistré par le serveur (open_booster, get_booster_state, à l'heure du serveur).
+   Ici, on affiche une copie locale et on fait avancer le compte à rebours entre deux synchronisations.
    ===================================================================== */
 const ENERGY = {max:6, period:4 * 3600 * 1000};       // 4 h
 const REELS_PER_HOUR = 15;                             // 4 h = 60 bobines
 const REELS_PER_LOT = 5, GEMS_PER_LOT = 2;             // 5 bobines = 2 gemmes
 
-let energy = store.get('energy', null);                // {n: boosters dispo, t: début du compte à rebours en cours (ms)}
-if(!energy || typeof energy.n !== 'number' || typeof energy.t !== 'number') energy = {n:ENERGY.max, t:Date.now()};   // 1re connexion : 6 boosters
-let lastPayment = null;                                // {type:'free'} ou {type:'reels', amount} : remboursé si l'ouverture échoue
+let energy = {n:ENERGY.max, t:Date.now()};             // {n: boosters dispo, t: début du compte à rebours en cours (horloge locale)}
 
-// Recalcule les boosters gagnés pendant l'absence, à partir de l'horodatage sauvegardé
+// État du serveur (get_booster_state, open_booster, fonctions admin) → soldes, énergie, statistiques
+let stateSeq = 0;                                      // une réponse plus ancienne qu'une autre déjà appliquée est ignorée
+function applyState(st, {energyToo = true, bump = null} = {}){
+  stateSeq++;
+  reelsTotal = st.reels; gemsTotal = st.gems;
+  player = {boostersOpened:st.boosters_opened, demo:st.demo_mode, admin:st.is_admin};
+  renderWallet(bump);
+  updateAdminUI();
+  if(energyToo) applyEnergy(st);
+}
+// ms_to_next (calculé avec l'horloge du serveur) → début du compte à rebours sur l'horloge du téléphone
+function applyEnergy(st){
+  const e = st.energy;
+  energy = {n:e.n, t: e.n >= ENERGY.max ? Date.now() : Date.now() + e.ms_to_next - ENERGY.period};
+  updateEnergyUI();
+}
+async function refreshState(){
+  const seq = stateSeq;
+  try{
+    const st = await rpc('get_booster_state');
+    if(seq === stateSeq && !paying) applyState(st);
+  }catch(e){}                                          // hors ligne : on garde la copie locale
+}
+
+// Boosters gagnés depuis la dernière synchronisation (affichage ; le serveur refait le même calcul)
 function refreshEnergy(now = Date.now()){
   energy.n = clamp(Math.floor(energy.n), 0, ENERGY.max);
   if(energy.t > now) energy.t = now;                   // horloge du téléphone reculée : on repart de maintenant
@@ -3555,7 +3519,6 @@ function refreshEnergy(now = Date.now()){
       energy.t = energy.n >= ENERGY.max ? now : energy.t + gained * ENERGY.period;   // on garde l'avance du cycle en cours
     }
   }
-  store.set('energy', energy);
 }
 const msToNext = (now = Date.now()) => energy.n >= ENERGY.max ? 0 : Math.max(0, energy.t + ENERGY.period - now);
 
@@ -3566,32 +3529,6 @@ function timerCost(now = Date.now()){
 }
 // Gemmes nécessaires pour N bobines manquantes : par lots de 5 entamés (12 manquantes → 3 lots → 6 gemmes)
 const gemsForReels = missing => Math.ceil(Math.max(0, missing) / REELS_PER_LOT) * GEMS_PER_LOT;
-
-function consumeFreeBooster(){
-  refreshEnergy();
-  if(energy.n <= 0) return false;
-  if(energy.n >= ENERGY.max) energy.t = Date.now();    // on quitte le « plein » : le compte à rebours démarre maintenant
-  energy.n -= 1;
-  store.set('energy', energy);
-  return true;
-}
-// NB : acheter un booster en bobines est une transaction isolée : elle ne touche JAMAIS à energy.t.
-// Le compte à rebours du prochain booster gratuit continue donc de tourner en parallèle.
-
-function refundLastPayment(){
-  if(!lastPayment) return;
-  if(lastPayment.type === 'free'){
-    refreshEnergy();
-    energy.n = Math.min(ENERGY.max, energy.n + 1);
-    if(energy.n >= ENERGY.max) energy.t = Date.now();
-    store.set('energy', energy);
-  }else if(lastPayment.type === 'reels'){
-    addResource('reels', lastPayment.amount);
-    if(lastPayment.prevT != null){ energy.t = lastPayment.prevT; store.set('energy', energy); }   // on annule aussi la remise à zéro du timer
-  }
-  lastPayment = null;
-  updateEnergyUI();
-}
 
 /* ---------- Affichage ---------- */
 const enPack = document.querySelector('.en-pack');
@@ -3653,7 +3590,11 @@ function updateEnergyUI(){
   }
 }
 setInterval(updateEnergyUI, 1000);
-document.addEventListener('visibilitychange', () => { if(!document.hidden) updateEnergyUI(); });
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) return;
+  updateEnergyUI();
+  if(userId && state === 'idle') refreshState();       // retour dans l'appli : soldes et énergie relus sur le serveur
+});
 updateEnergyUI();
 
 function nudgeOpenBtn(){ openBtn.classList.remove('nudge'); void openBtn.offsetWidth; openBtn.classList.add('nudge'); buzz(12); }
@@ -3684,14 +3625,13 @@ function computeArmedScale(){
 
 // Paiement validé : le HUD disparaît (mode immersif), le paquet tremble, puis grandit fortement ;
 // ensuite seulement le joueur peut le toucher pour l'ouvrir
-function armBooster(payment){
-  lastPayment = payment;
+function armBooster(prep){
+  pending = prep;                                                // booster payé et tiré : ouvert au prochain appui
   state = 'arming';                                              // pendant la secousse, un appui ne fait rien
   appEl.classList.remove('is-selecting');
   appEl.classList.add('is-opening-booster');
   pack.classList.add('zoomed');
   setStep('armed');
-  pending = pending || prefetchBooster();
   updateEnergyUI();
   buzz([10, 40, 10, 40, 20]);
   // taille finale du paquet… et des cartes qui en sortiront (carte = paquet zoomé − 14 px)
@@ -3708,36 +3648,49 @@ function armBooster(payment){
   }, RM ? 0 : 360);
 }
 // Depuis le résumé : retour à l'Accueil puis directement à l'étape « Touche le booster » (sans sélection)
-function armFromSummary(payment){
+function armFromSummary(prep){
   backToIdle(false);
   play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});   // le booster réapparaît en fondu, déjà agrandi
-  armBooster(payment);
+  armBooster(prep);
 }
-const armFor = (ctx, payment) => ctx === 'summary' ? armFromSummary(payment) : armBooster(payment);
+const armFor = (ctx, prep) => ctx === 'summary' ? armFromSummary(prep) : armBooster(prep);
 
 /* Paiement d'un booster. ctx = 'select' (étape de sélection) ou 'summary' (bouton du résumé)
+   Le serveur décide de tout (open_booster) et renvoie, dans la même réponse, les 5 cartes tirées :
    1. booster gratuit disponible → on en déduit 1
-   2. sinon : coût du temps restant en bobines (sans toucher au compte à rebours)
-   3. bobines insuffisantes → pop-up de conversion en gemmes */
-function payForBooster(ctx){
-  refreshEnergy();
-  if(energy.n > 0){
-    if(consumeFreeBooster()) armFor(ctx, {type:'free'});
+   2. sinon : coût du temps restant en bobines (relance un cycle complet de 4 h)
+   3. bobines insuffisantes → pop-up de conversion en gemmes ; useGems = le joueur a accepté la conversion */
+let paying = false;
+function setPaying(on){
+  paying = on;
+  [openBtn, againBtn, $('#backBtn'), toColBtn].forEach(b => b.disabled = on);   // pas de « Retour » pendant que le serveur tire
+}
+async function payForBooster(ctx, useGems = false){
+  if(paying) return;
+  setPaying(true); stateSeq++;                         // une lecture d'état encore en route ne doit plus rien écraser
+  let res;
+  try{ res = await rpc('open_booster', {p_use_gems:useGems}); }
+  catch(err){ setPaying(false); setCaption(`<span class="err">${esc(err.message)}</span>`); buzz([6, 40, 6]); return; }
+  setPaying(false);
+  if(!res.ok){                                         // need_gems ou insufficient_funds : rien n'a été débité
+    applyState(res.state);
+    const p = res.state.price;
+    showPayPopup(ctx, 'convert', p.cost_reels, p.missing_reels, p.gem_cost);
     return;
   }
-  const cost = timerCost();
-  if(spendResource('reels', cost)){ reelsPaid(ctx, cost); return; }
-  const missing = cost - reelsTotal;
-  showPayPopup(ctx, 'convert', cost, missing, gemsForReels(missing));
+  setCaption('');
+  const prep = prepareBooster(res);                    // affiches préchargées pendant la secousse et le grand zoom
+  if(res.payment === 'free'){ applyState(res.state); armFor(ctx, prep); return; }
+  applyState(res.state, {energyToo:false});            // bobines (et gemmes) débitées tout de suite ; la jauge suit après le « rush »
+  reelsPaid(ctx, res.state, prep);
 }
 
-/* Achat en bobines validé (bobines déjà déduites) :
+/* Achat en bobines validé (déjà débité par le serveur) :
    1. la jauge se remplit jusqu'à 100 % en exactement 1 s et le décompte file jusqu'à « 00 hr 00 min »
-   2. le timer global repart pour un cycle complet de 4 h (energy.t = maintenant, sauvegardé)
+   2. le timer global repart pour un cycle complet de 4 h (état renvoyé par le serveur)
    3. seulement ensuite : secousse + grand zoom → « Touche le booster pour l'ouvrir » */
 const RUSH_MS = 1000;
-function reelsPaid(ctx, cost){
-  const prevT = energy.t;                              // pour pouvoir annuler si l'ouverture échoue (réseau)
+function reelsPaid(ctx, st, prep){
   if(ctx === 'summary'){                               // depuis le résumé : retour à l'Accueil, booster agrandi, jauge visible
     backToIdle(false);
     play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 300, fill:'none'});
@@ -3746,9 +3699,8 @@ function reelsPaid(ctx, cost){
   }
   setStep('rush');
   rushTimer(() => {
-    energy.t = Date.now();                             // NOUVELLE RÈGLE : payer en bobines relance un cycle complet de 4 h
-    store.set('energy', energy);
-    armBooster({type:'reels', amount:cost, prevT});
+    applyEnergy(st);                                   // payer en bobines relance un cycle complet de 4 h
+    armBooster(prep);
   });
 }
 function rushTimer(onDone){
@@ -3837,13 +3789,8 @@ payModal.addEventListener('click', e => {
     closePayPopup();
     if(stillValid) payForBooster(ctx);                 // paie (ou propose la conversion si les bobines manquent)
   }else if(act.dataset.pay === 'convert'){
-    // on revérifie tout au moment du clic (rien ne doit pouvoir passer sous zéro)
-    if(!stillValid || reelsTotal + missing < cost || !spendResource('gems', gemCost)){ closePayPopup(); return; }
-    reelsTotal += missing;                             // exactement les bobines manquantes, pas plus
-    saveWallet();
-    if(!spendResource('reels', cost)){ closePayPopup(); return; }
     closePayPopup();
-    reelsPaid(ctx, cost);                              // même enchaînement qu'un paiement direct
+    if(stillValid) payForBooster(ctx, true);           // le serveur revérifie tout : rien ne peut passer sous zéro
   }else if(act.dataset.pay === 'shop'){
     closePayPopup();
     if(ctx === 'select') cancelSelect(); else backToIdle(false);
@@ -3854,12 +3801,10 @@ payModal.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if(payOpen && e.key === 'Escape') cancelPay(); });
 
-// OUTIL DE TEST (Magasin) : bobines, gemmes et boosters gratuits à 0
-$('#dbgReset').addEventListener('click', () => {
-  reelsTotal = 0; gemsTotal = 0; saveWallet(); renderWallet();
-  energy = {n:0, t:Date.now()}; store.set('energy', energy);   // 0 booster, le compte à rebours repart de maintenant
-  updateEnergyUI();
+// OUTIL DE TEST (Magasin, admin) : bobines, gemmes et boosters gratuits à 0, le compte à rebours repart de maintenant
+$('#dbgReset').addEventListener('click', async () => {
   buzz(20);
+  try{ applyState(await rpc('admin_reset_resources')); }catch(err){ adminError(err); }
 });
 
 // Écran de résumé : un simple appui sur l'une des 5 cartes ouvre directement le sur-menu
@@ -3900,14 +3845,19 @@ $('#recap').addEventListener('click', e => {
 })();
 
 /* =====================================================================
-   16. CLÉ TMDB ET RÉGLAGES
+   16. CLÉ TMDB (facultative) ET RÉGLAGES
    ===================================================================== */
 function updateDemoBtn(){ $('#demoBtn').textContent = demoOn() ? 'Mode démo activé : cotes élevées, collection protégée (désactiver)' : 'Activer le mode démo (cotes élevées pour tester les effets)'; }
-function refreshKeyState(){
-  const has = !!store.get('tmdb_key','');
-  $('#setup').classList.toggle('hidden', has);
-  $('#app').classList.toggle('hidden', !has);
+// Outils de test visibles seulement pour l'admin (profiles.is_admin) ; les joueurs voient « La boutique ouvre bientôt »
+function updateAdminUI(){
+  document.querySelectorAll('.admin-only').forEach(el => el.hidden = !player.admin);
+  $('#shopSoon').hidden = player.admin;
   updateDemoBtn();
+}
+function showKeyScreen(on){
+  $('#setup').classList.toggle('hidden', !on);
+  $('#app').classList.toggle('hidden', on);
+  if(!on) measureTitle();
 }
 
 $('#keyForm').addEventListener('submit', async e => {
@@ -3917,20 +3867,49 @@ $('#keyForm').addEventListener('submit', async e => {
   try{
     await tmdb('/configuration', {}, key);
     store.set('tmdb_key', key); $('#keyInput').value = ''; st.textContent = '';
-    warmThresholds();
-    refreshKeyState();
+    showKeyScreen(false);
   }catch(err){
     st.textContent = err.name === 'TypeError' ? 'Impossible de joindre TMDB. Vérifie ta connexion.' : err.message;
   }
 });
-$('#changeKey').addEventListener('click', () => { store.del('tmdb_key'); pageCache.clear(); showView('home'); refreshKeyState(); });
-$('#resetCol').addEventListener('click', () => {
-  if(confirm('Supprimer toutes les cartes de ta collection ?')){ store.del('collection'); nameCache.clear(); renderShelf(); }
+$('#keyBack').addEventListener('click', () => showKeyScreen(false));
+$('#changeKey').addEventListener('click', () => { $('#keyStatus').textContent = ''; showKeyScreen(true); });
+// OUTILS DE TEST (admin) : vider sa collection, mode démo
+$('#resetCol').addEventListener('click', async () => {
+  if(!confirm('Supprimer toutes les cartes de ta collection ?')) return;
+  try{
+    const r = await rpc('admin_reset_collection');
+    colCache = {}; nameCache.clear(); applyState(r.state); renderShelf();
+  }catch(err){ adminError(err); }
 });
-$('#demoBtn').addEventListener('click', () => { store.set('demo', !demoOn()); updateDemoBtn(); });
+$('#demoBtn').addEventListener('click', async () => {
+  try{ applyState(await rpc('admin_set_demo', {p_on: !demoOn()})); }catch(err){ adminError(err); }
+});
 
-refreshKeyState();
-warmThresholds();
+/* =====================================================================
+   17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
+   ===================================================================== */
+const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model'];   // données locales v53 : on repart de zéro
+async function boot(){
+  $('#bootTitle').textContent = 'Connexion…';
+  $('#bootStatus').textContent = '';
+  $('#bootRetry').hidden = true;
+  try{
+    await ensureSession();
+    const [st] = await Promise.all([rpc('get_booster_state'), loadCollection()]);
+    applyState(st);
+    OLD_KEYS.forEach(k => store.del(k));
+    $('#boot').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    measureTitle();
+  }catch(err){
+    $('#bootTitle').textContent = 'Connexion impossible';
+    $('#bootStatus').textContent = err.message || 'Réessaie dans un instant.';
+    $('#bootRetry').hidden = false;
+  }
+}
+$('#bootRetry').addEventListener('click', boot);
+boot();
 </script>
 </body>
 </html>
