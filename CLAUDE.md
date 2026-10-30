@@ -55,8 +55,12 @@ puisqu'aucune clé TMDB ne doit être dans `index.html`.
 
 Objectif : comptes Supabase, tirage et économie côté serveur, client en lecture seule sur les cartes.
 
-1. **Schéma** : `supabase/migrations/` (`profiles`, `films`, `collection`, `openings`, avec RLS).
-2. Import du catalogue `films` depuis TMDB (script serveur, clé TMDB dans `.env`).
+1. **Schéma** (fait, appliqué) : `supabase/migrations/` (`profiles`, `films`, `collection`, `openings`, avec RLS).
+2. Import du catalogue `films` : `node scripts/import-films.mjs [--test]` (Node, aucune dépendance npm).
+   Lit `TMDB_API_KEY`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY` dans `.env`. Cache de reprise dans `.import-cache/AAAA-MM/`.
+   Fiches en upsert par lots, puis rangs/raretés remplacés d'un coup par `apply_film_ranks()` (service_role seulement),
+   car `films.rank` est unique. Ne jamais supprimer de film : ceux sortis du classement passent à `rank = null`.
+   Les tranches de rareté sont dupliquées dans le script : les garder identiques à `TIERS`.
 3. Fonction Postgres `open_booster()` (`security definer`) : énergie/paiement + tirage + collection + `openings`,
    dans une seule transaction (échec = rien de débité). Fonctions admin (ressources, reset, mode démo) qui vérifient
    `profiles.is_admin`.
