@@ -61,9 +61,13 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
    Fiches en upsert par lots, puis rangs/raretés remplacés d'un coup par `apply_film_ranks()` (service_role seulement),
    car `films.rank` est unique. Ne jamais supprimer de film : ceux sortis du classement passent à `rank = null`.
    Les tranches de rareté sont dupliquées dans le script : les garder identiques à `TIERS`.
-3. Fonction Postgres `open_booster()` (`security definer`) : énergie/paiement + tirage + collection + `openings`,
-   dans une seule transaction (échec = rien de débité). Fonctions admin (ressources, reset, mode démo) qui vérifient
-   `profiles.is_admin`.
+3. `20261030140000_open_booster.sql` : `open_booster(p_use_gems)` (énergie/paiement + tirage + collection + `openings`,
+   une seule transaction, échec = rien de débité) et `get_booster_state()` (lecture seule : soldes, énergie, prix).
+   Refus = `{ok:false, reason:'need_gems'|'insufficient_funds', message, state}` ; rappeler avec `true` si le joueur
+   accepte la conversion. Helpers internes `_energy_refresh`, `_booster_cost`, `_gems_for_reels`, `_pick_rarity`,
+   `_state_json` (execute révoqué pour tous). Les cotes TIERS/DEMO_P sont dupliquées dans `_pick_rarity`.
+   Tests manuels : `supabase/tests/open_booster.sql`. Reste à faire : fonctions admin (ressources, reset, mode démo)
+   qui vérifient `profiles.is_admin`.
 4. Client : connexion anonyme au lancement, puis rattachement à un e-mail par code OTP
    (`updateUser({ email })` puis `verifyOtp({ type: 'email_change' })` : même `user.id`, la collection est conservée).
 
@@ -73,6 +77,11 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
   `boostersOuverts` → `profiles.boosters_opened`, `demo` → `profiles.demo_mode` (admin seulement),
   `collection[id].rating` → `films.vote_average`, `isToWatch/isWatched` → `collection.is_to_watch/is_watched`.
 - Admin : `profiles.is_admin`, posé à la main dans le SQL Editor, jamais modifiable par le client.
+
+### À décider plus tard
+- Le catalogue contient des courts-métrages (ex. « Chassé-croisé », Looney Tunes de 1951). Envisager un filtre de durée
+  (`with_runtime.gte` sur `/discover`) lors d'une prochaine mise à jour du catalogue : à appliquer aussi dans le jeu
+  tant que le client calcule ses propres classements.
 
 ## Règles
 
