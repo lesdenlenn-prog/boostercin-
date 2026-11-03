@@ -101,7 +101,8 @@ function discover(page, lte){
 }
 
 // Page globale g (1, 2, 3…) → page locale dans son segment, avec le seuil du segment. Mise en cache sur disque.
-const CACHE = path.join(ROOT, '.import-cache', new Date().toISOString().slice(0, 7));
+// -v2 : le cache garde aussi original_title (les pages des versions précédentes ne l'ont pas)
+const CACHE = path.join(ROOT, '.import-cache', new Date().toISOString().slice(0, 7) + '-v2');
 let fromCache = 0;
 async function getPage(g, lte){
   const file = path.join(CACHE, `page-${String(g).padStart(4, '0')}.json`);
@@ -111,7 +112,7 @@ async function getPage(g, lte){
   }catch{}
   const d = await discover((g - 1) % SEG_PAGES + 1, lte);
   const films = (d.results || []).map(m => ({
-    id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path,
+    id: m.id, title: m.title, original_title: m.original_title, release_date: m.release_date, poster_path: m.poster_path,
     overview: m.overview, vote_count: m.vote_count, vote_average: m.vote_average
   }));
   if(!films.length) throw new Fatal(`TMDB n'a renvoyé aucun film pour la page ${g}.`);
@@ -175,7 +176,7 @@ async function main(){
   console.log(`\n2/3 Envoi des fiches à Supabase (lots de ${nf(BATCH)})…`);
   const now = new Date().toISOString();
   const rows = ranked.map(m => ({
-    id: m.id, title: m.title || '(sans titre)', year: (m.release_date || '').slice(0, 4),
+    id: m.id, title: m.title || '(sans titre)', original_title: m.original_title || null, year: (m.release_date || '').slice(0, 4),
     poster_path: m.poster_path || null, overview: m.overview || '',
     vote_count: m.vote_count || 0, vote_average: m.vote_average || 0, updated_at: now
   }));

@@ -47,10 +47,9 @@ Déployé sur Vercel depuis ce dépôt GitHub (branche `main`).
 - Révélations Légendaire / Ultra très travaillées : **n'animer que `transform` et `opacity`**.
 
 ### Appels TMDB restants côté client
-Hors tirage, le client appelle encore TMDB avec la clé (facultative) du joueur : détails d'un film (`getDetails`),
-recherche de personnes (`searchPeople`), tendances et recherche de films (`loadWishTrending`, `searchMovies`, seuil
-`getPoolMinVotes`). Décision : la liste de souhaits lira la table `films` (4c), le reste passera par une Edge Function
-`tmdb` (4d). Aucune clé TMDB ne doit être dans `index.html`.
+Depuis le 4c, le client n'appelle plus TMDB que pour les détails d'un film (`getDetails`) et les personnes
+(`loadSuggestions`, `searchPeople`), avec la clé facultative du joueur. Décision : ces appels passeront par une Edge
+Function `tmdb` (4d). Aucune clé TMDB ne doit être dans `index.html`.
 
 ## Migration Supabase
 
@@ -76,7 +75,10 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      suivi à voir/vu écrit dans `collection`, outils admin (`.admin-only`, masqués si `is_admin` est faux).
      La clé TMDB devient facultative (bouton « Clé TMDB » de la Vidéothèque) : synopsis, personnes, liste de souhaits.
      Anciennes clés localStorage (`wallet`, `energy`, `collection`, `boostersOuverts`, `demo`, `rarity_model`) supprimées.
-   - 4c : Top Films, favoris, liste de souhaits dans `profiles` ; liste de souhaits cherchée dans la table `films`.
+   - **4c** : Top Films, favoris, liste de souhaits lus/écrits dans `profiles` (`loadProfile`, `saveProfile` ; en cas de
+     refus, on relit le serveur). Liste de souhaits : 30 films les plus populaires (`films` par `rank`) et recherche via
+     `search_films()` (migration `20261030160000_film_search.sql` : `films.original_title`, extension `unaccent`).
+     Le script d'import remplit `original_title` (cache `.import-cache/AAAA-MM-v2`). Plus aucun seuil TMDB côté client.
    - 4d : Edge Function `tmdb` (détails de film, recherche de personnes), suppression de la clé TMDB côté client.
    - 4e : rattachement à un e-mail par code OTP (8 chiffres ; `updateUser({ email })` puis
      `verifyOtp({ type: 'email_change' })` : même `user.id`). Nécessite SMTP personnalisé + modèles d'e-mail.

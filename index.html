@@ -1717,7 +1717,7 @@ function cancelWaapi(root){
 const buzz = p => { if(!RM && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } };
 
 /* =====================================================================
-   3. API TMDB (clé facultative : synopsis, personnes, liste de souhaits)
+   3. API TMDB (clé facultative : détails d'un film, recherche de personnes)
    ===================================================================== */
 async function tmdb(path, params = {}, keyOverride){
   const key = keyOverride || store.get('tmdb_key','');
@@ -1730,37 +1730,6 @@ async function tmdb(path, params = {}, keyOverride){
   if(r.status === 401) throw new Error('Clé TMDB refusée. Vérifie qu\'elle est complète.');
   if(!r.ok) throw new Error('Erreur TMDB (' + r.status + '). Réessaie dans un instant.');
   return r.json();
-}
-
-/* Seuil du catalogue pour la liste de souhaits (en attendant qu'elle lise la table films, étape 4c).
-   TMDB limite /discover à 500 pages (10 000 films) par requête : le classement est découpé en « segments » de 500 pages,
-   chacun avec vote_count.lte = nb de votes du dernier film du segment précédent.
-   Ces seuils coûtent 1 requête chacun ; ils sont gardés 7 jours dans le navigateur. */
-const SEG_PAGES = 500, THRESH_TTL = 7 * 24 * 3600 * 1000;
-let thresholds = store.get('vc_thresholds', null);
-if(!thresholds || Date.now() - thresholds.t > THRESH_TTL) thresholds = {t: Date.now(), v: []};
-const threshInflight = new Map();
-
-function discover(local, lte){
-  const params = {sort_by:'vote_count.desc', include_adult:'false', language:'fr-FR', page:local};
-  if(lte != null) params['vote_count.lte'] = lte;
-  return tmdb('/discover/movie', params);
-}
-function getThreshold(s){                      // s ≥ 1 : nb de votes du dernier film du segment s-1
-  if(thresholds.v[s] != null) return Promise.resolve(thresholds.v[s]);
-  if(threshInflight.has(s)) return threshInflight.get(s);
-  const p = (async () => {
-    const lte = s > 1 ? await getThreshold(s - 1) : null;
-    const d = await discover(SEG_PAGES, lte);
-    const last = d.results[d.results.length - 1];
-    if(!last) throw new Error('Classement TMDB incomplet. Réessaie dans un instant.');
-    thresholds.v[s] = last.vote_count;
-    store.set('vc_thresholds', thresholds);
-    return last.vote_count;
-  })();
-  threshInflight.set(s, p);
-  p.then(() => threshInflight.delete(s), () => threshInflight.delete(s));
-  return p;
 }
 /* =====================================================================
    3 bis. SUPABASE : session, fonctions SQL, booster tiré par le serveur
@@ -2927,10 +2896,32 @@ function closeProfile(){
 profileBtn.addEventListener('click', openProfile);
 $('#pmSettings').addEventListener('click', () => buzz(8));   // Paramètres : menu à venir
 
-/* ---------- Top Films : 4 cases (localStorage 'topFilms' = 4 identifiants de films ou null) ---------- */
+/* ---------- Vitrine du profil (Top Films, favoris, liste de souhaits) : colonnes top_films, favs, wishlist de profiles ----------
+   Ce sont les seules colonnes du profil modifiables par le joueur (le serveur vérifie que le Top Films ne contient que
+   des films possédés). Affichage immédiat, enregistrement en arrière-plan ; en cas de refus, on relit le serveur. */
+const PROFILE_SELECT = 'top_films,favs,wishlist';
+function applyProfile(p){
+  topFilms = Array.from({length:TOP_N}, (_, i) => p.top_films[i] ?? null);
+  const f = p.favs || {};
+  favs = {genres:[f.genres?.[0] ?? null, f.genres?.[1] ?? null], director:f.director || null, actor:f.actor || null};
+  wishlist = Array.from({length:WISH_N}, (_, i) => (p.wishlist || [])[i] || null);
+}
+async function loadProfile(){
+  const {data, error} = await sb.from('profiles').select(PROFILE_SELECT).eq('id', userId).single();
+  if(error) throw new Error(netMsg(error.message));
+  applyProfile(data);
+}
+function saveProfile(patch){
+  sb.from('profiles').update(patch).eq('id', userId).then(({error}) => {
+    if(!error) return;
+    srEl.textContent = 'Modification non enregistrée.';
+    loadProfile().then(() => { if(profileOpen){ renderTopFilms(); renderFavs(); renderWishlist(); } }, () => {});
+  });
+}
+
+/* ---------- Top Films : 4 cases (4 identifiants de films ou null) ---------- */
 const TOP_N = 4;
-let topFilms = store.get('topFilms', []);
-topFilms = Array.from({length:TOP_N}, (_, i) => topFilms[i] ?? null);
+let topFilms = Array(TOP_N).fill(null);
 const filmstrip = $('#filmstrip');
 let editKey = null;                                    // élément en mode édition : 'top:0'…'top:3', 'genre:0', 'genre:1', 'director' (null = aucun)
 function renderTopFilms(){
@@ -2958,7 +2949,7 @@ function setEditing(key){
 function stopEditing(){ if(editKey !== null) setEditing(null); }
 function removeTopFilm(i){
   topFilms[i] = null;
-  store.set('topFilms', topFilms);
+  saveProfile({top_films: topFilms});
   renderTopFilms();                                    // la case redevient vide : pellicule + « + »
   buzz(10);
 }
@@ -3062,8 +3053,8 @@ pickList.addEventListener('click', e => {
 // Film choisi → il remplit la case (sans en changer la taille). Un même film ne peut occuper qu'une case.
 function chooseTopFilm(i, id){
   topFilms = topFilms.map(x => String(x) === String(id) ? null : x);
-  topFilms[i] = id;
-  store.set('topFilms', topFilms);
+  topFilms[i] = +id;                                   // data-id (texte) → identifiant TMDB (nombre), comme en base
+  saveProfile({top_films: topFilms});
   renderTopFilms();
   closePicker();
   buzz(10);
@@ -3091,9 +3082,8 @@ const ACTOR_SILHOUETTE = '<svg viewBox="0 0 100 125" aria-hidden="true"><circle 
 const ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 .9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.4M13.8 10.5v5.4"/></svg>', ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.4 15 15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L9 18.6z"/><path d="m13.8 6.6 3.6 3.6"/></svg>';
 const personImg = (path, size = 'w185') => `https://image.tmdb.org/t/p/${size}${path}`;
 
-let favs = store.get('favs', null) || {};
-favs = {genres:[favs.genres?.[0] ?? null, favs.genres?.[1] ?? null], director:favs.director || null, actor:favs.actor || null};
-const saveFavs = () => store.set('favs', favs);
+let favs = {genres:[null, null], director:null, actor:null};   // director / actor = {id, name, photo}
+const saveFavs = () => saveProfile({favs});
 const favGrid = $('#favGrid');
 const editBtns = name => `<div class="tf-edit">
     <button class="tf-btn tf-del" type="button" tabindex="-1" aria-label="Retirer ${esc(name)}">${ICON_TRASH}</button>
@@ -3151,7 +3141,7 @@ function openFavModal(kind, i){
   $('#favMTitle').textContent = kind === 'genre' ? `Genre n° ${i + 1}` : kind === 'wish' ? `Souhait n° ${i + 1}` : PEOPLE[kind].title;
   gPane.hidden = kind !== 'genre'; dPane.hidden = !PEOPLE[kind]; wPane.hidden = kind !== 'wish';
   if(kind === 'genre'){ renderGenreGrid(); gPane.scrollTop = 0; }
-  else if(kind === 'wish'){ wSearch.value = ''; wQuery = ''; wClear.hidden = true; wResults = []; wSeq++; renderWishList(); wPane.scrollTop = 0; loadWishTrending(); }
+  else if(kind === 'wish'){ wSearch.value = ''; wQuery = ''; wClear.hidden = true; wResults = []; wSeq++; renderWishList(); wPane.scrollTop = 0; loadWishPopular(); }
   else{
     dSearch.value = ''; dQuery = ''; dClear.hidden = true; dResults = []; dSeq++;
     dSearch.placeholder = PEOPLE[kind].ph; dSearch.setAttribute('aria-label', PEOPLE[kind].ph.replace('…', ''));
@@ -3293,12 +3283,11 @@ dList.addEventListener('click', e => {
 
 
 /* =====================================================================
-   LISTE DE SOUHAITS : 3 films que le joueur n'a pas encore (localStorage 'wishlist')
-   Recherche dans TOUT le catalogue du jeu (TMDB /search/movie), pas dans la vidéothèque.
+   LISTE DE SOUHAITS : 3 films que le joueur n'a pas encore (colonne wishlist de profiles)
+   Recherche dans TOUT le catalogue du jeu (table films, fonction search_films), pas dans la vidéothèque.
    ===================================================================== */
 const WISH_N = 3;
-let wishlist = store.get('wishlist', []);
-wishlist = Array.from({length:WISH_N}, (_, i) => wishlist[i] || null);   // {id, title, year, poster} ou null
+let wishlist = Array(WISH_N).fill(null);                // {id, title, year, poster} ou null
 const wishstrip = $('#wishstrip');
 function wishCardHTML(w){
   return `<div class="card r-wish" title="${esc(w.title)}">
@@ -3318,7 +3307,7 @@ wishstrip.addEventListener('click', e => {
   const slot = e.target.closest('.tf-slot');
   if(!slot) return;
   const i = +slot.dataset.i;
-  if(e.target.closest('.tf-del')){ wishlist[i] = null; store.set('wishlist', wishlist); renderWishlist(); buzz(10); return; }   // poubelle
+  if(e.target.closest('.tf-del')){ wishlist[i] = null; saveProfile({wishlist}); renderWishlist(); buzz(10); return; }   // poubelle
   if(e.target.closest('.tf-pen') || !slot.classList.contains('filled')){ stopEditing(); openFavModal('wish', i); return; }      // crayon ou « + »
   if(editKey === 'wish:' + i){ stopEditing(); return; }
   setEditing('wish:' + i); buzz(6);
@@ -3327,24 +3316,15 @@ wishstrip.addEventListener('keydown', e => {
   if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tf-slot')){ e.preventDefault(); e.target.click(); }
 });
 
-/* ---------- Catalogue du jeu ----------
-   Le jeu = les 30 000 films les plus votés de TMDB. Le 30 000e a N votes (seuil mis en cache 7 jours) :
-   un film est « dans le jeu » s'il a au moins N votes (et une affiche). */
-let poolMinVotes = null;
-function getPoolMinVotes(){
-  if(poolMinVotes != null) return Promise.resolve(poolMinVotes);
-  const seg = Math.ceil(Math.ceil(TIERS[TIERS.length - 1].ranks[1] / 20) / SEG_PAGES);   // = 3 → dernier film du 3e segment
-  return getThreshold(seg).then(v => (poolMinVotes = v), () => 0);                      // en cas d'échec : pas de seuil
-}
-const inPool = (m, min) => m && m.poster_path && (m.vote_count || 0) >= min;
-const slimMovie = m => ({id:m.id, title:m.title || m.original_title || '', year:(m.release_date || '').slice(0, 4), poster:m.poster_path});
+/* ---------- Catalogue du jeu : table films (rank non nul = film du jeu, du plus voté au moins voté) ---------- */
+const wishMovie = f => ({id:f.id, title:f.title, year:f.year || '', poster:f.poster_path});
 
-let wQuery = '', wResults = [], wShown = [], wTrending = null, wSeq = 0, wTimer = null;
-function loadWishTrending(){
-  if(wTrending){ renderWishList(); return; }
-  Promise.all([tmdb('/trending/movie/week', {language:'fr-FR'}), getPoolMinVotes()])
-    .then(([r, min]) => { wTrending = (r.results || []).filter(m => inPool(m, min)).map(slimMovie); })
-    .catch(() => { wTrending = []; })
+let wQuery = '', wResults = [], wShown = [], wPopular = null, wSeq = 0, wTimer = null;
+// Avant toute saisie : les 30 films les plus populaires du jeu
+function loadWishPopular(){
+  if(wPopular){ renderWishList(); return; }
+  sb.from('films').select('id,title,year,poster_path').not('rank', 'is', null).not('poster_path', 'is', null).order('rank').limit(30)
+    .then(({data, error}) => { wPopular = error ? [] : data.map(wishMovie); })
     .then(() => { if(favMode === 'wish' && !wQuery.trim()) renderWishList(); });
 }
 function renderWishList(msg){
@@ -3352,9 +3332,9 @@ function renderWishList(msg){
   if(msg){ wList.innerHTML = `<p class="fm-msg">${msg}</p>`; return; }
   let head = '';
   if(!wQuery.trim()){
-    if(!wTrending){ wList.innerHTML = '<p class="fm-msg">Chargement des tendances…</p>'; return; }
-    if(!wTrending.length){ wList.innerHTML = '<p class="fm-msg">Tape le titre d’un film que tu aimerais obtenir.</p>'; return; }
-    wShown = wTrending; head = '<p class="fm-sub">TENDANCES DE LA SEMAINE</p>';
+    if(!wPopular){ wList.innerHTML = '<p class="fm-msg">Chargement des films populaires…</p>'; return; }
+    if(!wPopular.length){ wList.innerHTML = '<p class="fm-msg">Tape le titre d’un film que tu aimerais obtenir.</p>'; return; }
+    wShown = wPopular; head = '<p class="fm-sub">LES PLUS POPULAIRES DU JEU</p>';
   }else{
     if(!wResults.length){ wList.innerHTML = `<p class="fm-msg">Aucun film du jeu ne correspond à « ${esc(wQuery.trim())} ».</p>`; return; }
     wShown = wResults;
@@ -3368,19 +3348,13 @@ function renderWishList(msg){
       `<b>${esc(m.title)}</b><small>${esc(m.year || '—')}</small></button>`;
   }).join('') + '</div>';
 }
+// Titre français ou original, sans tenir compte des accents ; 30 résultats au plus, du plus voté au moins voté
 async function searchMovies(q){
   const seq = ++wSeq;
   try{
-    const params = {query:q, language:'fr-FR', include_adult:'false'};
-    const [first, min] = await Promise.all([tmdb('/search/movie', params), getPoolMinVotes()]);
+    const found = await rpc('search_films', {p_query:q});
     if(seq !== wSeq) return;
-    const second = (first.total_pages || 1) > 1 ? await tmdb('/search/movie', {...params, page:2}).catch(() => ({results:[]})) : {results:[]};
-    if(seq !== wSeq) return;
-    const seen = new Set();
-    wResults = [...(first.results || []), ...(second.results || [])]
-      .filter(m => inPool(m, min) && !seen.has(m.id) && seen.add(m.id))     // uniquement les films qui existent dans le jeu
-      .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
-      .slice(0, 30).map(slimMovie);
+    wResults = found.map(wishMovie);
     renderWishList();
   }catch(err){
     if(seq === wSeq) renderWishList(esc(err.message || 'Recherche impossible pour le moment.'));
@@ -3403,7 +3377,7 @@ wList.addEventListener('click', e => {
   if(!m) return;
   wishlist = wishlist.map(w => (w && w.id === m.id ? null : w));          // un film n'occupe qu'une case
   wishlist[favIdx] = m;
-  store.set('wishlist', wishlist);
+  saveProfile({wishlist});
   renderWishlist(); closeFavModal(); buzz(10);
 });
 
@@ -3880,6 +3854,7 @@ $('#resetCol').addEventListener('click', async () => {
   try{
     const r = await rpc('admin_reset_collection');
     colCache = {}; nameCache.clear(); applyState(r.state); renderShelf();
+    topFilms = Array(TOP_N).fill(null);                // vidé aussi par le serveur (plus aucun film possédé)
   }catch(err){ adminError(err); }
 });
 $('#demoBtn').addEventListener('click', async () => {
@@ -3889,14 +3864,15 @@ $('#demoBtn').addEventListener('click', async () => {
 /* =====================================================================
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
    ===================================================================== */
-const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model'];   // données locales v53 : on repart de zéro
+const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model',   // données locales v53 : on repart de zéro
+                  'topFilms', 'favs', 'wishlist', 'vc_thresholds'];
 async function boot(){
   $('#bootTitle').textContent = 'Connexion…';
   $('#bootStatus').textContent = '';
   $('#bootRetry').hidden = true;
   try{
     await ensureSession();
-    const [st] = await Promise.all([rpc('get_booster_state'), loadCollection()]);
+    const [st] = await Promise.all([rpc('get_booster_state'), loadCollection(), loadProfile()]);
     applyState(st);
     OLD_KEYS.forEach(k => store.del(k));
     $('#boot').classList.add('hidden');
