@@ -47,9 +47,9 @@ Déployé sur Vercel depuis ce dépôt GitHub (branche `main`).
 - Révélations Légendaire / Ultra très travaillées : **n'animer que `transform` et `opacity`**.
 
 ### Appels TMDB restants côté client
-Depuis le 4c, le client n'appelle plus TMDB que pour les détails d'un film (`getDetails`) et les personnes
-(`loadSuggestions`, `searchPeople`), avec la clé facultative du joueur. Décision : ces appels passeront par une Edge
-Function `tmdb` (4d). Aucune clé TMDB ne doit être dans `index.html`.
+Depuis le 4d, le client n'appelle plus TMDB directement : détails d'un film (`getDetails`) et personnes
+(`loadSuggestions`, `searchPeople`) passent par l'Edge Function `tmdb`. Les images restent servies par
+`image.tmdb.org` (pas de clé). Aucune clé TMDB ne doit être dans `index.html`.
 
 ## Migration Supabase
 
@@ -79,7 +79,11 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      refus, on relit le serveur). Liste de souhaits : 30 films les plus populaires (`films` par `rank`) et recherche via
      `search_films()` (migration `20261030160000_film_search.sql` : `films.original_title`, extension `unaccent`).
      Le script d'import remplit `original_title` (cache `.import-cache/AAAA-MM-v2`). Plus aucun seuil TMDB côté client.
-   - 4d : Edge Function `tmdb` (détails de film, recherche de personnes), suppression de la clé TMDB côté client.
+   - **4d** : Edge Function `supabase/functions/tmdb/index.ts` (déployée depuis le tableau de bord, secret
+     `TMDB_API_KEY`, « Verify JWT » activé + `withSupabase({ auth: 'user' })`). Liste blanche : `/movie/{id}`,
+     `/search/person`, `/person/popular`, `/trending/person/week`, paramètres validés. Le client appelle
+     `sb.functions.invoke('tmdb', { body: { path, params } })` dans `tmdb()`. Plus d'écran ni de clé TMDB côté client.
+     Toute modification de la fonction doit être recollée dans l'éditeur du tableau de bord puis redéployée.
    - 4e : rattachement à un e-mail par code OTP (8 chiffres ; `updateUser({ email })` puis
      `verifyOtp({ type: 'email_change' })` : même `user.id`). Nécessite SMTP personnalisé + modèles d'e-mail.
      4a à 4d ne doivent dépendre d'aucun e-mail.

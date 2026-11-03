@@ -435,14 +435,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .caption:empty{display:none}
 .caption .err{color:#ff9b9b}
 
-/* ================= CONNEXION (écran de démarrage) et CLÉ TMDB (facultative) ================= */
+/* ================= CONNEXION (écran de démarrage) ================= */
 .setup{position:absolute;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:var(--bg)}
 .setup-card{width:100%;max-width:420px;background:var(--surface);border-radius:16px;padding:20px;box-shadow:inset 0 0 0 1px var(--line)}
 .setup h2{margin:0 0 6px;font-size:1.15rem}
 .setup p{margin:0 0 12px;color:var(--muted)}
-.setup form{display:flex;gap:8px;flex-wrap:wrap}
-.setup input{flex:1;min-width:200px;min-height:46px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:0 12px;
-  font-size:16px;-webkit-user-select:text;user-select:text}
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
 /* ================= CARTES ================= */
@@ -1323,20 +1320,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
   </section>
 
-  <!-- Clé TMDB facultative : synopsis, recherche de personnes et liste de souhaits (en attendant le serveur) -->
-  <section class="setup hidden" id="setup">
-    <div class="setup-card">
-      <h2>Clé TMDB (facultative)</h2>
-      <p>Elle sert encore au synopsis des films, à la recherche de réalisateurs et d'acteurs et à la liste de souhaits. Crée un compte gratuit sur themoviedb.org, puis demande une clé dans Paramètres, API. La clé v3 et le jeton v4 fonctionnent tous les deux. Elle reste dans ton navigateur.</p>
-      <form id="keyForm">
-        <input id="keyInput" type="password" autocomplete="off" placeholder="Clé API ou jeton d'accès" aria-label="Clé API TMDB" required>
-        <button class="btn" type="submit">Enregistrer</button>
-        <button class="btn ghost" id="keyBack" type="button">Retour</button>
-      </form>
-      <p class="err" id="keyStatus" role="status"></p>
-    </div>
-  </section>
-
   <div class="app hidden hud-on" id="app" data-page="home">
     <!-- HUD : profil + ressources (flottent au-dessus des pages Accueil et Magasin) -->
     <div class="hud">
@@ -1480,7 +1463,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <footer class="sfoot">
         <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
         <button class="admin-only" id="demoBtn" hidden></button>
-        <button id="changeKey">Clé TMDB (synopsis et recherches)</button>
         <button class="admin-only" id="resetCol" hidden>Vider ma collection</button>
       </footer>
     </section>
@@ -1717,19 +1699,17 @@ function cancelWaapi(root){
 const buzz = p => { if(!RM && navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } };
 
 /* =====================================================================
-   3. API TMDB (clé facultative : détails d'un film, recherche de personnes)
+   3. API TMDB (détails d'un film, recherche de personnes)
+   Relayée par l'Edge Function « tmdb » : la clé TMDB reste sur le serveur, seuls les joueurs connectés y ont accès.
    ===================================================================== */
-async function tmdb(path, params = {}, keyOverride){
-  const key = keyOverride || store.get('tmdb_key','');
-  const url = new URL('https://api.themoviedb.org/3' + path);
-  const headers = {};
-  if(key.length > 40) headers.Authorization = 'Bearer ' + key;
-  else url.searchParams.set('api_key', key);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
-  const r = await fetch(url, {headers});
-  if(r.status === 401) throw new Error('Clé TMDB refusée. Vérifie qu\'elle est complète.');
-  if(!r.ok) throw new Error('Erreur TMDB (' + r.status + '). Réessaie dans un instant.');
-  return r.json();
+async function tmdb(path, params = {}){
+  const {data, error} = await sb.functions.invoke('tmdb', {body:{path, params}});
+  if(error && error.context && error.context.json){            // refus de la fonction : la raison exacte dans la console
+    error.context.json().then(b => console.warn('tmdb', path, error.context.status, b.error || b), () => {});
+  }
+  if(error) throw new Error(error.name === 'FunctionsFetchError' ? netMsg('fetch')                   // réseau coupé
+                                                                : 'TMDB indisponible pour le moment. Réessaie dans un instant.');
+  return data;
 }
 /* =====================================================================
    3 bis. SUPABASE : session, fonctions SQL, booster tiré par le serveur
@@ -3186,7 +3166,7 @@ const PEOPLE = {
 const DIRECTOR_BACKUP = ['Christopher Nolan', 'Steven Spielberg', 'Quentin Tarantino', 'Martin Scorsese', 'Denis Villeneuve', 'Hayao Miyazaki',
   'David Fincher', 'Ridley Scott', 'James Cameron', 'Stanley Kubrick', 'Wes Anderson', 'Tim Burton', 'Alfred Hitchcock', 'Peter Jackson'];
 const SUGGEST_TTL = 24 * 3600 * 1000;
-let suggestCache = store.get('peopleSuggest2', null);   // v47 : nouvelle liste (24 acteurs)
+let suggestCache = store.get('peopleSuggest3', null);   // v3 : relais TMDB serveur (la v2 a pu garder une liste vide)
 if(!suggestCache || Date.now() - suggestCache.t > SUGGEST_TTL) suggestCache = {t:Date.now(), director:null, actor:null};
 const suggestJobs = {};
 const slimPerson = p => ({id:p.id, name:p.name, profile_path:p.profile_path || null, popularity:p.popularity || 0,
@@ -3210,7 +3190,7 @@ function loadSuggestions(kind){
       list = list.concat(found.filter(keep));
     }
     suggestCache[kind] = list.slice(0, PEOPLE[kind].max).map(slimPerson);   // 10 réalisateurs, 24 acteurs
-    store.set('peopleSuggest2', suggestCache);
+    store.set('peopleSuggest3', suggestCache);
     return suggestCache[kind];
   })().finally(() => { delete suggestJobs[kind]; });
   suggestJobs[kind].then(() => { if(favMode === kind && !dQuery.trim()) renderDirList(); })
@@ -3819,7 +3799,7 @@ $('#recap').addEventListener('click', e => {
 })();
 
 /* =====================================================================
-   16. CLÉ TMDB (facultative) ET RÉGLAGES
+   16. RÉGLAGES (outils de test admin)
    ===================================================================== */
 function updateDemoBtn(){ $('#demoBtn').textContent = demoOn() ? 'Mode démo activé : cotes élevées, collection protégée (désactiver)' : 'Activer le mode démo (cotes élevées pour tester les effets)'; }
 // Outils de test visibles seulement pour l'admin (profiles.is_admin) ; les joueurs voient « La boutique ouvre bientôt »
@@ -3828,26 +3808,6 @@ function updateAdminUI(){
   $('#shopSoon').hidden = player.admin;
   updateDemoBtn();
 }
-function showKeyScreen(on){
-  $('#setup').classList.toggle('hidden', !on);
-  $('#app').classList.toggle('hidden', on);
-  if(!on) measureTitle();
-}
-
-$('#keyForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const key = $('#keyInput').value.trim(), st = $('#keyStatus');
-  st.textContent = 'Vérification…';
-  try{
-    await tmdb('/configuration', {}, key);
-    store.set('tmdb_key', key); $('#keyInput').value = ''; st.textContent = '';
-    showKeyScreen(false);
-  }catch(err){
-    st.textContent = err.name === 'TypeError' ? 'Impossible de joindre TMDB. Vérifie ta connexion.' : err.message;
-  }
-});
-$('#keyBack').addEventListener('click', () => showKeyScreen(false));
-$('#changeKey').addEventListener('click', () => { $('#keyStatus').textContent = ''; showKeyScreen(true); });
 // OUTILS DE TEST (admin) : vider sa collection, mode démo
 $('#resetCol').addEventListener('click', async () => {
   if(!confirm('Supprimer toutes les cartes de ta collection ?')) return;
@@ -3865,7 +3825,8 @@ $('#demoBtn').addEventListener('click', async () => {
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
    ===================================================================== */
 const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model',   // données locales v53 : on repart de zéro
-                  'topFilms', 'favs', 'wishlist', 'vc_thresholds'];
+                  'topFilms', 'favs', 'wishlist', 'vc_thresholds', 'tmdb_key',    // la clé TMDB est désormais sur le serveur
+                  'peopleSuggest2'];
 async function boot(){
   $('#bootTitle').textContent = 'Connexion…';
   $('#bootStatus').textContent = '';
