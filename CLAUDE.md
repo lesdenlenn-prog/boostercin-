@@ -43,7 +43,7 @@ Déployé sur Vercel depuis ce dépôt GitHub (branche `main`).
   `boostersOuverts` (statistique).
 
 ### Interface (ne pas modifier sans demande)
-- 5 pages en carrousel : Magasin, Marché, Accueil, Vidéothèque, Amis. HUD profil + ressources.
+- 6 pages en carrousel : Magasin, Marché, Accueil, Vidéothèque, Cinéma, Amis. HUD profil + ressources (Billets sur la page Cinéma).
 - Révélations Légendaire / Ultra très travaillées : **n'animer que `transform` et `opacity`**.
 
 ### Appels TMDB restants côté client
@@ -106,7 +106,12 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      chaque appel (chantier échu, revenu au taux d'avant, nouveau taux). API : `get_cinema_state`, `collect_cash`,
      `start_build(kind)`, `finish_build_with_gems(p_max_gems)`, `set_screening(screen, film)` (film déplacé s'il est déjà
      projeté), `admin_add_tickets`, `admin_finish_build`, `admin_reset_cinema`. Tests : `supabase/tests/cinema.sql`.
-   - À venir : C2 onglet « Cinéma » (6e page, avant Amis) + HUD Billets + récolte, C3 constructions, C4 films, C5 SVG cartoon.
+   - **C2** (à tester) : onglet « Cinéma » (6e page, avant Amis ; barre resserrée sous 360 px), HUD Billets + gemmes sans profil
+     ni bobines, section « CINÉMA » du script : `applyCinema` (dates du serveur ramenées à l'horloge du téléphone via
+     `server_now`), caisse qui monte localement jusqu'à `full_at`, jauge 12 h (`scaleX`), `collect_cash`, plan SVG simple
+     `cinePlanSvg` (20 emplacements, hall, guichet, arcade, équipements, chantier + minuteur), outils admin. État relu à chaque
+     visite de la page et au retour dans l'appli ; chantier échu → relecture du serveur.
+   - À venir : C3 constructions, C4 films, C5 SVG cartoon.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.

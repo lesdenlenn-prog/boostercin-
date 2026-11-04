@@ -40,26 +40,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .app{--bar:calc(62px + env(safe-area-inset-bottom,0px));position:relative;height:100%;max-width:560px;margin:0 auto;overflow:hidden}
 .view{position:absolute;left:0;right:0;top:0;bottom:var(--bar)}
-/* Ruban horizontal des 5 pages (carrousel « Clash Royale ») : Magasin · Marché · Accueil · Vidéothèque · Amis.
-   La piste fait 500 % de large ; on la décale de -20 % par page. Pendant le glissement (.dragging),
+/* Ruban horizontal des 6 pages (carrousel « Clash Royale ») : Magasin · Marché · Accueil · Vidéothèque · Cinéma · Amis.
+   La piste fait 600 % de large ; on la décale d'un sixième (-16,67 %) par page. Pendant le glissement (.dragging),
    la transition est coupée pour que la page suive exactement le doigt. */
 .pager{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden}   /* les pages descendent sous la barre : rien de vide quand elle se cache */
-.track{display:flex;width:500%;height:100%;will-change:transform;
+.track{display:flex;width:600%;height:100%;will-change:transform;
   transition:transform .34s cubic-bezier(.22,.8,.24,1)}
 .track.dragging{transition:none}
-.track > .view{position:relative;inset:auto;flex:0 0 20%;width:20%;height:100%;padding-bottom:var(--bar)}
+.track > .view{position:relative;inset:auto;flex:0 0 calc(100% / 6);width:calc(100% / 6);height:100%;padding-bottom:var(--bar)}
 .track > .view-shop,.track > .view-ph{padding-bottom:calc(var(--bar) + 24px)}
 
 /* ================= BARRE DE NAVIGATION ================= */
-/* 5 onglets : Magasin · Marché · Accueil · Vidéothèque · Amis — toujours visibles, fixés en bas.
+/* 6 onglets : Magasin · Marché · Accueil · Vidéothèque · Cinéma · Amis — toujours visibles, fixés en bas.
    Inactif : fond noir, icône + texte clairs. Actif : fond doré (couleur Légendaire), icône + texte noirs,
    et il s'élargit en douceur (flex-grow 1 → 1.5, effet accordéon). */
 .bottombar{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:stretch;gap:3px;height:var(--bar);
   padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
   background:#000;border-top:1px solid rgba(255,255,255,.08)}
 .tabbtn{flex:1 1 0;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  padding:0 2px;border:0;border-radius:14px;background:transparent;color:#efe6dc;
-  font-weight:800;font-size:clamp(.54rem,2.45vw,.68rem);letter-spacing:-.01em;
+  padding:0 1px;border:0;border-radius:14px;background:transparent;color:#efe6dc;
+  font-weight:800;font-size:clamp(.5rem,2.2vw,.66rem);letter-spacing:-.02em;   /* 6 onglets : « Vidéothèque » tient en entier */
   transition:flex-grow .3s ease,background-color .3s ease,color .3s ease,box-shadow .3s ease}
 .tabbtn span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabbtn svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;   /* style « rounded » */
@@ -69,7 +69,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .tabbtn[aria-current="page"]::before,.tabbtn[aria-current="page"] + .tabbtn::before{opacity:0}
 /* Onglet actif : même fond sombre et même couleur claire que les autres ; il s'élargit (flex-grow)
    et une fine ligne dorée lumineuse apparaît tout en haut, au-dessus de l'icône. */
-.tabbtn[aria-current="page"]{flex-grow:1.5}
+.tabbtn[aria-current="page"]{flex-grow:1.25}
 .tabbtn[aria-current="page"] span{color:var(--legendary);text-shadow:none}   /* texte doré, net et plat (pas de halo) */
 .tabbtn::after{content:'';position:absolute;top:-6px;left:12%;right:12%;height:3px;border-radius:0 0 3px 3px;   /* 76 % de la largeur, centrée */
   background:var(--legendary);box-shadow:0 0 8px rgba(246,196,83,.95),0 0 18px rgba(246,196,83,.55);
@@ -82,6 +82,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .tabbtn:disabled{cursor:not-allowed}
 .tabbtn:disabled:not([aria-current]){opacity:.4}
 @media (max-width:340px){.tabbtn{font-size:.5rem}.tabbtn svg{width:21px;height:21px}}   /* très petits écrans : « Vidéothèque » tient en entier */
+@media (max-width:360px){   /* 6 onglets sur petit écran : barre resserrée, l'onglet actif s'élargit moins */
+  .bottombar{gap:2px;padding-left:4px;padding-right:4px}
+  .tabbtn{letter-spacing:-.04em}
+  .tabbtn[aria-current="page"]{flex-grow:1.1}}
 
 /* Pages « en construction » (Magasin, Marché, Amis) */
 .view-ph{display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;
@@ -89,6 +93,54 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
              radial-gradient(120% 80% at 50% 35%,#3a0b13 0%,#16070b 60%,#0b0406 100%)}
 .view-ph p{margin:0;font-family:'Limelight','Bricolage Grotesque',serif;font-size:1.5rem;letter-spacing:.03em;color:#fff1c4;
   text-shadow:0 0 10px rgba(246,196,83,.45)}
+
+/* =====================================================================
+   CINÉMA (mode gestion) : plan en haut (~60 %), caisse en bas.
+   Seuls transform et opacity sont animés ; rien ne bouge avec prefers-reduced-motion.
+   ===================================================================== */
+.view-cine{display:flex;flex-direction:column;
+  padding-top:calc(env(safe-area-inset-top,0px) + 86px);   /* sous le HUD (Billets + gemmes) */
+  background:radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.12),transparent 70%),
+             radial-gradient(120% 80% at 50% 35%,#3a0b13 0%,#16070b 60%,#0b0406 100%)}
+.cine-title{position:absolute;left:18px;top:calc(env(safe-area-inset-top,0px) + 22px);margin:0;
+  font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:clamp(1.2rem,6.2vw,1.7rem);letter-spacing:.04em;
+  color:#fff1c4;text-shadow:0 0 10px rgba(246,196,83,.45)}
+.cine-plan{flex:1 1 auto;min-height:0;padding:0 10px}
+.cine-plan svg{display:block;width:100%;height:100%}
+.cine-foot{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 18px 16px}
+.cine-rate{margin:0;font-weight:800;font-size:.95rem;color:#ffe3da;display:flex;align-items:center;gap:6px}
+.cine-rate b{color:#8af5b9}
+.cine-rate svg{width:20px;height:20px}
+.cine-collect{position:relative;overflow:hidden;width:100%;max-width:340px;height:58px;padding:0 18px;border:0;border-radius:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#2a0a10;color:#fff6e0;font-weight:800;font-size:1.08rem;text-shadow:0 1px 2px rgba(0,0,0,.5);
+  box-shadow:inset 0 0 0 2px rgba(138,245,185,.5),0 6px 16px rgba(0,0,0,.35);transition:transform .12s ease,opacity .2s}
+.cine-collect:not(:disabled):active{transform:scale(.97)}
+.cine-collect:disabled{opacity:.55;cursor:default}
+/* jauge de remplissage sur 12 h : scaleX seulement */
+.cc-fill{position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(0);
+  background:linear-gradient(90deg,#14693c,#2fbf71);transition:transform 1s linear}
+.cine-collect.full{box-shadow:inset 0 0 0 2px #f6c453,0 0 18px rgba(246,196,83,.45),0 6px 16px rgba(0,0,0,.35)}
+.cine-collect.full .cc-fill{background:linear-gradient(90deg,#b77a12,#f6c453)}
+.cc-label,.cc-amount{position:relative}
+.cc-amount{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.cc-amount svg{width:24px;height:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.cc-float{position:absolute;left:50%;top:0;z-index:2;pointer-events:none;font-weight:800;font-size:1.3rem;color:#8af5b9;
+  text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap}
+.cine-cap{margin:0;min-height:1.2em;font-size:.8rem;color:rgba(255,227,218,.75);text-align:center}
+.cine-err{margin:0;font-size:.85rem;font-weight:700;color:#ffb3a3;text-align:center}
+.cine-admin{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:4px}
+.cine-admin[hidden]{display:none}
+.cine-admin button{min-height:32px;padding:0 10px;border:1.5px dashed rgba(255,140,120,.5);border-radius:10px;
+  background:transparent;color:#ffb3a3;font-weight:800;font-size:.7rem;letter-spacing:.04em}
+/* plan : échafaudage qui « respire » pendant une construction */
+.cp-build{animation:cp-build 1.6s ease-in-out infinite alternate}
+@keyframes cp-build{from{opacity:.55}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.cp-build{animation:none}.cc-fill{transition:none}}
+/* HUD de la page Cinéma : Billets + gemmes, sans profil ni bobines */
+.res-tickets{display:none}
+.app[data-page="cinema"] .res-tickets{display:flex}
+.app[data-page="cinema"] .res-reels{display:none}
 
 /* =====================================================================
    HUD DE L'ACCUEIL : profil (haut gauche) + ressources (haut droite)
@@ -119,6 +171,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .hud-avatar{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.3rem;line-height:1;
   background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.35);text-shadow:none}   /* future photo de profil */
 .app[data-page="shop"] .hud-profile,
+.app[data-page="cinema"] .hud-profile,
 .app.is-selecting .hud-profile{opacity:0;visibility:hidden;pointer-events:none}   /* Magasin et sélection d'un booster : ressources seules */
 /* Compteurs : pilules plus basses que leur icône → l'icône déborde (overflow visible) */
 .hud-res{display:flex;flex-direction:column;gap:12px;align-items:flex-end;margin-right:18px}   /* marge pour l'icône qui déborde à droite */
@@ -1332,6 +1385,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <linearGradient id="gemGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#c79bff"/><stop offset=".5" stop-color="#8a3ffc"/><stop offset="1" stop-color="#5a17c9"/>
     </linearGradient>
+    <linearGradient id="ticketGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8af5b9"/><stop offset=".5" stop-color="#2fbf71"/><stop offset="1" stop-color="#16824a"/>
+    </linearGradient>
     <linearGradient id="iceGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#b6d1fc"/><stop offset="1" stop-color="#5b1eff"/>
     </linearGradient>
@@ -1341,6 +1397,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <path d="M7.6 4.5h8.8a2 2 0 0 1 1.6.8l2.6 3.5a1.6 1.6 0 0 1-.1 2l-7.4 8.7a1.4 1.4 0 0 1-2.2 0l-7.4-8.7a1.6 1.6 0 0 1-.1-2L6 5.3a2 2 0 0 1 1.6-.8z" fill="url(#gemGrad)" stroke="#3b0d8f" stroke-width="1.2" stroke-linejoin="round"/>
     <path d="M3.7 9.7h16.6M9.7 4.8 8.6 9.7l3.4 9.2 3.4-9.2-1.1-4.9" fill="none" stroke="#e4ccff" stroke-opacity=".75" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
     <path d="M7.2 6.4 6 8.2" stroke="#fff" stroke-opacity=".8" stroke-width="1.2" stroke-linecap="round"/>
+  </symbol>
+  <!-- ticket vert (ressource « Billets » du Cinéma) -->
+  <symbol id="ticket" viewBox="0 0 24 24">
+    <g transform="rotate(-14 12 12)">
+      <path d="M3 7.6a1.1 1.1 0 0 1 1.1-1.1h15.8A1.1 1.1 0 0 1 21 7.6v2.2a2.2 2.2 0 0 0 0 4.4v2.2a1.1 1.1 0 0 1-1.1 1.1H4.1A1.1 1.1 0 0 1 3 16.4v-2.2a2.2 2.2 0 0 0 0-4.4z" fill="url(#ticketGrad)" stroke="#0b4728" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M15.6 7.4v9.2" fill="none" stroke="#dcffeb" stroke-opacity=".85" stroke-width="1" stroke-dasharray="1.3 1.3"/>
+      <path d="M6.4 10.4h5.8M6.4 13.4h3.8" fill="none" stroke="#efffF5" stroke-opacity=".9" stroke-width="1.4" stroke-linecap="round"/>
+    </g>
   </symbol>
   <symbol id="reel-ice" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="46" fill="url(#iceGrad)" mask="url(#reelMask)"/>
@@ -1370,7 +1434,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <div class="hud">
       <button class="hud-profile" id="profileBtn" type="button" aria-haspopup="dialog"><span class="hud-avatar" aria-hidden="true">🎞️</span><span class="hud-name" id="hudName">Profil</span></button>
       <div class="hud-res">
-        <div class="res" aria-label="Bobines">
+        <!-- Billets : seulement sur la page Cinéma (ils servent à agrandir le cinéma, gagnés à la caisse) -->
+        <div class="res res-tickets" aria-label="Billets">
+          <span class="res-val" id="valTickets">0</span>
+          <svg class="res-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg>
+        </div>
+        <div class="res res-reels" aria-label="Bobines">
           <button class="res-plus" type="button" data-goto="shop" aria-label="Obtenir des bobines"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
           <span class="res-val" id="valReels">0</span>
           <svg class="res-ico" viewBox="0 0 100 100" aria-hidden="true"><use href="#reel"/></svg>
@@ -1390,7 +1459,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
 
     <div class="pager" id="pager">
-      <div class="track dragging" id="track" style="transform:translateX(-40%)">
+      <div class="track dragging" id="track" style="transform:translateX(calc(-200% / 6))">
     <section class="view view-shop" id="view-shop" aria-label="Magasin">
       <h2 class="shop-title">Magasin</h2>
       <p class="shop-soon" id="shopSoon">La boutique ouvre bientôt.</p>
@@ -1517,6 +1586,27 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <button class="admin-only" id="resetCol" hidden>Vider ma collection</button>
       </footer>
     </section>
+    <!-- Cinéma (mode gestion) : plan SVG généré depuis l'état du serveur + caisse. Tout est calculé par Supabase. -->
+    <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
+      <h2 class="cine-title">Mon cinéma</h2>
+      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma"></div>
+      <div class="cine-foot">
+        <p class="cine-rate" id="cineRate">&nbsp;</p>
+        <button class="cine-collect" id="cineCollect" type="button" disabled>
+          <span class="cc-fill" id="cineFill"></span>
+          <span class="cc-label">Récolter la caisse</span>
+          <span class="cc-amount"><span id="cinePending">0</span><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg></span>
+        </button>
+        <p class="cine-cap" id="cineCap" role="status">&nbsp;</p>
+        <p class="cine-err" id="cineErr" role="alert" hidden></p>
+        <!-- OUTILS DE TEST : réservés à l'admin -->
+        <div class="cine-admin admin-only" hidden>
+          <button type="button" id="cineAddT">+1 000 billets</button>
+          <button type="button" id="cineFinish">Terminer la construction</button>
+          <button type="button" id="cineReset">Réinitialiser le cinéma</button>
+        </div>
+      </div>
+    </section>
     <section class="view view-ph" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
       </div>
     </div>
@@ -1541,6 +1631,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <!-- étagère (inchangée) -->
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="4" height="12" rx="1.6"/><rect x="9.5" y="3.5" width="4" height="14.5" rx="1.6"/><rect x="15.3" y="6.8" width="3.8" height="11" rx="1.5" transform="rotate(16 17.2 12.3)"/><path d="M3 21h18"/></svg>
         <span>Vidéothèque</span>
+      </button>
+      <button class="tabbtn" id="tab-cinema" data-view="cinema">
+        <!-- bâtiment de cinéma : fronton, enseigne, porte -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5h18"/><path d="M5 20.5V9.6L12 4.5l7 5.1v10.9"/><rect x="8" y="9.6" width="8" height="3.4" rx="1"/><path d="M10 20.5v-4.3h4v4.3"/></svg>
+        <span>Cinéma</span>
       </button>
       <button class="tabbtn" id="tab-friends" data-view="friends">
         <!-- deux bustes : premier plan + un second, plus petit, derrière à droite -->
@@ -2422,17 +2517,18 @@ toColBtn.addEventListener('click', () => backToIdle(true));        // « Retour 
 /* =====================================================================
    14. NAVIGATION (barre du bas)
    ===================================================================== */
-// Routage interne : les 5 pages sont côte à côte sur une piste horizontale (#track).
-const ORDER = ['shop', 'market', 'home', 'col', 'friends'];
-const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:'#view-col', friends:'#view-friends'};
+// Routage interne : les 6 pages sont côte à côte sur une piste horizontale (#track).
+const ORDER = ['shop', 'market', 'home', 'col', 'cinema', 'friends'];
+const VIEWS = {shop:'#view-shop', market:'#view-market', home:'#view-home', col:'#view-col', cinema:'#view-cinema', friends:'#view-friends'};
 const viewHome = $('#view-home'), viewCol = $('#view-col'), pagerEl = $('#pager'), track = $('#track');
 let currentView = 'home', viewIdx = ORDER.indexOf('home');
 
 const canNavigate = () => !['zoomed', 'rushing', 'arming', 'armed', 'opening', 'stack', 'summary'].includes(state);   // pas pendant la séquence d'ouverture (mode immersif)
 function setTrack(idx, dx = 0){
-  track.style.transform = dx ? `translateX(calc(${-idx * 20}% + ${dx}px))` : `translateX(${-idx * 20}%)`;
+  const pc = -idx * 100 / ORDER.length;                  // une page = 1/6 de la piste
+  track.style.transform = dx ? `translateX(calc(${pc}% + ${dx}px))` : `translateX(${pc}%)`;
 }
-const HUD_VIEWS = ['home', 'shop'];   // pages où le profil et les ressources sont affichés
+const HUD_VIEWS = ['home', 'shop', 'cinema'];   // pages où le profil et/ou les ressources sont affichés
 function setActiveTab(name){
   tabs.forEach(t => { if(t.dataset.view === name) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   appEl.classList.toggle('hud-on', HUD_VIEWS.includes(name));     // suit aussi la page visée pendant un glissement
@@ -2444,6 +2540,7 @@ function showView(name){
   if(name !== currentView){
     if(currentView === 'col' || imOpen){ closeInfo(true); clearSel(); closeFilter(); }    // on quitte la Vidéothèque proprement
     if(name === 'col' && shelfDirty) renderShelf();
+    if(name === 'cinema') loadCinema();                                  // état du cinéma relu à chaque visite
     currentView = name; viewIdx = i;
     ORDER.forEach((k, j) => { $(VIEWS[k]).inert = j !== i; });          // pages hors écran : non focusables
   }else if(name === 'col' && shelfDirty){
@@ -3896,6 +3993,7 @@ async function reloadPlayer(){
   const [st] = await Promise.all([rpc('get_booster_state'), loadCollection(), loadProfile()]);
   applyState(st);
   renderShelf();
+  cine = null; loadCinema();                     // autre compte : autre cinéma
   if(profileOpen){ renderTopFilms(); renderFavs(); renderWishlist(); renderStats(); }
 }
 
@@ -4373,6 +4471,198 @@ $('#demoBtn').addEventListener('click', async () => {
 /* =====================================================================
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
    ===================================================================== */
+/* =====================================================================
+   16 bis. CINÉMA (mode gestion)
+   Le serveur fait tout, à son heure : get_cinema_state, collect_cash, fonctions admin (et, plus tard, constructions).
+   Ici : copie locale de l'état, caisse qui monte entre deux synchronisations (même calcul que _cinema_accrued),
+   plan SVG généré depuis l'état. Rien n'est gardé dans localStorage.
+   ===================================================================== */
+let cine = null;                      // {st: état du serveur, recv/fullAt/buildEnd : horloge du téléphone}
+let cineSeq = 0, cineBusy = false, cineRefreshAt = 0;
+let ticketsTotal = 0;                 // Billets (copie d'affichage)
+const valTickets = $('#valTickets');
+const cineCollect = $('#cineCollect'), cinePendingEl = $('#cinePending'), cineFill = $('#cineFill');
+const cineCap = $('#cineCap'), cineErr = $('#cineErr');
+const fmtN = n => Number(n).toLocaleString('fr-FR', {maximumFractionDigits:1});
+// durée lisible : « 3 h 05 », « 12 min 30 s »
+function fmtDur(ms){
+  const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min ${String(s % 60).padStart(2, '0')} s`;
+}
+function showCineErr(msg){ cineErr.textContent = msg || ''; cineErr.hidden = !msg; }
+
+// État du serveur → affichage (les dates du serveur sont converties en horloge du téléphone via server_now)
+function applyCinema(st, {bump = false} = {}){
+  cineSeq++;
+  const now = Date.now(), srv = Date.parse(st.server_now);
+  cine = {st, recv:now, fullAt: now + (Date.parse(st.full_at) - srv), buildEnd: st.build ? now + Number(st.build.ms_left) : 0};
+  ticketsTotal = Number(st.tickets);
+  valTickets.textContent = ticketsTotal.toLocaleString('fr-FR');
+  if(bump){ valTickets.classList.remove('bump'); void valTickets.offsetWidth; valTickets.classList.add('bump'); }
+  if(gemsTotal !== st.gems){ gemsTotal = st.gems; renderWallet(); }
+  $('#cineRate').innerHTML = `<b>+${fmtN(st.rate)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg> par heure`;
+  const plan = $('#cinePlan');
+  plan.innerHTML = cinePlanSvg(st);
+  plan.setAttribute('aria-label', `Plan du cinéma : ${st.levels.screen} salle${st.levels.screen > 1 ? 's' : ''} sur 20, ` +
+    `guichet niveau ${st.levels.box_office}, arcade niveau ${st.levels.arcade}`);
+  tickCinema();
+}
+// Caisse à l'instant t : montant calculé par le serveur + revenu au taux actuel, jusqu'au plafond (full_at)
+function cinePending(now = Date.now()){
+  if(!cine) return 0;
+  const run = Math.max(0, Math.min(now, cine.fullAt) - cine.recv);
+  return Number(cine.st.pending_exact) + Number(cine.st.rate) * run / 3600e3;
+}
+function tickCinema(){
+  if(!cine) return;
+  const now = Date.now(), capMs = cine.st.cap_hours * 3600e3;
+  const pending = Math.floor(cinePending(now)), full = now >= cine.fullAt;
+  cinePendingEl.textContent = pending.toLocaleString('fr-FR');
+  cineFill.style.transform = `scaleX(${clamp(1 - (cine.fullAt - now) / capMs, 0, 1).toFixed(4)})`;   // jauge sur 12 h
+  cineCollect.classList.toggle('full', full);
+  cineCollect.disabled = cineBusy || pending < 1;
+  cineCap.textContent = full ? 'Caisse pleine : production à l\'arrêt'
+                             : `Caisse pleine dans ${fmtDur(cine.fullAt - now)}`;
+  const t = document.getElementById('cpTimer');
+  if(t && cine.buildEnd) t.textContent = fmtDur(cine.buildEnd - now);
+  // construction échue : le serveur la termine à la prochaine lecture (au plus une relecture toutes les 5 s)
+  if(cine.buildEnd && now >= cine.buildEnd + 500 && now > cineRefreshAt){ cineRefreshAt = now + 5000; loadCinema(); }
+}
+setInterval(() => { if(currentView === 'cinema' && !document.hidden) tickCinema(); }, 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden && currentView === 'cinema') loadCinema(); });
+
+async function loadCinema(){
+  if(!userId) return;
+  const seq = cineSeq;
+  try{
+    const st = await rpc('get_cinema_state');
+    if(seq === cineSeq && !cineBusy){ applyCinema(st); showCineErr(''); }
+  }catch(e){ if(!cine) showCineErr(e.message); }      // hors ligne : on garde la copie locale
+}
+
+// « Récolter la caisse » : le serveur crédite floor(caisse) et relance les 12 h
+cineCollect.addEventListener('click', async () => {
+  if(cineBusy || !cine) return;
+  cineBusy = true; cineCollect.disabled = true; buzz(12);
+  try{
+    const r = await rpc('collect_cash');
+    cineBusy = false;
+    applyCinema(r.state, {bump: r.collected > 0});
+    if(r.collected > 0) floatGain(r.collected);
+    showCineErr('');
+  }catch(e){ showCineErr(e.message); }
+  finally{ cineBusy = false; tickCinema(); }
+});
+// « +N » qui s'envole au-dessus du bouton (transform + opacity seulement)
+function floatGain(n){
+  if(RM) return;
+  const el = document.createElement('span');
+  el.className = 'cc-float'; el.textContent = '+' + n.toLocaleString('fr-FR');
+  el.style.top = cineCollect.offsetTop + 'px';
+  cineCollect.parentElement.appendChild(el);
+  play(el, [{opacity:0, transform:'translate(-50%, 0) scale(.8)'},
+            {opacity:1, transform:'translate(-50%, -26px) scale(1)', offset:.3},
+            {opacity:0, transform:'translate(-50%, -64px) scale(1)'}],
+       {duration:1100, easing:'cubic-bezier(.2,.8,.3,1)'}).then(() => el.remove());
+}
+
+// OUTILS DE TEST (admin) : +1 000 billets, terminer la construction, remise à zéro
+async function cineAdmin(fn, args){
+  try{ applyCinema(await rpc(fn, args), {bump: fn === 'admin_add_tickets'}); }catch(err){ adminError(err); }
+}
+$('#cineAddT').addEventListener('click', () => cineAdmin('admin_add_tickets', {p_amount:1000}));
+$('#cineFinish').addEventListener('click', () => cineAdmin('admin_finish_build'));
+$('#cineReset').addEventListener('click', () => {
+  if(confirm('Remettre le cinéma à zéro (salles, niveaux, billets) ? La collection ne bouge pas.')) cineAdmin('admin_reset_cinema');
+});
+
+/* ---------- Plan du cinéma (SVG simple, vue de dessus) ----------
+   Grille de 20 emplacements (5 × 4, la salle 1 en bas à gauche, près du hall), hall en bas :
+   guichet à gauche, arcade à droite, entrée au centre. Emplacements vides en pointillés,
+   chantier = échafaudage hachuré + minuteur. Les finitions cartoon viendront au C5. */
+const CP = {cols:5, cw:64, ch:40, gx:7, gy:7, x0:6, y0:8, hallY:200, hallH:74};
+function cinePlanSvg(st){
+  const lv = st.levels, b = st.build;
+  const screens = new Map(st.screens.map(s => [s.no, s]));
+  let out = '';
+  for(let n = 1; n <= 20; n++){
+    const i = n - 1, x = CP.x0 + (i % CP.cols) * (CP.cw + CP.gx), y = CP.y0 + (3 - Math.floor(i / CP.cols)) * (CP.ch + CP.gy);
+    const s = screens.get(n);
+    if(s) out += cpScreen(s, x, y);
+    else if(b && b.kind === 'screen' && b.level === n) out += cpSite(x, y, CP.cw, CP.ch);
+    else out += `<rect x="${x + .5}" y="${y + .5}" width="${CP.cw - 1}" height="${CP.ch - 1}" rx="6" fill="rgba(255,255,255,.03)" stroke="rgba(255,227,218,.22)" stroke-dasharray="4 3"/>`
+              + (n === lv.screen + 1 ? `<text x="${x + CP.cw / 2}" y="${y + CP.ch / 2 + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="rgba(255,227,218,.35)">+</text>` : '');
+  }
+  return `<svg viewBox="0 0 360 ${CP.hallY + CP.hallH + 8}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <pattern id="cpHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="8" height="8" fill="rgba(60,40,10,.7)"/><rect width="4" height="8" fill="rgba(246,196,83,.5)"/></pattern>
+      <pattern id="cpTiles" width="12" height="12" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="rgba(255,255,255,.06)"/><rect x="6" y="6" width="6" height="6" fill="rgba(255,255,255,.06)"/></pattern>
+    </defs>
+    ${out}${cpHall(lv, b)}
+  </svg>`;
+}
+// Salle construite : écran, rangées de fauteuils, numéro, petite affiche du film (bordure de sa rareté)
+function cpScreen(s, x, y){
+  const w = CP.cw, h = CP.ch;
+  const poster = s.poster
+    ? `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="#000" style="stroke:var(--${s.rarity})" stroke-width="1.6"/>
+       <image href="https://image.tmdb.org/t/p/w92${esc(s.poster)}" x="${x + w - 20.2}" y="${y + 11.8}" width="13.4" height="22.4" preserveAspectRatio="xMidYMid slice"/>`
+    : `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="none" stroke="rgba(255,227,218,.3)" stroke-dasharray="2 2"/>`;
+  return `<g><title>Salle ${s.no}${s.title ? ' : ' + esc(s.title) : ' (sans film)'}</title>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#4a121b" stroke="#22060b" stroke-width="1.5"/>
+    <rect x="${x + 7}" y="${y + 4}" width="${w - 14}" height="3" rx="1.5" fill="#fff4d6" opacity=".85"/>
+    <path d="M${x + 8} ${y + 15}h32M${x + 8} ${y + 22}h32M${x + 8} ${y + 29}h32" stroke="#b7303f" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="3.2 2.2"/>
+    <text x="${x + 6}" y="${y + h - 3}" font-size="8" font-weight="800" fill="#ffe3da">${s.no}</text>${poster}</g>`;
+}
+// Chantier : échafaudage hachuré (il « respire ») + bulle du minuteur
+function cpSite(x, y, w, h){
+  const cx = x + w / 2, cy = y + h / 2;
+  return `<rect class="cp-build" x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="url(#cpHatch)" stroke="#f6c453" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <rect x="${cx - 27}" y="${cy - 9}" width="54" height="18" rx="9" fill="rgba(0,0,0,.78)"/>
+    <text id="cpTimer" x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fff1c4"></text>`;
+}
+// Hall : délabré tant que le guichet n'est pas amélioré ; guichet et arcade s'élargissent avec leur niveau
+function cpHall(lv, b){
+  const Y = CP.hallY, H = CP.hallH, worn = lv.box_office === 0;
+  const site = kind => b && b.kind === kind;
+  let g = `<rect x="6" y="${Y}" width="348" height="${H}" rx="10" fill="${worn ? '#3f2c25' : '#5a3a2c'}" stroke="#1d0f0b" stroke-width="2"/>
+    <rect x="6" y="${Y}" width="348" height="${H}" rx="10" fill="url(#cpTiles)"/>
+    <rect x="166" y="${Y + 34}" width="28" height="${H - 34}" fill="#a3212f" opacity=".9"/>
+    <text x="180" y="${Y + H - 6}" text-anchor="middle" font-size="7.5" font-weight="800" fill="#ffe3da">ENTRÉE</text>`;
+  if(worn) g += `<path d="M40 ${Y + 8}l8 10-5 8 9 9M300 ${Y + H - 10}l-10-6 4-9M220 ${Y + 6}l-6 9 7 5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.5" stroke-linecap="round"/>`;
+  // Guichet (à gauche)
+  const gw = 56 + Math.min(lv.box_office, 10) * 5, gx = 14, gy = Y + 8, gh = H - 16;
+  g += site('box_office') ? cpSite(gx, gy, gw, gh)
+    : `<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" rx="6" fill="${worn ? '#5b2a2f' : '#7a2430'}" stroke="#22060b" stroke-width="1.5"/>
+       <rect x="${gx + 4}" y="${gy + gh - 13}" width="${gw - 8}" height="7" rx="3" fill="#d9a441"/>
+       <text x="${gx + gw / 2}" y="${gy + 18}" text-anchor="middle" font-size="9" font-weight="800" fill="#fff1c4">Guichet</text>
+       <text x="${gx + gw / 2}" y="${gy + 30}" text-anchor="middle" font-size="7.5" fill="#ffe3da">${worn ? 'délabré' : 'niv. ' + lv.box_office}</text>`;
+  // Arcade (à droite)
+  const aw = 56 + Math.min(lv.arcade, 10) * 5, ax = 346 - aw, ay = gy, ah = gh;
+  if(site('arcade')) g += cpSite(ax, ay, aw, ah);
+  else if(lv.arcade === 0) g += `<rect x="${ax}" y="${ay}" width="${aw}" height="${ah}" rx="6" fill="rgba(255,255,255,.03)" stroke="rgba(255,227,218,.25)" stroke-dasharray="4 3"/>
+       <text x="${ax + aw / 2}" y="${ay + ah / 2 + 3}" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,227,218,.45)">Arcade</text>`;
+  else{
+    const neon = ['#ff5b72', '#5b97f0', '#f6c453', '#4db38a', '#b65cf2'];
+    let cab = '';
+    for(let k = 0; k < Math.min(lv.arcade, 10); k++){
+      cab += `<rect x="${ax + 7 + (k % 5) * ((aw - 14) / 5)}" y="${ay + 18 + Math.floor(k / 5) * 18}" width="8" height="13" rx="2" fill="${neon[k % 5]}"/>`;
+    }
+    g += `<rect x="${ax}" y="${ay}" width="${aw}" height="${ah}" rx="6" fill="#23244a" stroke="#0c0c22" stroke-width="1.5"/>
+       <text x="${ax + aw / 2}" y="${ay + 12}" text-anchor="middle" font-size="8" font-weight="800" fill="#fff1c4">Arcade niv. ${lv.arcade}</text>${cab}`;
+  }
+  // Équipements : pastilles au centre du hall (ou chantier)
+  [['popcorn', '🍿', 150], ['vip', '💺', 180], ['sound', '🔊', 210]].forEach(([k, ico, cx]) => {
+    if(site(k)) g += cpSite(cx - 20, Y + 6, 40, 24);
+    else if(lv[k] > 0) g += `<circle cx="${cx}" cy="${Y + 18}" r="11" fill="rgba(0,0,0,.35)" stroke="#d9a441" stroke-width="1.2"/>
+       <text x="${cx}" y="${Y + 22}" text-anchor="middle" font-size="11">${ico}</text>
+       <text x="${cx + 12}" y="${Y + 30}" font-size="7" font-weight="800" fill="#fff1c4">${lv[k]}</text>`;
+  });
+  return g;
+}
+
 const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model',   // données locales v53 : on repart de zéro
                   'topFilms', 'favs', 'wishlist', 'vc_thresholds', 'tmdb_key',    // la clé TMDB est désormais sur le serveur
                   'peopleSuggest2'];
@@ -4388,6 +4678,7 @@ async function boot(){
     $('#boot').classList.add('hidden');
     $('#app').classList.remove('hidden');
     measureTitle();
+    loadCinema();                                // Billets et caisse prêts avant la 1re visite (sans bloquer le démarrage)
   }catch(err){
     $('#bootTitle').textContent = 'Connexion impossible';
     $('#bootStatus').textContent = err.message || 'Réessaie dans un instant.';
