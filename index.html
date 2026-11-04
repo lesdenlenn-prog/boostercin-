@@ -442,6 +442,51 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .setup p{margin:0 0 12px;color:var(--muted)}
 .setup .err{color:#ff9b9b;margin:10px 0 0}
 
+/* =====================================================================
+   COMPTE (Paramètres) : sauvegarde de la progression par e-mail + code, connexion, déconnexion
+   Même habillage que les modales de choix du profil (bordeaux, encadrés du HUD).
+   ===================================================================== */
+.hud-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* pseudo long : coupé par « … » */
+.pm-name{max-width:calc(100% - 28px);text-align:center;overflow-wrap:anywhere}
+.ac-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.ac-pane{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.ac-card{padding:16px;border-radius:16px;background:rgba(30,3,9,.8);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3),0 6px 16px rgba(0,0,0,.28)}
+.ac-k{font-size:.66rem;font-weight:800;letter-spacing:.14em;color:#f6c453}
+.ac-v{margin:4px 0 6px;font-weight:800;font-size:1.1rem;color:#fff3e4;overflow-wrap:anywhere}
+.ac-v.warn{color:#ffb36b}
+.ac-p{margin:0;color:#ead6cf;line-height:1.45;font-size:.92rem}
+.ac-p b{color:#ffe08a;overflow-wrap:anywhere}
+.ac-lbl{display:flex;flex-direction:column;gap:6px;font-size:.7rem;font-weight:800;letter-spacing:.12em;color:#f6c453}
+.ac-in{display:block;width:100%;min-height:48px;border:0;border-radius:12px;padding:0 14px;outline:none;
+  font:600 1rem/1.2 'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:0;color:#fff3e4;   /* 16 px : pas de zoom automatique sur iOS */
+  background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.3);-webkit-user-select:text;user-select:text}
+.ac-in::placeholder{color:rgba(255,220,200,.4)}
+.ac-in:focus{background:rgba(246,196,83,.12);box-shadow:inset 0 0 0 1.5px #f6c453}
+.ac-in[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px #ff7a7a}
+.ac-code{text-align:center;font-size:1.5rem;font-weight:800;letter-spacing:.28em;font-variant-numeric:tabular-nums}
+.ac-hint{min-height:1.25em;margin:-4px 0 0;font-size:.8rem;line-height:1.35;color:#c9a69c}
+.ac-hint.err{color:#ff9b9b}
+.ac-hint.ok{color:#8fe3b0}
+.ac-hint:empty{min-height:0;margin:0}
+.ac-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.ac-actions .btn{width:100%}
+.ac-body .btn:disabled{opacity:.55}
+.ac-link{align-self:center;min-height:40px;padding:6px 12px;border:0;background:none;color:#ffe3da;font-weight:700;
+  text-decoration:underline;text-underline-offset:3px}
+.ac-link:disabled{opacity:.5;text-decoration:none}
+.ac-warn{background:rgba(120,30,10,.55);box-shadow:inset 0 0 0 1.5px rgba(255,150,90,.55),0 6px 16px rgba(0,0,0,.28)}
+
+/* Rappel discret « Sauvegarde ta collection » (comptes anonymes) : sous le HUD de l'Accueil, se ferme d'un appui */
+.save-nudge{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 96px);z-index:26;display:flex;align-items:center;
+  max-width:calc(100% - 32px);border-radius:99px;background:rgba(30,3,9,.9);color:#ffe3da;
+  box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55),0 6px 16px rgba(0,0,0,.35);
+  opacity:0;transform:translate(-50%,-8px);transition:opacity .3s ease,transform .3s ease;pointer-events:none}
+.save-nudge.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.app:not([data-page="home"]) .save-nudge.on,.app.is-selecting .save-nudge.on,.app.is-opening-booster .save-nudge.on{opacity:0;pointer-events:none}
+.sn-open{min-width:0;min-height:40px;padding:0 6px 0 16px;border:0;background:none;color:inherit;font-weight:800;font-size:.86rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sn-close{flex:none;width:40px;height:40px;padding:0;border:0;background:none;color:rgba(255,227,218,.75);font-size:1.3rem;line-height:1}
+
 /* ================= CARTES ================= */
 /* Contour de rareté fin (1,5 px) pour l'ouverture du booster et le résumé.
    Dans la Vidéothèque il est volontairement plus épais (voir .slot .card). */
@@ -1323,7 +1368,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   <div class="app hidden hud-on" id="app" data-page="home">
     <!-- HUD : profil + ressources (flottent au-dessus des pages Accueil et Magasin) -->
     <div class="hud">
-      <button class="hud-profile" id="profileBtn" type="button" aria-haspopup="dialog"><span class="hud-avatar" aria-hidden="true">🎞️</span><span>Profil</span></button>
+      <button class="hud-profile" id="profileBtn" type="button" aria-haspopup="dialog"><span class="hud-avatar" aria-hidden="true">🎞️</span><span class="hud-name" id="hudName">Profil</span></button>
       <div class="hud-res">
         <div class="res" aria-label="Bobines">
           <button class="res-plus" type="button" data-goto="shop" aria-label="Obtenir des bobines"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
@@ -1336,6 +1381,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           <svg class="res-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg>
         </div>
       </div>
+    </div>
+
+    <!-- Rappel « Sauvegarde ta collection » (comptes anonymes, après quelques boosters) -->
+    <div class="save-nudge" id="saveNudge" hidden>
+      <button class="sn-open" id="snOpen" type="button">💾 Sauvegarde ta collection</button>
+      <button class="sn-close" id="snClose" type="button" aria-label="Ne plus afficher ce rappel">×</button>
     </div>
 
     <div class="pager" id="pager">
@@ -1604,6 +1655,88 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </div>
   </div>
 
+  <!-- Paramètres du compte : statut, sauvegarde par e-mail (code), connexion à un compte existant, déconnexion -->
+  <div class="pickmodal favmodal hidden" id="acctModal" role="dialog" aria-modal="true" aria-labelledby="acTitle">
+    <div class="pick-head">
+      <button class="pm-iconbtn" id="acClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <h3 id="acTitle">Paramètres</h3>
+      <span class="spacer"></span>
+    </div>
+    <div class="ac-body" id="acBody">
+      <!-- Accueil : statut du compte -->
+      <div class="ac-pane" data-pane="home">
+        <div class="ac-card">
+          <div class="ac-k">COMPTE</div>
+          <div class="ac-v" id="acStatus">Non sauvegardé</div>
+          <p class="ac-p" id="acStatusSub"></p>
+        </div>
+        <p class="ac-hint" id="acHomeMsg" role="status"></p>
+        <div class="ac-actions">
+          <button class="btn cta" type="button" data-go="save" id="acSaveBtn">Sauvegarder ma progression</button>
+          <button class="btn pill-dark" type="button" data-go="login" id="acLoginBtn">J'ai déjà un compte</button>
+          <button class="btn cta" type="button" data-go="name" id="acNameBtn" hidden>Choisir un pseudo</button>
+          <button class="btn ghost" type="button" data-go="logout" id="acLogoutBtn" hidden>Se déconnecter</button>
+        </div>
+      </div>
+      <!-- Sauvegarde, étape 1 : pseudo + e-mail (ou pseudo seul) -->
+      <form class="ac-pane" data-pane="save" id="acSaveForm" novalidate>
+        <p class="ac-p" id="acSaveIntro"></p>
+        <label class="ac-lbl">PSEUDO
+          <input class="ac-in" id="acName" type="text" maxlength="20" autocomplete="nickname" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+        </label>
+        <p class="ac-hint" id="acNameHint" aria-live="polite"></p>
+        <label class="ac-lbl" id="acEmailLbl">E-MAIL
+          <input class="ac-in" id="acEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="toi@exemple.fr">
+        </label>
+        <p class="ac-hint" id="acSaveMsg" role="status"></p>
+        <div class="ac-actions"><button class="btn cta" type="submit" id="acSaveSubmit">Recevoir le code</button></div>
+        <button class="ac-link" type="button" data-go="login" id="acHaveAcct" hidden>J'ai déjà un compte</button>
+        <button class="ac-link" type="button" data-go="home">Retour</button>
+      </form>
+      <!-- Avant de se connecter à un autre compte : les cartes du compte anonyme seront perdues -->
+      <div class="ac-pane" data-pane="warn">
+        <div class="ac-card ac-warn">
+          <div class="ac-k">ATTENTION</div>
+          <p class="ac-p" id="acWarnText" style="margin-top:6px"></p>
+        </div>
+        <div class="ac-actions">
+          <button class="btn cta" type="button" data-go="save">Sauvegarder plutôt ce compte</button>
+          <button class="btn pill-dark" type="button" data-go="login-ok">Continuer et perdre ces cartes</button>
+        </div>
+        <button class="ac-link" type="button" data-go="home">Retour</button>
+      </div>
+      <!-- Connexion, étape 1 : e-mail du compte existant -->
+      <form class="ac-pane" data-pane="login" id="acLoginForm" novalidate>
+        <p class="ac-p" id="acLoginIntro"></p>
+        <label class="ac-lbl">E-MAIL
+          <input class="ac-in" id="acLoginEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="toi@exemple.fr">
+        </label>
+        <p class="ac-hint" id="acLoginMsg" role="status"></p>
+        <div class="ac-actions"><button class="btn cta" type="submit" id="acLoginSubmit">Recevoir le code</button></div>
+        <button class="ac-link" type="button" data-go="home">Retour</button>
+      </form>
+      <!-- Étape 2 (sauvegarde ou connexion) : saisie du code reçu par e-mail -->
+      <form class="ac-pane" data-pane="code" id="acCodeForm" novalidate>
+        <p class="ac-p" id="acCodeIntro"></p>
+        <label class="ac-lbl">CODE
+          <input class="ac-in ac-code" id="acCode" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" enterkeyhint="done">
+        </label>
+        <p class="ac-hint" id="acCodeMsg" role="status"></p>
+        <div class="ac-actions"><button class="btn cta" type="submit" id="acCodeSubmit">Valider</button></div>
+        <button class="ac-link" type="button" id="acResend">Renvoyer le code</button>
+        <button class="ac-link" type="button" data-go="fix">Corriger l'e-mail</button>
+      </form>
+      <!-- Déconnexion (comptes rattachés à un e-mail) -->
+      <div class="ac-pane" data-pane="logout">
+        <p class="ac-p" id="acLogoutText"></p>
+        <div class="ac-actions">
+          <button class="btn pill-dark" type="button" id="acLogoutGo">Se déconnecter</button>
+        </div>
+        <button class="ac-link" type="button" data-go="home">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <div class="infomodal hidden" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
     <div class="im-back"></div>
     <div class="im-scroll" id="imScroll">
@@ -1720,6 +1853,9 @@ const sb = supabase.createClient('https://tubjlfbqadwgclhbfuco.supabase.co', 'sb
 let userId = null;
 let player = {boostersOpened:0, demo:false, admin:false};   // dernier état connu du serveur (hors soldes et énergie)
 const demoOn = () => player.demo;
+let account = {anon:true, email:null};   // compte connecté : anonyme, ou rattaché à un e-mail (voir section COMPTE)
+let username = null;                     // pseudo (profiles.username), null tant que le compte n'est pas sauvegardé
+let acctOpen = false;                    // écran Paramètres ouvert
 
 const netMsg = m => /fetch|network|load failed/i.test(m || '') ? 'Impossible de joindre le serveur. Vérifie ta connexion.' : m;
 // Appel d'une fonction SQL (rpc) : l'erreur renvoyée devient un message lisible
@@ -1731,10 +1867,15 @@ async function rpc(name, args){
 // Session gardée par le navigateur ; la 1re fois, compte anonyme (rattaché à un e-mail plus tard)
 async function ensureSession(){
   const {data:{session}} = await sb.auth.getSession();
-  if(session){ userId = session.user.id; return; }
+  if(session){ readAccount(session.user); return; }
   const {data, error} = await sb.auth.signInAnonymously();
   if(error) throw new Error(netMsg(error.message));
-  userId = data.user.id;
+  readAccount(data.user);
+}
+// Compte rattaché = e-mail confirmé (un compte anonyme n'a pas d'e-mail, même avec un changement d'e-mail en attente)
+function readAccount(user){
+  userId = user.id;
+  account = {anon: !user.email, email: user.email || null};
 }
 
 function preload(cards){
@@ -2269,6 +2410,7 @@ function backToIdle(animate = true){
   state = 'idle'; busy = false; pending = null; cards = []; idx = 0;
   updateEnergyUI();                              // de retour sur l'Accueil : la jauge reprend sa vraie valeur (ex. 4 hr 0 min)
   setCaption('');
+  maybeNudge();                                  // compte anonyme : rappel « Sauvegarde ta collection » (section COMPTE)
   if(!animate) return;
   play(arena, [{opacity:0}, {opacity:1}], {duration: RM ? 1 : 400, fill:'none'});
   play(packZoom, [{opacity:0, transform:'translateY(40px) scale(.94)'}, {opacity:1, transform:'translateY(0) scale(1)'}],
@@ -2328,7 +2470,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => track.classList.remove('
 
   pagerEl.addEventListener('touchstart', e => {
     g = null;
-    if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy || profileOpen) return;
+    if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy || profileOpen || acctOpen) return;
     if(e.target.closest('.fdrop, input')) return;          // menu des filtres ouvert : on le laisse tranquille
     const t = e.touches[0];
     g = {x:t.clientX, y:t.clientY, dx:0, mode:null, w:pagerEl.clientWidth, hover:viewIdx, samples:[{x:t.clientX, t:e.timeStamp}]};
@@ -2874,13 +3016,20 @@ function closeProfile(){
   profileBtn.focus({preventScroll:true});
 }
 profileBtn.addEventListener('click', openProfile);
-$('#pmSettings').addEventListener('click', () => buzz(8));   // Paramètres : menu à venir
+$('#pmSettings').addEventListener('click', () => { buzz(8); openAcct(); });   // Paramètres : compte (section COMPTE)
 
 /* ---------- Vitrine du profil (Top Films, favoris, liste de souhaits) : colonnes top_films, favs, wishlist de profiles ----------
    Ce sont les seules colonnes du profil modifiables par le joueur (le serveur vérifie que le Top Films ne contient que
    des films possédés). Affichage immédiat, enregistrement en arrière-plan ; en cas de refus, on relit le serveur. */
-const PROFILE_SELECT = 'top_films,favs,wishlist';
+const PROFILE_SELECT = 'username,top_films,favs,wishlist';
+// Pseudo : remplace « Profil » dans le HUD et « Pseudo » dans le sur-menu
+function renderName(){
+  $('#hudName').textContent = username || 'Profil';
+  $('#pmTitle').textContent = username || 'Pseudo';
+}
 function applyProfile(p){
+  username = p.username || null;
+  renderName();
   topFilms = Array.from({length:TOP_N}, (_, i) => p.top_films[i] ?? null);
   const f = p.favs || {};
   favs = {genres:[f.genres?.[0] ?? null, f.genres?.[1] ?? null], director:f.director || null, actor:f.actor || null};
@@ -3390,10 +3539,410 @@ profileModal.addEventListener('click', e => {
   if(e.target.closest('#pmClose') || !e.target.closest('.pm-panel')) closeProfile();
 });
 document.addEventListener('keydown', e => {
-  if(!profileOpen || e.key !== 'Escape' || pickModal.classList.contains('on') || favModal.classList.contains('on')) return;
+  if(!profileOpen || e.key !== 'Escape' || pickModal.classList.contains('on') || favModal.classList.contains('on') || acctOpen) return;
   if(editKey !== null){ stopEditing(); return; }       // Échap : d'abord on quitte le mode édition
   closeProfile();
 });
+
+/* =====================================================================
+   15 sexies bis. COMPTE : sauvegarder sa progression (pseudo + e-mail + code), se reconnecter sur un autre appareil
+   - Sauvegarder : updateUser({email}) puis verifyOtp({type:'email_change'}) → le compte anonyme devient un compte e-mail
+     avec le MÊME user.id : collection, soldes et vitrine sont conservés. Le pseudo est enregistré une fois l'e-mail vérifié
+     (le serveur refuse un pseudo sur un compte anonyme).
+   - J'ai déjà un compte : signInWithOtp({shouldCreateUser:false}) puis verifyOtp({type:'email'}) → on bascule sur ce compte ;
+     le compte anonyme en cours est abandonné (pas de fusion), d'où l'avertissement s'il contient des cartes.
+   Codes envoyés par Supabase (SMTP personnalisé ; modèles « Change email address » et « Magic link » avec {{ .Token }}).
+   ===================================================================== */
+const EMAIL_READY = false;             // SMTP + modèles d'e-mail configurés dans Supabase ? false : sauvegarde et connexion masquées
+const OTP_LENGTH = 8;                  // longueur des codes : doit être égale au réglage Supabase « Email OTP Length »
+const OTP_TTL = 3600 * 1000;           // validité d'un code : réglage Supabase « Email OTP Expiration » (3 600 s par défaut)
+const OTP_RESEND = 60 * 1000;          // délai avant « Renvoyer le code » (Supabase refuse un nouvel envoi avant 60 s)
+const OTP_MAX_TRIES = 5;               // codes faux acceptés avant d'exiger un nouveau code
+const USERNAME_RE = /^[A-Za-z0-9À-ÖØ-öø-ÿ_.-]{3,20}$/;   // mêmes règles que la contrainte profiles_username_format (migration)
+const NAME_RULES = '3 à 20 caractères : lettres, chiffres, _ - .';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const acctModal = $('#acctModal'), acCode = $('#acCode');
+let acctBusy = false;                  // appel au serveur en cours : boutons désactivés
+let otp = null;                        // code en attente : {mode:'link'|'login', email, name, sentAt, tries}
+let nameOnly = false;                  // écran « pseudo seul » (compte déjà rattaché à un e-mail mais sans pseudo)
+const AC_TITLES = {home:'Paramètres', save:'Sauvegarde', warn:'Connexion', login:'Connexion', code:'Code reçu', logout:'Déconnexion'};
+acCode.maxLength = OTP_LENGTH;
+acCode.placeholder = '•'.repeat(OTP_LENGTH);
+
+const cleanName = s => s.normalize('NFC').trim();
+const cleanEmail = s => s.trim().toLowerCase();
+const maskEmail = e => { const at = e.lastIndexOf('@'); return e.slice(0, 1) + '•••' + e.slice(at); };   // l•••@gmail.com
+function setMsg(sel, text, kind = ''){ const el = $(sel); el.textContent = text; el.className = 'ac-hint' + (kind ? ' ' + kind : ''); }
+function setInvalid(input, on){ if(on) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid'); }
+
+// Erreur de Supabase (Auth ou base) → message en français ; kind : 'exists' (e-mail déjà pris), 'otp' (code refusé), 'name' (pseudo)
+function acctError(err, ctx = ''){
+  const code = (err && err.code) || '', msg = (err && err.message) || '', status = err && err.status;
+  const wait = +((msg.match(/after (\d+) seconds?/i) || [])[1] || 0);
+  if(/fetch|network|load failed/i.test(msg)) return {text: netMsg(msg)};
+  if(code === '23505') return {kind:'name', text:'Ce pseudo est déjà pris. Essaie une variante.'};
+  if(code === '23514') return {kind:'name', text:'Pseudo refusé. ' + NAME_RULES};
+  if(code === 'email_exists' || code === 'user_already_exists' || /already (been )?registered|already exists/i.test(msg))
+    return {kind:'exists', text:'Cet e-mail est déjà utilisé par un autre compte.'};
+  if(code === 'otp_expired' || (ctx === 'verify' && /token|otp|expired|invalid/i.test(msg))) return {kind:'otp'};
+  if(code === 'over_email_send_rate_limit' || wait)
+    return {wait, text: wait ? `Patiente encore ${wait} s avant de demander un nouveau code.` : 'Trop d\'e-mails envoyés. Réessaie dans quelques minutes.'};
+  if(code === 'over_request_rate_limit' || status === 429) return {text:'Trop de tentatives. Réessaie dans quelques minutes.'};
+  if(code === 'otp_disabled' || /signups? not allowed/i.test(msg))
+    return {text:'Aucun compte n\'utilise cet e-mail. Vérifie l\'adresse, ou sauvegarde plutôt ta progression actuelle.'};
+  if(code === 'email_address_invalid' || code === 'validation_failed' || /email/i.test(msg) && /invalid/i.test(msg))
+    return {text:'Adresse e-mail invalide.'};
+  if(code === 'email_address_not_authorized') return {text:'L\'envoi des e-mails n\'est pas encore activé. Réessaie plus tard.'};
+  console.warn('compte', err);
+  return {text:'Une erreur est survenue. Réessaie dans un instant.'};
+}
+
+/* ---------- Ouverture / navigation entre les écrans ---------- */
+function openAcct(pane = 'home'){
+  if(acctOpen) return;
+  acctOpen = true;
+  hideNudge();
+  setMsg('#acHomeMsg', '');
+  if(pane === 'save') startSave(); else goPane(pane);
+  acctModal.classList.remove('hidden'); void acctModal.offsetWidth; acctModal.classList.add('on');
+  if(pane === 'home') $('#acClose').focus({preventScroll:true});
+}
+function closeAcct(){
+  if(!acctOpen) return;
+  acctOpen = false;
+  clearTimeout(resendTimer); clearTimeout(nameTimer);
+  if(acctModal.contains(document.activeElement)) document.activeElement.blur();
+  acctModal.classList.remove('on');
+  setTimeout(() => { if(!acctOpen) acctModal.classList.add('hidden'); }, 300);
+  (profileOpen ? $('#pmSettings') : profileBtn).focus({preventScroll:true});
+}
+function goPane(name){
+  acctModal.querySelectorAll('.ac-pane').forEach(p => p.hidden = p.dataset.pane !== name);
+  $('#acTitle').textContent = AC_TITLES[name];
+  $('#acBody').scrollTop = 0;
+  if(name === 'home') renderAcctHome();
+  if(name === 'code') refreshCodeUI();
+}
+function renderAcctHome(){
+  const anon = account.anon;
+  $('#acStatus').textContent = anon ? 'Non sauvegardé' : maskEmail(account.email);
+  $('#acStatus').classList.toggle('warn', anon);
+  $('#acStatusSub').textContent = anon
+    ? 'Ta progression n\'est liée qu\'à ce navigateur : si tu effaces ses données ou changes d\'appareil, elle sera perdue.'
+      + (EMAIL_READY ? '' : ' La sauvegarde par e-mail arrive bientôt.')
+    : 'Progression sauvegardée. Sur un autre appareil, choisis « J\'ai déjà un compte » dans les Paramètres et saisis cet e-mail.';
+  $('#acSaveBtn').hidden = !anon || !EMAIL_READY;      // sans SMTP, aucun code ne peut partir
+  $('#acLoginBtn').hidden = !anon || !EMAIL_READY;
+  $('#acNameBtn').hidden = anon || !!username;
+  $('#acLogoutBtn').hidden = anon;                     // déconnexion réservée aux comptes rattachés : un compte anonyme serait perdu
+}
+const doneHome = msg => { goPane('home'); setMsg('#acHomeMsg', msg, 'ok'); };
+
+// Appel en cours : tous les boutons de l'écran sont désactivés, le bouton appuyé affiche « Un instant… »
+function setAcctBusy(on, btn = null){
+  acctBusy = on;
+  acctModal.querySelectorAll('.ac-body button').forEach(b => b.disabled = on);
+  if(on && btn){ btn.dataset.label = btn.textContent; btn.textContent = 'Un instant…'; }
+  if(!on){
+    acctModal.querySelectorAll('[data-label]').forEach(b => { b.textContent = b.dataset.label; delete b.dataset.label; });
+    refreshCodeUI();
+  }
+}
+
+acctModal.addEventListener('click', e => {
+  const b = e.target.closest('[data-go]');
+  if(!b || acctBusy) return;
+  const go = b.dataset.go;
+  if(go === 'home') goPane('home');
+  else if(go === 'save') startSave(false);
+  else if(go === 'name') startSave(true);
+  else if(go === 'login') startLogin(b.id === 'acHaveAcct' ? cleanEmail($('#acEmail').value) : '');
+  else if(go === 'login-ok') showLogin();
+  else if(go === 'logout') showLogout();
+  else if(go === 'fix' && otp) otp.mode === 'link' ? startSave(false) : showLogin();   // retour à l'étape 1, champs déjà remplis
+});
+$('#acClose').addEventListener('click', closeAcct);
+document.addEventListener('keydown', e => { if(acctOpen && e.key === 'Escape') closeAcct(); });
+
+/* ---------- Sauvegarde, étape 1 : pseudo (vérifié sur le serveur) + e-mail ---------- */
+function startSave(onlyName = false){
+  nameOnly = onlyName;
+  $('#acEmailLbl').hidden = onlyName;
+  $('#acSaveIntro').textContent = onlyName
+    ? 'Choisis le pseudo affiché sur ton profil.'
+    : `Choisis un pseudo et indique ton e-mail. Tu vas recevoir un code à ${OTP_LENGTH} chiffres : ta collection sera sauvegardée et tu pourras la retrouver sur n'importe quel appareil.`;
+  $('#acSaveSubmit').textContent = onlyName ? 'Enregistrer' : 'Recevoir le code';
+  const nameIn = $('#acName');
+  if(!nameIn.value && username) nameIn.value = username;
+  setInvalid(nameIn, false); setInvalid($('#acEmail'), false);
+  setMsg('#acNameHint', NAME_RULES); setMsg('#acSaveMsg', '');
+  $('#acHaveAcct').hidden = true;
+  goPane('save');
+  (nameIn.value && !onlyName ? $('#acEmail') : nameIn).focus({preventScroll:true});
+}
+
+// Disponibilité vérifiée pendant la saisie (indicatif) ; elle est revérifiée à l'envoi, et la base garantit l'unicité
+let nameTimer = 0, nameSeq = 0;
+$('#acName').addEventListener('input', () => {
+  const nameIn = $('#acName'), name = cleanName(nameIn.value), seq = ++nameSeq;
+  clearTimeout(nameTimer);
+  setInvalid(nameIn, false);
+  if(!USERNAME_RE.test(name)){ setMsg('#acNameHint', NAME_RULES); return; }
+  nameTimer = setTimeout(async () => {
+    try{
+      const ok = await rpc('username_available', {p_username:name});
+      if(seq !== nameSeq) return;
+      setInvalid(nameIn, !ok);
+      setMsg('#acNameHint', ok ? 'Pseudo disponible.' : 'Ce pseudo est déjà pris. Essaie une variante.', ok ? 'ok' : 'err');
+    }catch(e){}
+  }, 450);
+});
+
+$('#acSaveForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if(acctBusy) return;
+  const nameIn = $('#acName'), emailIn = $('#acEmail');
+  const name = cleanName(nameIn.value), email = cleanEmail(emailIn.value);
+  nameIn.value = name; nameSeq++; clearTimeout(nameTimer);
+  setInvalid(nameIn, false); setInvalid(emailIn, false);
+  setMsg('#acSaveMsg', ''); $('#acHaveAcct').hidden = true;
+  if(!USERNAME_RE.test(name)){
+    setInvalid(nameIn, true);
+    setMsg('#acNameHint', name.length < 3 || name.length > 20 ? 'Le pseudo doit faire de 3 à 20 caractères.' : 'Uniquement des lettres, des chiffres et _ - .', 'err');
+    nameIn.focus(); return;
+  }
+  if(!nameOnly && !EMAIL_RE.test(email)){ setInvalid(emailIn, true); setMsg('#acSaveMsg', 'Adresse e-mail invalide.', 'err'); emailIn.focus(); return; }
+  setAcctBusy(true, $('#acSaveSubmit'));
+  try{
+    if(!(await rpc('username_available', {p_username:name}))){
+      setInvalid(nameIn, true); setMsg('#acNameHint', 'Ce pseudo est déjà pris. Essaie une variante.', 'err'); return;
+    }
+    setMsg('#acNameHint', 'Pseudo disponible.', 'ok');
+    if(nameOnly){ await setUsername(name); doneHome('Pseudo enregistré.'); return; }
+    // Même adresse qu'un code envoyé il y a moins d'une minute : pas de nouvel envoi, on retourne à la saisie du code
+    if(otp && otp.mode === 'link' && otp.email === email && Date.now() - otp.sentAt < OTP_RESEND){ otp.name = name; showCode(); return; }
+    if(await sendCode('link', email)){ await finishLink(name); return; }
+    otp = {mode:'link', email, name, sentAt:Date.now(), tries:0};
+    showCode();
+  }catch(err){
+    const m = acctError(err);
+    if(m.kind === 'name'){ setInvalid(nameIn, true); setMsg('#acNameHint', m.text, 'err'); }
+    else{
+      setMsg('#acSaveMsg', m.text, 'err');
+      if(m.kind === 'exists'){ setInvalid(emailIn, true); $('#acHaveAcct').hidden = false; }   // proposer « J'ai déjà un compte »
+    }
+  }finally{ setAcctBusy(false); }
+});
+async function setUsername(name){
+  const {error} = await sb.from('profiles').update({username:name}).eq('id', userId);
+  if(error) throw error;
+  username = name;
+  renderName();
+}
+
+// Envoi d'un code. 'link' : changement d'e-mail du compte actuel ; 'login' : connexion à un compte existant (jamais de création)
+// Renvoie true si l'e-mail est déjà confirmé sans code (confirmation des e-mails désactivée dans Supabase)
+async function sendCode(mode, email){
+  if(mode === 'link'){
+    const {data, error} = await sb.auth.updateUser({email});
+    if(error) throw error;
+    return !!(data.user && data.user.email === email);
+  }
+  const {error} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:false}});
+  if(error) throw error;
+  return false;
+}
+
+/* ---------- « J'ai déjà un compte » : avertissement, puis e-mail ---------- */
+function startLogin(email = ''){
+  if(email) $('#acLoginEmail').value = email;
+  const n = Object.keys(getCol()).length;
+  if(account.anon && n > 0){
+    $('#acWarnText').innerHTML = `Ta progression actuelle n'est pas sauvegardée. Si tu te connectes à un autre compte, ses <b>${nf(n)} carte${n > 1 ? 's' : ''}</b>, ` +
+      `ses bobines, ses gemmes et ses boosters seront <b>définitivement perdus</b> : les deux comptes ne sont pas fusionnés.`;
+    goPane('warn');
+    return;
+  }
+  showLogin();
+}
+function showLogin(){
+  $('#acLoginIntro').textContent = `Saisis l'e-mail de ton compte : tu vas recevoir un code à ${OTP_LENGTH} chiffres pour te connecter.`;
+  setMsg('#acLoginMsg', ''); setInvalid($('#acLoginEmail'), false);
+  goPane('login');
+  $('#acLoginEmail').focus({preventScroll:true});
+}
+$('#acLoginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if(acctBusy) return;
+  const emailIn = $('#acLoginEmail'), email = cleanEmail(emailIn.value);
+  setInvalid(emailIn, false);
+  if(!EMAIL_RE.test(email)){ setInvalid(emailIn, true); setMsg('#acLoginMsg', 'Adresse e-mail invalide.', 'err'); emailIn.focus(); return; }
+  if(otp && otp.mode === 'login' && otp.email === email && Date.now() - otp.sentAt < OTP_RESEND){ showCode(); return; }
+  setAcctBusy(true, $('#acLoginSubmit'));
+  try{
+    await sendCode('login', email);
+    otp = {mode:'login', email, name:null, sentAt:Date.now(), tries:0};
+    showCode();
+  }catch(err){
+    setMsg('#acLoginMsg', acctError(err).text, 'err');
+  }finally{ setAcctBusy(false); }
+});
+
+/* ---------- Étape 2 : saisie du code (chiffres uniquement, validé dès que les OTP_LENGTH chiffres sont saisis) ---------- */
+function showCode(){
+  acCode.value = ''; setInvalid(acCode, false);
+  $('#acCodeIntro').innerHTML = `Saisis le code à ${OTP_LENGTH} chiffres envoyé à <b>${esc(otp.email)}</b>. ` +
+    `Il peut mettre une minute à arriver : pense à regarder dans les courriers indésirables.`;
+  setMsg('#acCodeMsg', '');
+  $('#acCodeSubmit').textContent = otp.mode === 'link' ? 'Sauvegarder ma progression' : 'Se connecter';
+  goPane('code');
+  acCode.focus({preventScroll:true});
+}
+// « Renvoyer le code » : compte à rebours de 60 s ; trop de codes faux → il faut un nouveau code
+let resendTimer = 0;
+function refreshCodeUI(){
+  clearTimeout(resendTimer);
+  if(!otp) return;
+  const btn = $('#acResend'), left = Math.ceil((OTP_RESEND - (Date.now() - otp.sentAt)) / 1000);
+  if(!acctBusy){
+    btn.disabled = left > 0;
+    $('#acCodeSubmit').disabled = otp.tries >= OTP_MAX_TRIES;
+  }
+  if(!btn.dataset.label) btn.textContent = left > 0 ? `Renvoyer le code (${left} s)` : 'Renvoyer le code';
+  if(left > 0 && acctOpen) resendTimer = setTimeout(refreshCodeUI, 1000);
+}
+acCode.addEventListener('input', () => {
+  const v = acCode.value.replace(/\D/g, '').slice(0, OTP_LENGTH);   // collage d'un code avec espaces, lettres tapées…
+  if(v !== acCode.value) acCode.value = v;
+  setInvalid(acCode, false);
+  if(v.length === OTP_LENGTH) submitCode();
+});
+$('#acCodeForm').addEventListener('submit', e => { e.preventDefault(); submitCode(); });
+async function submitCode(){
+  if(acctBusy || !otp) return;
+  const flow = otp, token = acCode.value.replace(/\D/g, '');
+  if(flow.tries >= OTP_MAX_TRIES){ setMsg('#acCodeMsg', 'Trop de tentatives. Demande un nouveau code.', 'err'); return; }
+  if(token.length !== OTP_LENGTH){
+    setInvalid(acCode, true); setMsg('#acCodeMsg', `Le code contient ${OTP_LENGTH} chiffres.`, 'err'); acCode.focus(); return;
+  }
+  setAcctBusy(true, $('#acCodeSubmit'));
+  let ok = false;
+  try{
+    const {error} = await sb.auth.verifyOtp({email:flow.email, token, type: flow.mode === 'link' ? 'email_change' : 'email'});
+    if(error) throw error;
+    ok = true;
+  }catch(err){
+    const m = acctError(err, 'verify');
+    acCode.value = ''; setInvalid(acCode, true);
+    if(m.kind !== 'otp') setMsg('#acCodeMsg', m.text, 'err');
+    else if(Date.now() - flow.sentAt > OTP_TTL) setMsg('#acCodeMsg', 'Ce code a expiré. Demande un nouveau code.', 'err');
+    else if(++flow.tries >= OTP_MAX_TRIES) setMsg('#acCodeMsg', 'Trop de tentatives. Demande un nouveau code.', 'err');
+    else{
+      const left = OTP_MAX_TRIES - flow.tries;
+      setMsg('#acCodeMsg', `Code incorrect. Seul le dernier code reçu est valable (encore ${left} essai${left > 1 ? 's' : ''}).`, 'err');
+    }
+  }finally{ setAcctBusy(false); }
+  if(!ok){ acCode.focus({preventScroll:true}); return; }
+  otp = null;
+  acCode.blur();
+  setAcctBusy(true);
+  try{ flow.mode === 'link' ? await finishLink(flow.name) : await finishLogin(); }
+  finally{ setAcctBusy(false); }
+}
+$('#acResend').addEventListener('click', async () => {
+  if(acctBusy || !otp || Date.now() - otp.sentAt < OTP_RESEND) return;
+  const flow = otp;
+  setAcctBusy(true, $('#acResend'));
+  try{
+    if(await sendCode(flow.mode, flow.email)){ otp = null; await finishLink(flow.name); return; }
+    Object.assign(flow, {sentAt:Date.now(), tries:0});
+    acCode.value = ''; setInvalid(acCode, false);
+    setMsg('#acCodeMsg', 'Nouveau code envoyé. Seul le dernier code reçu est valable.', 'ok');
+  }catch(err){
+    const m = acctError(err);
+    if(m.wait) flow.sentAt = Date.now() - OTP_RESEND + m.wait * 1000;   // le compte à rebours suit celui du serveur
+    setMsg('#acCodeMsg', m.text, 'err');
+  }finally{ setAcctBusy(false); }
+});
+
+/* ---------- Fin de la sauvegarde : même compte, désormais rattaché à l'e-mail ; puis le pseudo ---------- */
+async function finishLink(name){
+  await sb.auth.refreshSession();                      // jeton à jour (le compte n'est plus anonyme)
+  const {data:{user}} = await sb.auth.getUser();
+  if(user) readAccount(user);
+  hideNudge();
+  try{ await setUsername(name); }
+  catch(err){                                          // ex. pseudo pris entre-temps : la progression est sauvegardée quand même
+    startSave(true);
+    setMsg('#acNameHint', acctError(err).kind === 'name'
+      ? 'Ta progression est sauvegardée, mais ce pseudo vient d\'être pris : choisis-en un autre.'
+      : 'Ta progression est sauvegardée, mais le pseudo n\'a pas pu être enregistré. Réessaie.', 'err');
+    return;
+  }
+  doneHome('Progression sauvegardée ! Tu peux la retrouver sur n\'importe quel appareil avec cet e-mail.');
+}
+/* ---------- Fin de la connexion : autre compte → on recharge son état, sa collection et son profil ---------- */
+async function finishLogin(){
+  hideNudge();
+  try{ await reloadPlayer(); }
+  catch(err){ location.reload(); return; }             // rechargement partiel impossible : on redémarre le jeu (écran de connexion)
+  doneHome(username ? `Bon retour, ${username} !` : 'Te voilà connecté à ton compte.');
+}
+async function reloadPlayer(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) throw new Error('Session absente');
+  readAccount(session.user);
+  const [st] = await Promise.all([rpc('get_booster_state'), loadCollection(), loadProfile()]);
+  applyState(st);
+  renderShelf();
+  if(profileOpen){ renderTopFilms(); renderFavs(); renderWishlist(); renderStats(); }
+}
+
+/* ---------- Déconnexion (comptes rattachés seulement) : une nouvelle partie anonyme démarre sur cet appareil ---------- */
+function showLogout(){
+  $('#acLogoutText').innerHTML = `Ta collection reste sauvegardée sur ton compte <b>${esc(maskEmail(account.email))}</b>. ` +
+    `Pour la retrouver, reconnecte-toi avec « J'ai déjà un compte ». En attendant, une nouvelle partie commencera sur cet appareil.`;
+  goPane('logout');
+}
+$('#acLogoutGo').addEventListener('click', async () => {
+  if(acctBusy) return;
+  setAcctBusy(true, $('#acLogoutGo'));
+  try{
+    const {error} = await sb.auth.signOut({scope:'local'});   // cet appareil seulement : les autres restent connectés
+    if(error) throw error;
+  }catch(err){ setAcctBusy(false); setMsg('#acHomeMsg', acctError(err).text, 'err'); goPane('home'); return; }
+  try{ username = null; otp = null; await ensureSession(); await reloadPlayer(); }
+  catch(err){ location.reload(); return; }
+  finally{ setAcctBusy(false); }
+  doneHome('Tu es déconnecté.');
+});
+
+/* ---------- Rappel discret « Sauvegarde ta collection » (comptes anonymes) ----------
+   Après le 3e booster, puis tous les 10 boosters tant qu'il n'est pas fermé par la croix (fermé = plus jamais sur ce navigateur).
+   Il disparaît seul au bout de 12 s, et n'apparaît que sur l'Accueil au repos. */
+const NUDGE_FIRST = 3, NUDGE_EVERY = 10, NUDGE_MS = 12000;
+const saveNudge = $('#saveNudge');
+let nudgeTimer = 0;
+function maybeNudge(){
+  setTimeout(showNudgeIfDue, 700);                    // « Ouvrir un autre booster » repasse par l'Accueil : on attend que tout soit posé
+}
+function showNudgeIfDue(){
+  if(!EMAIL_READY || !account.anon || state !== 'idle' || profileOpen || acctOpen || payOpen) return;
+  const at = store.get('saveNudgeAt', NUDGE_FIRST);   // -1 = fermé pour de bon
+  if(at < 0 || player.boostersOpened < at) return;
+  store.set('saveNudgeAt', player.boostersOpened + NUDGE_EVERY);
+  saveNudge.hidden = false; void saveNudge.offsetWidth; saveNudge.classList.add('on');
+  clearTimeout(nudgeTimer); nudgeTimer = setTimeout(hideNudge, NUDGE_MS);
+}
+function hideNudge(){
+  clearTimeout(nudgeTimer);
+  if(saveNudge.hidden) return;
+  saveNudge.classList.remove('on');
+  setTimeout(() => { if(!saveNudge.classList.contains('on')) saveNudge.hidden = true; }, 320);
+}
+$('#snOpen').addEventListener('click', () => { if(canNavigate()) openAcct('save'); });
+$('#snClose').addEventListener('click', () => { store.set('saveNudgeAt', -1); hideNudge(); });
 
 // Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
 document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => {

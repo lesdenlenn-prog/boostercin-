@@ -84,8 +84,16 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      `/search/person`, `/person/popular`, `/trending/person/week`, paramètres validés. Le client appelle
      `sb.functions.invoke('tmdb', { body: { path, params } })` dans `tmdb()`. Plus d'écran ni de clé TMDB côté client.
      Toute modification de la fonction doit être recollée dans l'éditeur du tableau de bord puis redéployée.
-   - 4e : rattachement à un e-mail par code OTP (8 chiffres ; `updateUser({ email })` puis
-     `verifyOtp({ type: 'email_change' })` : même `user.id`). Nécessite SMTP personnalisé + modèles d'e-mail.
+   - **4e** : écran Paramètres (engrenage du Profil, `#acctModal`, section « COMPTE » du script). Sauvegarde = pseudo +
+     e-mail, `updateUser({ email })` puis `verifyOtp({ type: 'email_change' })` : même `user.id`, le pseudo est écrit après
+     vérification. « J'ai déjà un compte » = `signInWithOtp({ shouldCreateUser: false })` puis `verifyOtp({ type: 'email' })`,
+     puis `reloadPlayer()` ; pas de fusion (avertissement si le compte anonyme a des cartes). Déconnexion
+     `signOut({ scope: 'local' })`, réservée aux comptes rattachés. Constantes `OTP_LENGTH` (8, = réglage « Email OTP Length »),
+     `OTP_TTL`, `OTP_RESEND` (60 s). **`EMAIL_READY = false`** tant que le SMTP et les modèles d'e-mail (« Change email
+     address » et « Magic link » avec `{{ .Token }}`) ne sont pas configurés : sauvegarde, connexion et rappel masqués.
+     Rappel « Sauvegarde ta collection » après le 3e booster (localStorage `saveNudgeAt`). Migration
+     `20261104120000_username.sql` (appliquée) : pseudo 3–20 caractères (`USERNAME_RE` côté client, à garder identique),
+     unique sans tenir compte des majuscules, `username_available()`, policy restrictive : pas de pseudo sur un compte anonyme.
      4a à 4d ne doivent dépendre d'aucun e-mail.
 
 ### Décisions
