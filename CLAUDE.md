@@ -96,6 +96,18 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      unique sans tenir compte des majuscules, `username_available()`, policy restrictive : pas de pseudo sur un compte anonyme.
      4a à 4d ne doivent dépendre d'aucun e-mail.
 
+5. **Mode Cinéma** (jeu de gestion idle), découpé en C0 → C5, chaque étape testée avant commit :
+   - C0 (validé) : modèle de données et équilibrage ci-dessous.
+   - **C1** (appliqué, testé) : `20261104140000_cinema.sql`. Équilibrage dans `cinema_levels` (coût, durée, revenu, bonus,
+     salles requises par niveau de `screen`/`arcade`/`box_office`/`popcorn`/`vip`/`sound`), `cinema_params` (`cap_hours` 12,
+     `empty_mult` 0,25, `gem_minutes` 10) et `cinema_rarity` (multiplicateurs) : lus par le client, modifiables sans migration.
+     Joueur : `profiles.tickets` (Billets), `cinemas` (taux, caisse `banked`/`accrue_from`, `last_collect_at`, chantier),
+     `cinema_screens` (film unique par salle, FK vers `collection`), `cinema_upgrades`. `_cinema_settle` fait le point à
+     chaque appel (chantier échu, revenu au taux d'avant, nouveau taux). API : `get_cinema_state`, `collect_cash`,
+     `start_build(kind)`, `finish_build_with_gems(p_max_gems)`, `set_screening(screen, film)` (film déplacé s'il est déjà
+     projeté), `admin_add_tickets`, `admin_finish_build`, `admin_reset_cinema`. Tests : `supabase/tests/cinema.sql`.
+   - À venir : C2 onglet « Cinéma » (6e page, avant Amis) + HUD Billets + récolte, C3 constructions, C4 films, C5 SVG cartoon.
+
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
 - Correspondance localStorage → Supabase : `wallet` → `profiles.reels/gems`, `energy` → `profiles.energy_n/energy_t`,
@@ -125,4 +137,15 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
 - Les utilisateurs anonymes ont aussi le rôle `authenticated` (claim JWT `is_anonymous`).
 - Dans les policies, écrire `(select auth.uid())` plutôt que `auth.uid()` (évalué une seule fois).
 - Migrations : `supabase/migrations/AAAAMMJJHHMMSS_nom.sql`. Ne jamais modifier une migration déjà appliquée : en ajouter une nouvelle.
+- **Claude applique lui-même les migrations et les tests** (plus de copier-coller dans le SQL Editor) :
+  - connexion : `SUPABASE_DB_URL` dans `.env` (session pooler), chargée sans jamais afficher sa valeur
+    (`set -a; . ./.env; set +a`) et masquée dans les sorties ;
+  - avant d'appliquer : vérifier l'état réel (`npx supabase migration list --db-url "$SUPABASE_DB_URL"`, tables et fonctions
+    existantes), puis `npx supabase db push --dry-run --db-url …`, puis `db push --yes`. L'historique
+    `supabase_migrations.schema_migrations` est à jour depuis le 4/11/2026 (migrations 1 à 8 marquées appliquées par
+    `migration repair`) : ne plus appliquer de SQL hors `db push` ;
+  - tests : créer un joueur de test via l'API admin (`SUPABASE_URL` + `SUPABASE_SECRET_KEY`, e-mail confirmé), exécuter
+    chaque bloc de `supabase/tests/*.sql` en tant que ce joueur (`set local role authenticated` + `request.jwt.claims`),
+    vérifier chaque résultat attendu, puis **toujours** supprimer le joueur de test (même en cas d'échec) ;
+  - rendre compte : migrations appliquées, tests réussis / ratés.
 - Code : suivre le style d'`index.html` (commentaires en français, JS vanilla, pas de dépendance de build).
