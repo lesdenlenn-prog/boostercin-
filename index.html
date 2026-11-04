@@ -107,8 +107,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   color:#fff1c4;text-shadow:0 0 10px rgba(246,196,83,.45)}
 .cine-plan{flex:1 1 auto;min-height:0;padding:0 10px}
 .cine-plan svg{display:block;width:100%;height:100%}
-.cine-foot{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 18px 16px}
-.cine-rate{margin:0;font-weight:800;font-size:.95rem;color:#ffe3da;display:flex;align-items:center;gap:6px}
+.cine-foot{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 14px 12px}
+.cine-rate{margin:0;font-weight:800;font-size:.95rem;color:#ffe3da;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.cine-rate > span:first-child{display:flex;align-items:center;gap:5px}
 .cine-rate b{color:#8af5b9}
 .cine-rate svg{width:20px;height:20px}
 .cine-collect{position:relative;overflow:hidden;width:100%;max-width:340px;height:58px;padding:0 18px;border:0;border-radius:16px;
@@ -127,7 +128,51 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .cc-amount svg{width:24px;height:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 .cc-float{position:absolute;left:50%;top:0;z-index:2;pointer-events:none;font-weight:800;font-size:1.3rem;color:#8af5b9;
   text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap}
-.cine-cap{margin:0;min-height:1.2em;font-size:.8rem;color:rgba(255,227,218,.75);text-align:center}
+.cine-cap{font-weight:600;font-size:.78rem;color:rgba(255,227,218,.7)}
+.cine-cap:not(:empty)::before{content:'·';margin:0 6px 0 2px}
+.cine-cap.full{color:#f6c453}
+/* bandeau du chantier en cours */
+.cine-site{width:100%;max-width:340px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:14px;
+  background:rgba(246,196,83,.1);box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.45)}
+.cine-site[hidden]{display:none}
+.cs-ico{font-size:1.2rem}
+.cs-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.cs-txt b{font-size:.85rem;color:#fff1c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-txt span{font-size:.78rem;font-weight:700;color:#ffe3da;font-variant-numeric:tabular-nums}
+.cs-finish{flex:none;display:flex;align-items:center;gap:4px;min-height:38px;padding:0 12px;border:0;border-radius:11px;
+  background:linear-gradient(180deg,#c79bff,#8a3ffc);color:#fff;font-weight:800;font-size:.85rem;
+  box-shadow:inset 0 0 0 1.5px #3b0d8f,0 3px 0 #3b0d8f;transition:transform .12s ease}
+.cs-finish:active{transform:translateY(2px)}
+.cs-finish svg{width:18px;height:18px}
+/* menu à onglets Salles / Arcade / Guichet / Équipements */
+.cine-tabs{width:100%;max-width:340px;display:flex;gap:3px;padding:3px;border-radius:12px;background:rgba(0,0,0,.35)}
+.cine-tabs button{flex:1 1 0;min-width:0;min-height:32px;padding:0 2px;border:0;border-radius:9px;background:transparent;
+  color:#e9d6cf;font-weight:800;font-size:clamp(.66rem,2.9vw,.76rem);letter-spacing:-.01em;white-space:nowrap}
+.cine-tabs button[aria-selected="true"]{background:#5a1620;color:#fff1c4;box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55)}
+.cine-cards{width:100%;max-width:340px;display:grid;gap:6px}
+.cine-cards.equip{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bcard{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 8px 8px 10px;border-radius:14px;
+  background:linear-gradient(180deg,#3d0f17,#2a0a10);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.25)}
+.bc-ico{flex:none;font-size:1.6rem;line-height:1}
+.bc-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.2}
+.bc-main b{font-size:.9rem;color:#fff1c4}
+.bc-main span{font-size:.74rem;color:#e9d6cf}
+.bc-main .bc-gain{color:#8af5b9;font-weight:800}
+.bc-buy{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:86px;min-height:46px;
+  padding:3px 8px;border:0;border-radius:11px;background:linear-gradient(180deg,#46d98a,#1f9a57);color:#06301a;
+  font-weight:800;font-size:.88rem;box-shadow:inset 0 0 0 1.5px #0b4728,0 3px 0 #0b4728;transition:transform .12s ease}
+.bc-buy:active{transform:translateY(2px)}
+.bc-buy .bc-cost{display:flex;align-items:center;gap:3px}
+.bc-buy svg{width:17px;height:17px}
+.bc-buy small{font-size:.68rem;font-weight:700;opacity:.85}
+.bc-buy.no{background:#3a2a2c;color:#c9b3ae;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.4)}
+.bc-buy:disabled{opacity:.7}
+/* équipements : 3 petites cartes en colonne */
+.equip .bcard{flex-direction:column;align-items:stretch;gap:5px;padding:8px 6px;text-align:center}
+.equip .bc-ico{font-size:1.4rem}
+.equip .bc-main b{font-size:.8rem}
+.equip .bc-buy{min-width:0;min-height:42px;padding:3px 4px;font-size:.8rem}
+.bcard.nudge{animation:nudge .4s ease}
 .cine-err{margin:0;font-size:.85rem;font-weight:700;color:#ffb3a3;text-align:center}
 .cine-admin{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:4px}
 .cine-admin[hidden]{display:none}
@@ -723,6 +768,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pay-panel .rate{font-size:.78rem;color:#b99c9a}
 .pay-bal{display:flex;justify-content:center;gap:16px;margin:12px 0 16px;font-weight:800;color:#ffe3da}
 .pay-bal span{display:flex;align-items:center;gap:6px}
+.pay-bal span[hidden]{display:none}
 .pay-bal svg{width:22px;height:22px}
 .pay-actions{display:flex;flex-direction:column;gap:8px}
 .pay-actions .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -1591,14 +1637,27 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
       <h2 class="cine-title">Mon cinéma</h2>
       <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma"></div>
       <div class="cine-foot">
-        <p class="cine-rate" id="cineRate">&nbsp;</p>
+        <p class="cine-rate"><span id="cineRate">&nbsp;</span><span class="cine-cap" id="cineCap" role="status"></span></p>
         <button class="cine-collect" id="cineCollect" type="button" disabled>
           <span class="cc-fill" id="cineFill"></span>
           <span class="cc-label">Récolter la caisse</span>
           <span class="cc-amount"><span id="cinePending">0</span><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg></span>
         </button>
-        <p class="cine-cap" id="cineCap" role="status">&nbsp;</p>
         <p class="cine-err" id="cineErr" role="alert" hidden></p>
+        <!-- Chantier en cours : nom, minuteur, « Terminer » payé en gemmes (prix confirmé dans la fenêtre de paiement) -->
+        <div class="cine-site" id="cineSite" hidden>
+          <span class="cs-ico" aria-hidden="true">🚧</span>
+          <span class="cs-txt"><b id="csName"></b><span id="csTime"></span></span>
+          <button class="cs-finish" id="csFinish" type="button">Terminer <b id="csGems">0</b><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg></button>
+        </div>
+        <!-- Menu de construction -->
+        <div class="cine-tabs" id="cineTabs" role="tablist" aria-label="Constructions">
+          <button type="button" role="tab" data-tab="screen" aria-selected="true">Salles</button>
+          <button type="button" role="tab" data-tab="arcade" aria-selected="false">Arcade</button>
+          <button type="button" role="tab" data-tab="box_office" aria-selected="false">Guichet</button>
+          <button type="button" role="tab" data-tab="equip" aria-selected="false">Équipements</button>
+        </div>
+        <div class="cine-cards" id="cineCards" role="tabpanel"></div>
         <!-- OUTILS DE TEST : réservés à l'admin -->
         <div class="cine-admin admin-only" hidden>
           <button type="button" id="cineAddT">+1 000 billets</button>
@@ -4362,6 +4421,7 @@ function showPayPopup(ctx, kind, cost, missing, gemCost){
   $('#payBody').innerHTML = body;
   $('#payActions').innerHTML = actions;
   $('#payReels').textContent = reelsTotal.toLocaleString('fr-FR');
+  $('#payReels').parentElement.hidden = false;
   $('#payGems').textContent = gemsTotal.toLocaleString('fr-FR');
   Object.assign(payModal.dataset, {ctx, cost, missing, gems:gemCost});
   payOpen = true;
@@ -4384,6 +4444,13 @@ payModal.addEventListener('click', e => {
   const act = e.target.closest('[data-pay]');
   if(!act){ if(!e.target.closest('.pay-panel')) cancelPay(); return; }   // clic dans le flou = Annuler
   const ctx = payModal.dataset.ctx;
+  if(ctx === 'cine'){                                  // Cinéma : « Terminer maintenant » en gemmes
+    const max = +payModal.dataset.gems;
+    closePayPopup();
+    if(act.dataset.pay === 'cinefinish') finishWithGems(max);   // le serveur refuse si le prix a monté (price_changed)
+    else if(act.dataset.pay === 'shop') showView('shop');
+    return;
+  }
   const cost = +payModal.dataset.cost, missing = +payModal.dataset.missing, gemCost = +payModal.dataset.gems;
   const stillValid = ctx === 'select' ? state === 'zoomed' : state === 'summary';
   if(act.dataset.pay === 'confirm'){
@@ -4469,13 +4536,10 @@ $('#demoBtn').addEventListener('click', async () => {
 });
 
 /* =====================================================================
-   17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
-   ===================================================================== */
-/* =====================================================================
    16 bis. CINÉMA (mode gestion)
-   Le serveur fait tout, à son heure : get_cinema_state, collect_cash, fonctions admin (et, plus tard, constructions).
+   Le serveur fait tout, à son heure : get_cinema_state, collect_cash, start_build, finish_build_with_gems, fonctions admin.
    Ici : copie locale de l'état, caisse qui monte entre deux synchronisations (même calcul que _cinema_accrued),
-   plan SVG généré depuis l'état. Rien n'est gardé dans localStorage.
+   plan SVG généré depuis l'état, menu de construction lu dans les tables d'équilibrage. Rien dans localStorage.
    ===================================================================== */
 let cine = null;                      // {st: état du serveur, recv/fullAt/buildEnd : horloge du téléphone}
 let cineSeq = 0, cineBusy = false, cineRefreshAt = 0;
@@ -4505,6 +4569,10 @@ function applyCinema(st, {bump = false} = {}){
   plan.innerHTML = cinePlanSvg(st);
   plan.setAttribute('aria-label', `Plan du cinéma : ${st.levels.screen} salle${st.levels.screen > 1 ? 's' : ''} sur 20, ` +
     `guichet niveau ${st.levels.box_office}, arcade niveau ${st.levels.arcade}`);
+  $('#cineSite').hidden = !st.build;
+  if(st.build) $('#csName').textContent = buildName(st.build.kind, st.build.level);
+  renderCineCards();
+  if(payOpen && payModal.dataset.ctx === 'cine' && !st.build) closePayPopup();   // chantier fini entre-temps
   tickCinema();
 }
 // Caisse à l'instant t : montant calculé par le serveur + revenu au taux actuel, jusqu'au plafond (full_at)
@@ -4521,10 +4589,16 @@ function tickCinema(){
   cineFill.style.transform = `scaleX(${clamp(1 - (cine.fullAt - now) / capMs, 0, 1).toFixed(4)})`;   // jauge sur 12 h
   cineCollect.classList.toggle('full', full);
   cineCollect.disabled = cineBusy || pending < 1;
-  cineCap.textContent = full ? 'Caisse pleine : production à l\'arrêt'
-                             : `Caisse pleine dans ${fmtDur(cine.fullAt - now)}`;
+  cineCap.textContent = full ? 'caisse pleine !' : `pleine dans ${fmtDur(cine.fullAt - now)}`;
+  cineCap.classList.toggle('full', full);
   const t = document.getElementById('cpTimer');
   if(t && cine.buildEnd) t.textContent = fmtDur(cine.buildEnd - now);
+  if(cine.st.build){                                          // bandeau du chantier : minuteur + prix en gemmes du moment
+    const left = cine.buildEnd - now;
+    $('#csTime').textContent = left > 0 ? `encore ${fmtDur(left)}` : 'Finition…';
+    $('#csGems').textContent = gemPriceNow(now);
+    $('#csFinish').disabled = left <= 0;
+  }
   // construction échue : le serveur la termine à la prochaine lecture (au plus une relecture toutes les 5 s)
   if(cine.buildEnd && now >= cine.buildEnd + 500 && now > cineRefreshAt){ cineRefreshAt = now + 5000; loadCinema(); }
 }
@@ -4535,7 +4609,7 @@ async function loadCinema(){
   if(!userId) return;
   const seq = cineSeq;
   try{
-    const st = await rpc('get_cinema_state');
+    const [st] = await Promise.all([rpc('get_cinema_state'), loadCineConfig()]);
     if(seq === cineSeq && !cineBusy){ applyCinema(st); showCineErr(''); }
   }catch(e){ if(!cine) showCineErr(e.message); }      // hors ligne : on garde la copie locale
 }
@@ -4575,6 +4649,156 @@ $('#cineFinish').addEventListener('click', () => cineAdmin('admin_finish_build')
 $('#cineReset').addEventListener('click', () => {
   if(confirm('Remettre le cinéma à zéro (salles, niveaux, billets) ? La collection ne bouge pas.')) cineAdmin('admin_reset_cinema');
 });
+
+/* ---------- Constructions (C3) ----------
+   Coûts, durées, revenus et bonus viennent des tables d'équilibrage (cinema_levels, cinema_params), lues une fois.
+   Le client ne fait qu'afficher et demander : start_build et finish_build_with_gems revérifient tout. */
+let cineCfg = null;                    // {lv: {kind: {niveau: ligne}}, p: {cap_hours, empty_mult, gem_minutes}}
+let cineTab = 'screen';
+const BUILD_INFO = {
+  screen:     {ico:'🎬', name:'Salle'},
+  arcade:     {ico:'🕹️', name:'Arcade'},
+  box_office: {ico:'🎟️', name:'Guichet'},
+  popcorn:    {ico:'🍿', name:'Pop-corn'},
+  vip:        {ico:'💺', name:'Sièges VIP'},
+  sound:      {ico:'🔊', name:'Son Dolby'}
+};
+const buildName = (kind, level) => kind === 'screen' ? `Salle ${level}` : `${BUILD_INFO[kind].name} niv. ${level}`;
+// durée d'un chantier : « 45 min », « 1 h 30 », « 12 h »
+const fmtMin = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}`;
+const TICKET_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg>';
+const GEM_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg>';
+
+async function loadCineConfig(){
+  if(cineCfg) return;
+  const [lv, pr] = await Promise.all([
+    sb.from('cinema_levels').select('kind,level,cost,build_minutes,income,bonus_pct,requires_screens'),
+    sb.from('cinema_params').select('key,value')]);
+  if(lv.error || pr.error) throw new Error(netMsg((lv.error || pr.error).message));
+  const cfg = {lv:{}, p:{}};
+  lv.data.forEach(r => { (cfg.lv[r.kind] ||= {})[r.level] = r; });
+  pr.data.forEach(r => { cfg.p[r.key] = Number(r.value); });
+  cineCfg = cfg;
+}
+// Prix en gemmes du temps restant (même règle que _cinema_gem_price : 1 gemme par tranche entamée, 1 au minimum)
+function gemPriceNow(now = Date.now()){
+  const st = cine && cine.st;
+  if(!st || !st.build) return 0;
+  if(!cineCfg) return st.build.gem_price;
+  const sec = Math.max(0, (cine.buildEnd - now) / 1000);
+  return Math.max(1, Math.ceil(sec / (cineCfg.p.gem_minutes * 60)));
+}
+
+// Prochain niveau d'un élément → ce que la carte affiche et, s'il y a lieu, pourquoi on ne peut pas le lancer
+function nextBuild(kind){
+  const st = cine.st, lv = st.levels, cur = lv[kind], row = cineCfg.lv[kind][cur + 1];
+  const raw = st.screens.reduce((s, x) => s + Number(x.base) * Number(x.mult), 0);   // revenu des salles avant bonus
+  const o = {kind, row, title: kind === 'screen' ? `Salle ${cur + 1}` : `${BUILD_INFO[kind].name} niv. ${cur + 1}`};
+  if(!row){
+    o.title = kind === 'screen' ? 'Salles' : BUILD_INFO[kind].name;
+    o.desc = kind === 'screen' ? '20 salles sur 20' : `Niveau ${cur} (max)`;
+    o.block = 'max'; return o;
+  }
+  if(kind === 'screen'){
+    o.desc = `${cur} salle${cur > 1 ? 's' : ''} sur 20`;
+    o.gain = `${fmtN(row.income)}/h × rareté du film`;
+  }else if(kind === 'arcade'){
+    const now = cur ? cineCfg.lv.arcade[cur].income : 0;
+    o.desc = cur ? `Niveau ${cur} : ${fmtN(now)}/h` : 'Jeux vidéo dans le hall';
+    o.gain = `+${fmtN(row.income - now)}/h`;
+  }else{
+    const now = cur ? cineCfg.lv[kind][cur].bonus_pct : 0, d = Number(row.bonus_pct) - Number(now);
+    o.desc = kind === 'box_office' ? (cur ? `Niveau ${cur} : +${fmtN(now)} %` : 'Délabré : à rénover') : `+${fmtN(row.bonus_pct)} % sur les salles`;
+    o.gain = `+${fmtN(d)} %` + (raw ? ` (≈ +${fmtN(raw * d / 100)}/h)` : '');
+  }
+  if(lv.screen < row.requires_screens) o.block = 'locked';
+  else if(st.build) o.block = 'busy';
+  else if(ticketsTotal < row.cost) o.block = 'tickets';
+  return o;
+}
+function buildCard(o, small){
+  const i = BUILD_INFO[o.kind];
+  let btn;
+  if(o.block === 'max') btn = `<button class="bc-buy no" type="button" disabled>Max</button>`;
+  else if(o.block === 'locked') btn = `<button class="bc-buy no" type="button" disabled><span>Dès ${o.row.requires_screens}</span><small>salles</small></button>`;
+  else btn = `<button class="bc-buy${o.block ? ' no' : ''}" type="button" data-build="${o.kind}"
+      aria-label="Construire ${esc(o.title)} : ${o.row.cost} billets, ${fmtMin(o.row.build_minutes)}">
+      <span class="bc-cost">${o.row.cost.toLocaleString('fr-FR')}${TICKET_ICO}</span><small>⏱ ${fmtMin(o.row.build_minutes)}</small></button>`;
+  return `<div class="bcard" data-kind="${o.kind}">
+    <span class="bc-ico" aria-hidden="true">${i.ico}</span>
+    <span class="bc-main"><b>${esc(small && o.row ? `${i.name} ${o.row.level}` : o.title)}</b>${small ? '' : `<span>${esc(o.desc)}</span>`}${o.gain && o.block !== 'max' ? `<span class="bc-gain">${esc(o.gain)}</span>` : ''}</span>
+    ${btn}</div>`;
+}
+function renderCineCards(){
+  const box = $('#cineCards');
+  if(!cine || !cineCfg){ box.innerHTML = ''; return; }
+  const equip = cineTab === 'equip';
+  box.classList.toggle('equip', equip);
+  box.innerHTML = equip ? ['popcorn', 'vip', 'sound'].map(k => buildCard(nextBuild(k), true)).join('')
+                        : buildCard(nextBuild(cineTab), false);
+}
+$('#cineTabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if(!b) return;
+  cineTab = b.dataset.tab;
+  $('#cineTabs').querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  renderCineCards();
+});
+
+// Lancer une construction : refus expliqué sur place (le serveur revérifie de toute façon)
+$('#cineCards').addEventListener('click', async e => {
+  const b = e.target.closest('[data-build]');
+  if(!b || cineBusy || !cine) return;
+  const o = nextBuild(b.dataset.build);
+  if(o.block === 'busy' || o.block === 'tickets'){
+    showCineErr(o.block === 'busy' ? 'Une construction est déjà en cours.'
+                                   : `Il te manque ${(o.row.cost - ticketsTotal).toLocaleString('fr-FR')} billets.`);
+    const card = b.closest('.bcard'); card.classList.remove('nudge'); void card.offsetWidth; card.classList.add('nudge'); buzz(12);
+    return;
+  }
+  cineBusy = true; b.disabled = true; buzz(15);
+  try{
+    const r = await rpc('start_build', {p_kind:o.kind});
+    cineBusy = false;
+    applyCinema(r.state);
+    showCineErr(r.ok ? '' : r.message);
+  }catch(err){ showCineErr(err.message); }
+  finally{ cineBusy = false; b.disabled = false; tickCinema(); }
+});
+
+// « Terminer » : le prix du moment est affiché dans la fenêtre de paiement avant confirmation
+$('#csFinish').addEventListener('click', () => {
+  if(!cine || !cine.st.build || cineBusy) return;
+  const price = gemPriceNow(), name = buildName(cine.st.build.kind, cine.st.build.level);
+  const enough = gemsTotal >= price;
+  $('#payTitle').textContent = enough ? 'Terminer maintenant' : 'Gemmes insuffisantes';
+  $('#payBody').innerHTML = enough
+    ? `<p>Terminer <b>${esc(name)}</b> tout de suite pour <b>${price} gemme${price > 1 ? 's' : ''}</b> ?</p>
+       <p class="rate">1 gemme par tranche de ${cineCfg ? cineCfg.p.gem_minutes : 10} min restante</p>`
+    : `<p>Terminer <b>${esc(name)}</b> coûte <b>${price} gemmes</b>. Il t'en manque <b>${price - gemsTotal}</b>.</p>`;
+  $('#payActions').innerHTML = enough
+    ? `<button class="btn" type="button" data-pay="cinefinish">Terminer pour ${price} ${GEM_ICO}</button>
+       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`
+    : `<button class="btn" type="button" data-pay="shop">Aller au Magasin</button>
+       <button class="btn ghost" type="button" data-pay="cancel">Annuler</button>`;
+  $('#payReels').parentElement.hidden = true;                       // ici, seules les gemmes comptent
+  $('#payGems').textContent = gemsTotal.toLocaleString('fr-FR');
+  Object.assign(payModal.dataset, {ctx:'cine', cost:0, missing:0, gems:price});
+  payOpen = true;
+  payModal.classList.remove('hidden'); void payModal.offsetWidth; payModal.classList.add('on');
+  payModal.querySelector('.pay-actions .btn').focus({preventScroll:true});
+});
+async function finishWithGems(maxGems){
+  if(cineBusy) return;
+  cineBusy = true; buzz(15);
+  try{
+    const r = await rpc('finish_build_with_gems', {p_max_gems:maxGems});
+    cineBusy = false;
+    applyCinema(r.state);
+    showCineErr(r.ok || r.reason === 'no_build' ? '' : r.message);   // déjà terminé d'elle-même : rien à signaler
+  }catch(err){ showCineErr(err.message); }
+  finally{ cineBusy = false; tickCinema(); }
+}
 
 /* ---------- Plan du cinéma (SVG simple, vue de dessus) ----------
    Grille de 20 emplacements (5 × 4, la salle 1 en bas à gauche, près du hall), hall en bas :
@@ -4663,6 +4887,9 @@ function cpHall(lv, b){
   return g;
 }
 
+/* =====================================================================
+   17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche
+   ===================================================================== */
 const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model',   // données locales v53 : on repart de zéro
                   'topFilms', 'favs', 'wishlist', 'vc_thresholds', 'tmdb_key',    // la clé TMDB est désormais sur le serveur
                   'peopleSuggest2'];

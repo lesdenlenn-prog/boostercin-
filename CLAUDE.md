@@ -106,12 +106,16 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      chaque appel (chantier échu, revenu au taux d'avant, nouveau taux). API : `get_cinema_state`, `collect_cash`,
      `start_build(kind)`, `finish_build_with_gems(p_max_gems)`, `set_screening(screen, film)` (film déplacé s'il est déjà
      projeté), `admin_add_tickets`, `admin_finish_build`, `admin_reset_cinema`. Tests : `supabase/tests/cinema.sql`.
-   - **C2** (à tester) : onglet « Cinéma » (6e page, avant Amis ; barre resserrée sous 360 px), HUD Billets + gemmes sans profil
+   - **C2** (fait) : onglet « Cinéma » (6e page, avant Amis ; barre resserrée sous 360 px), HUD Billets + gemmes sans profil
      ni bobines, section « CINÉMA » du script : `applyCinema` (dates du serveur ramenées à l'horloge du téléphone via
      `server_now`), caisse qui monte localement jusqu'à `full_at`, jauge 12 h (`scaleX`), `collect_cash`, plan SVG simple
      `cinePlanSvg` (20 emplacements, hall, guichet, arcade, équipements, chantier + minuteur), outils admin. État relu à chaque
      visite de la page et au retour dans l'appli ; chantier échu → relecture du serveur.
-   - À venir : C3 constructions, C4 films, C5 SVG cartoon.
+   - **C3** (à tester) : menu Salles / Arcade / Guichet / Équipements (`renderCineCards`, `nextBuild`) lu dans `cinema_levels` et
+     `cinema_params` (`loadCineConfig`, une fois) ; refus affichés sur place, `start_build` revérifie. Bandeau du chantier
+     (minuteur, prix du moment = règle de `_cinema_gem_price`) ; « Terminer » ouvre la fenêtre de paiement (`ctx: 'cine'`)
+     puis `finish_build_with_gems(prix affiché)`.
+   - À venir : C4 films, C5 SVG cartoon.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
