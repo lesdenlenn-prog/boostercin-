@@ -506,6 +506,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pick-list{flex:1;min-height:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)}
 .pick-list .slot:not(.empty) .card{cursor:pointer}
 .pick-empty{margin:40px 24px;text-align:center;color:#7f9ae0}
+/* Cinéma : bouton « Retirer » et étiquette « ×multiplicateur · Salle n » sur chaque film */
+.pick-remove{flex:none;min-height:34px;padding:0 10px;border:1.5px solid rgba(255,140,120,.5);border-radius:10px;
+  background:transparent;color:#ffb3a3;font-weight:800;font-size:.75rem}
+.pick-remove[hidden]{display:none}
+.pick-list .slot{position:relative}
+.pk-tag{position:absolute;left:50%;top:-7px;z-index:3;transform:translateX(-50%);padding:1px 6px;border-radius:99px;
+  background:rgba(4,30,16,.92);color:#8af5b9;font-weight:800;font-size:.6rem;white-space:nowrap;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(138,245,185,.5)}
+.pk-tag.used{background:rgba(40,24,4,.92);color:#f6c453;box-shadow:inset 0 0 0 1px rgba(246,196,83,.6)}
+.cine-hint{grid-column:1 / -1;margin:0;text-align:center;font-size:.74rem;color:rgba(255,227,218,.65)}
+#cinePlan [data-screen]{cursor:pointer}
+#cinePlan [data-screen]:focus-visible{outline:2px solid var(--gold-hi)}
 
 /* =====================================================================
    MAGASIN
@@ -1635,7 +1647,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <!-- Cinéma (mode gestion) : plan SVG généré depuis l'état du serveur + caisse. Tout est calculé par Supabase. -->
     <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
       <h2 class="cine-title">Mon cinéma</h2>
-      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma"></div>
+      <div class="cine-plan" id="cinePlan" role="group" aria-label="Plan du cinéma"></div>
       <div class="cine-foot">
         <p class="cine-rate"><span id="cineRate">&nbsp;</span><span class="cine-cap" id="cineCap" role="status"></span></p>
         <button class="cine-collect" id="cineCollect" type="button" disabled>
@@ -1757,7 +1769,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     <div class="pick-head">
       <button class="pm-iconbtn" id="pickClose" type="button" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
       <h3 id="pickTitle">Choisis un film</h3>
-      <span class="spacer"></span>
+      <span class="spacer" id="pickSpacer"></span>
+      <!-- Cinéma : salle qui projette déjà un film → on peut la vider -->
+      <button class="pick-remove" id="pickRemove" type="button" hidden>Retirer</button>
     </div>
     <!-- Même barre de tri + recherche que la Vidéothèque (état indépendant) -->
     <header class="shead pick-shead">
@@ -3256,7 +3270,7 @@ filmstrip.addEventListener('keydown', e => {
 const pickModal = $('#pickModal'), pickList = $('#pickList');
 const pkCrit = $('#pkCrit'), pkDir = $('#pkDir'), pkFilt = $('#pkFilt'), pkDrop = $('#pkDrop'), pkSearch = $('#pkSearch'), pkClear = $('#pkClear'), pkStatus = $('#pkStatus');
 const pickState = {by:'rarity', dir:'desc', rarities:new Set()};   // indépendant de la Vidéothèque
-let pickSlot = null, pickQuery = '';
+let pickSlot = null, pickQuery = '', pickTarget = 'top';
 function renderPickBar(){
   const byRating = pickState.by === 'rating';
   pkCrit.textContent = byRating ? 'NOTE' : 'RARETÉ';
@@ -3280,12 +3294,16 @@ function renderPickList(){
   const rows = chunk(films, SHELF.perRow);
   pickList.innerHTML = `<div class="cabinet"><div class="scap"></div>${rows.map(row => `<div class="srow"><div class="niche">
     <div class="sback"></div><div class="swall l"></div><div class="swall r"></div><div class="plank"></div>
-    <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}</div>`).join('')}</div></div></div>`).join('')}</div>`;
+    <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}${pickTarget === 'cine' ? cineTag(c) : ''}</div>`).join('')}</div></div></div>`).join('')}</div>`;
   pickList.scrollTop = 0;
 }
-function openPicker(slotIndex){
-  pickSlot = slotIndex;
-  $('#pickTitle').textContent = `Top film n° ${slotIndex + 1}`;
+// Deux usages : une case du Top Films (target 'top'), ou une salle du Cinéma (target 'cine', slotIndex = n° de salle)
+function openPicker(slotIndex, target = 'top'){
+  pickSlot = slotIndex; pickTarget = target;
+  const screen = target === 'cine' && cine ? cine.st.screens.find(s => s.no === slotIndex) : null;
+  $('#pickTitle').textContent = target === 'cine' ? `Film de la salle ${slotIndex}` : `Top film n° ${slotIndex + 1}`;
+  $('#pickRemove').hidden = !(screen && screen.film_id);
+  $('#pickSpacer').hidden = !$('#pickRemove').hidden;
   pickQuery = ''; pkSearch.value = ''; pkClear.hidden = true;   // la recherche repart à zéro, le tri choisi est conservé
   closePickFilter();
   renderPickBar(); renderPickList();
@@ -3295,7 +3313,7 @@ function closePicker(){
   pickModal.classList.remove('on');
   closePickFilter(); pkSearch.blur();
   setTimeout(() => { if(!pickModal.classList.contains('on')){ pickModal.classList.add('hidden'); pickList.innerHTML = ''; } }, 300);
-  pickSlot = null;
+  pickSlot = null; pickTarget = 'top';
 }
 pkCrit.addEventListener('click', () => {
   pickState.by = pickState.by === 'rarity' ? 'rating' : 'rarity';
@@ -3333,8 +3351,10 @@ $('#pickClose').addEventListener('click', closePicker);
 pickList.addEventListener('click', e => {
   const slot = e.target.closest('.slot[data-id]');
   if(!slot || pickSlot === null) return;
-  chooseTopFilm(pickSlot, slot.dataset.id);
+  if(pickTarget === 'cine') chooseScreenFilm(pickSlot, +slot.dataset.id);
+  else chooseTopFilm(pickSlot, slot.dataset.id);
 });
+$('#pickRemove').addEventListener('click', () => { if(pickTarget === 'cine' && pickSlot !== null) chooseScreenFilm(pickSlot, null); });
 // Film choisi → il remplit la case (sans en changer la taille). Un même film ne peut occuper qu'une case.
 function chooseTopFilm(i, id){
   topFilms = topFilms.map(x => String(x) === String(id) ? null : x);
@@ -4671,13 +4691,16 @@ const GEM_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/><
 
 async function loadCineConfig(){
   if(cineCfg) return;
-  const [lv, pr] = await Promise.all([
+  const [lv, pr, ra] = await Promise.all([
     sb.from('cinema_levels').select('kind,level,cost,build_minutes,income,bonus_pct,requires_screens'),
-    sb.from('cinema_params').select('key,value')]);
-  if(lv.error || pr.error) throw new Error(netMsg((lv.error || pr.error).message));
-  const cfg = {lv:{}, p:{}};
+    sb.from('cinema_params').select('key,value'),
+    sb.from('cinema_rarity').select('rarity,mult')]);
+  const bad = lv.error || pr.error || ra.error;
+  if(bad) throw new Error(netMsg(bad.message));
+  const cfg = {lv:{}, p:{}, rar:{}};
   lv.data.forEach(r => { (cfg.lv[r.kind] ||= {})[r.level] = r; });
   pr.data.forEach(r => { cfg.p[r.key] = Number(r.value); });
+  ra.data.forEach(r => { cfg.rar[r.rarity] = Number(r.mult); });
   cineCfg = cfg;
 }
 // Prix en gemmes du temps restant (même règle que _cinema_gem_price : 1 gemme par tranche entamée, 1 au minimum)
@@ -4735,7 +4758,8 @@ function renderCineCards(){
   const equip = cineTab === 'equip';
   box.classList.toggle('equip', equip);
   box.innerHTML = equip ? ['popcorn', 'vip', 'sound'].map(k => buildCard(nextBuild(k), true)).join('')
-                        : buildCard(nextBuild(cineTab), false);
+                        : buildCard(nextBuild(cineTab), false)
+                          + (cineTab === 'screen' ? '<p class="cine-hint">Touche une salle du plan pour choisir son film.</p>' : '');
 }
 $('#cineTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
@@ -4800,6 +4824,43 @@ async function finishWithGems(maxGems){
   finally{ cineBusy = false; tickCinema(); }
 }
 
+/* ---------- Films projetés (C4) ----------
+   Un appui sur une salle du plan ouvre la modale de sélection du Top Films (mode 'cine').
+   set_screening vérifie que le film est dans la collection et le retire de son ancienne salle. */
+function cineTag(c){
+  if(!cine) return '';
+  const mult = cineCfg && cineCfg.rar[c.rarity];
+  const used = cine.st.screens.find(s => String(s.film_id) === String(c.id));
+  const txt = [mult ? '×' + fmtN(mult) : '', used ? `Salle ${used.no}` : ''].filter(Boolean).join(' · ');
+  return txt ? `<span class="pk-tag${used ? ' used' : ''}">${txt}</span>` : '';
+}
+function openScreenPicker(no){
+  if(!cine || !cine.st.screens.some(s => s.no === no)) return;
+  buzz(6);
+  openPicker(no, 'cine');
+}
+async function chooseScreenFilm(no, filmId){
+  const cur = cine && cine.st.screens.find(s => s.no === no);
+  closePicker();
+  if(!cur || cineBusy || (cur.film_id ?? null) === filmId) return;          // même film : rien à faire
+  cineBusy = true; buzz(10);
+  try{
+    const r = await rpc('set_screening', {p_screen:no, p_film:filmId});
+    cineBusy = false;
+    applyCinema(r.state);
+    showCineErr('');
+  }catch(err){ showCineErr(err.message); }
+  finally{ cineBusy = false; tickCinema(); }
+}
+$('#cinePlan').addEventListener('click', e => {
+  const g = e.target.closest('[data-screen]');
+  if(g) openScreenPicker(+g.dataset.screen);
+});
+$('#cinePlan').addEventListener('keydown', e => {
+  const g = e.target.closest('[data-screen]');
+  if(g && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openScreenPicker(+g.dataset.screen); }
+});
+
 /* ---------- Plan du cinéma (SVG simple, vue de dessus) ----------
    Grille de 20 emplacements (5 × 4, la salle 1 en bas à gauche, près du hall), hall en bas :
    guichet à gauche, arcade à droite, entrée au centre. Emplacements vides en pointillés,
@@ -4817,7 +4878,7 @@ function cinePlanSvg(st){
     else out += `<rect x="${x + .5}" y="${y + .5}" width="${CP.cw - 1}" height="${CP.ch - 1}" rx="6" fill="rgba(255,255,255,.03)" stroke="rgba(255,227,218,.22)" stroke-dasharray="4 3"/>`
               + (n === lv.screen + 1 ? `<text x="${x + CP.cw / 2}" y="${y + CP.ch / 2 + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="rgba(255,227,218,.35)">+</text>` : '');
   }
-  return `<svg viewBox="0 0 360 ${CP.hallY + CP.hallH + 8}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  return `<svg viewBox="0 0 360 ${CP.hallY + CP.hallH + 8}" preserveAspectRatio="xMidYMid meet">
     <defs>
       <pattern id="cpHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="8" height="8" fill="rgba(60,40,10,.7)"/><rect width="4" height="8" fill="rgba(246,196,83,.5)"/></pattern>
@@ -4834,7 +4895,9 @@ function cpScreen(s, x, y){
     ? `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="#000" style="stroke:var(--${s.rarity})" stroke-width="1.6"/>
        <image href="https://image.tmdb.org/t/p/w92${esc(s.poster)}" x="${x + w - 20.2}" y="${y + 11.8}" width="13.4" height="22.4" preserveAspectRatio="xMidYMid slice"/>`
     : `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="none" stroke="rgba(255,227,218,.3)" stroke-dasharray="2 2"/>`;
-  return `<g><title>Salle ${s.no}${s.title ? ' : ' + esc(s.title) : ' (sans film)'}</title>
+  return `<g data-screen="${s.no}" role="button" tabindex="0"
+      aria-label="Salle ${s.no} : ${s.title ? esc(s.title) + ', ' + fmtN(s.income) + ' billets par heure' : 'sans film'}. Choisir le film">
+    <title>Salle ${s.no}${s.title ? ' : ' + esc(s.title) : ' (sans film)'}</title>
     <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#4a121b" stroke="#22060b" stroke-width="1.5"/>
     <rect x="${x + 7}" y="${y + 4}" width="${w - 14}" height="3" rx="1.5" fill="#fff4d6" opacity=".85"/>
     <path d="M${x + 8} ${y + 15}h32M${x + 8} ${y + 22}h32M${x + 8} ${y + 29}h32" stroke="#b7303f" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="3.2 2.2"/>

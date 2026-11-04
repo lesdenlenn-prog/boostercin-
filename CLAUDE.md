@@ -111,11 +111,14 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      `server_now`), caisse qui monte localement jusqu'à `full_at`, jauge 12 h (`scaleX`), `collect_cash`, plan SVG simple
      `cinePlanSvg` (20 emplacements, hall, guichet, arcade, équipements, chantier + minuteur), outils admin. État relu à chaque
      visite de la page et au retour dans l'appli ; chantier échu → relecture du serveur.
-   - **C3** (à tester) : menu Salles / Arcade / Guichet / Équipements (`renderCineCards`, `nextBuild`) lu dans `cinema_levels` et
+   - **C3** (fait) : menu Salles / Arcade / Guichet / Équipements (`renderCineCards`, `nextBuild`) lu dans `cinema_levels` et
      `cinema_params` (`loadCineConfig`, une fois) ; refus affichés sur place, `start_build` revérifie. Bandeau du chantier
      (minuteur, prix du moment = règle de `_cinema_gem_price`) ; « Terminer » ouvre la fenêtre de paiement (`ctx: 'cine'`)
      puis `finish_build_with_gems(prix affiché)`.
-   - À venir : C4 films, C5 SVG cartoon.
+   - **C4** (à tester) : un appui sur une salle du plan (`[data-screen]`, aussi au clavier) ouvre la modale de sélection du Top
+     Films en mode `pickTarget = 'cine'` : étiquette « ×multiplicateur · Salle n » (`cinema_rarity`, lu par `loadCineConfig`),
+     bouton « Retirer » si la salle projette un film ; `chooseScreenFilm` → `set_screening` (film déplacé s'il était ailleurs).
+   - À venir : C5 SVG cartoon.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
