@@ -115,10 +115,14 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      `cinema_params` (`loadCineConfig`, une fois) ; refus affichés sur place, `start_build` revérifie. Bandeau du chantier
      (minuteur, prix du moment = règle de `_cinema_gem_price`) ; « Terminer » ouvre la fenêtre de paiement (`ctx: 'cine'`)
      puis `finish_build_with_gems(prix affiché)`.
-   - **C4** (à tester) : un appui sur une salle du plan (`[data-screen]`, aussi au clavier) ouvre la modale de sélection du Top
+   - **C4** (fait) : un appui sur une salle du plan (`[data-screen]`, aussi au clavier) ouvre la modale de sélection du Top
      Films en mode `pickTarget = 'cine'` : étiquette « ×multiplicateur · Salle n » (`cinema_rarity`, lu par `loadCineConfig`),
      bouton « Retirer » si la salle projette un film ; `chooseScreenFilm` → `set_screening` (film déplacé s'il était ailleurs).
-   - À venir : C5 SVG cartoon.
+   - **C5** (fait) : plan cartoon (`cinePlanSvg`, `cpScreen`, `cpEmpty`, `cpSite`, `cpHall`, `cpStreet`) : salles (moquette,
+     fauteuils, écran, faisceau qui scintille si un film passe, affiche encadrée de sa rareté), béton pour les emplacements libres,
+     chantier (hachures, plots, marteau), hall délabré → carrelage (guichet 1+) → plantes (3+) → dorures (5+), guichet à vitres,
+     arcade néon, équipements dessinés, enseigne « CINÉMA » à ampoules (éteinte tant que le hall est délabré). Animations
+     `.cp-*` en opacity/transform, en pause hors de la page Cinéma, coupées avec prefers-reduced-motion.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.

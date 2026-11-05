@@ -180,8 +180,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:transparent;color:#ffb3a3;font-weight:800;font-size:.7rem;letter-spacing:.04em}
 /* plan : échafaudage qui « respire » pendant une construction */
 .cp-build{animation:cp-build 1.6s ease-in-out infinite alternate}
-@keyframes cp-build{from{opacity:.55}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.cp-build{animation:none}.cc-fill{transition:none}}
+@keyframes cp-build{from{opacity:.55}to{opacity:.95}}
+.cp-flick{animation:cp-flick 2.6s ease-in-out infinite}                    /* faisceau du projecteur */
+@keyframes cp-flick{0%,100%{opacity:.95}40%{opacity:.6}55%{opacity:.85}70%{opacity:.7}}
+.cp-glow,.cp-next{animation:cp-glow 1.8s ease-in-out infinite alternate}  /* écrans d'arcade, néon, « + » */
+@keyframes cp-glow{from{opacity:.5}to{opacity:1}}
+.cp-bulb{animation:cp-bulb 1.1s steps(1) infinite}                        /* ampoules de l'enseigne, en alternance */
+.cp-bulb.b2{animation-delay:-.55s}
+@keyframes cp-bulb{50%{opacity:.25}}
+.cp-hammer{transform-box:fill-box;transform-origin:50% 100%;animation:cp-hammer .6s ease-in-out infinite alternate}
+@keyframes cp-hammer{from{transform:rotate(-28deg)}to{transform:rotate(12deg)}}
+.app:not([data-page="cinema"]) .cine-plan *{animation-play-state:paused}   /* hors de la page : rien ne tourne */
+@media (prefers-reduced-motion:reduce){.cp-build,.cp-flick,.cp-glow,.cp-next,.cp-bulb,.cp-hammer{animation:none}.cc-fill{transition:none}}
 /* HUD de la page Cinéma : Billets + gemmes, sans profil ni bobines */
 .res-tickets{display:none}
 .app[data-page="cinema"] .res-tickets{display:flex}
@@ -4861,93 +4871,203 @@ $('#cinePlan').addEventListener('keydown', e => {
   if(g && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openScreenPicker(+g.dataset.screen); }
 });
 
-/* ---------- Plan du cinéma (SVG simple, vue de dessus) ----------
-   Grille de 20 emplacements (5 × 4, la salle 1 en bas à gauche, près du hall), hall en bas :
-   guichet à gauche, arcade à droite, entrée au centre. Emplacements vides en pointillés,
-   chantier = échafaudage hachuré + minuteur. Les finitions cartoon viendront au C5. */
-const CP = {cols:5, cw:64, ch:40, gx:7, gy:7, x0:6, y0:8, hallY:200, hallH:74};
+/* ---------- Plan du cinéma (SVG cartoon, vue de dessus) ----------
+   Grille de 20 emplacements (5 × 4, la salle 1 en bas à gauche, près du hall), hall en bas, trottoir et enseigne.
+   - salle : moquette, écran, rangées de fauteuils, faisceau du projecteur (qui scintille si un film passe),
+     petite affiche encadrée de la couleur de sa rareté, plaque du numéro ;
+   - emplacement vide : dalle de béton ; le prochain porte un « + » ; chantier : hachures, plots, marteau, minuteur ;
+   - hall : délabré (fissures, toiles d'araignée, enseigne éteinte) tant que le guichet n'est pas rénové,
+     puis carrelage, plantes, et dorures dès le niveau 5 ; arcade et guichet s'agrandissent avec leur niveau.
+   Animations : opacity et transform seulement (classes .cp-*), en pause hors de la page Cinéma
+   et coupées avec prefers-reduced-motion. */
+const CP = {cols:5, cw:64, ch:40, gx:7, gy:7, x0:6, y0:8, hallY:198, hallH:74, W:360, H:302};
+const cpBox = (x, y, w, h, extra = '') => `x="${x}" y="${y}" width="${w}" height="${h}" ${extra}`;
 function cinePlanSvg(st){
   const lv = st.levels, b = st.build;
   const screens = new Map(st.screens.map(s => [s.no, s]));
-  let out = '';
+  let rooms = '';
   for(let n = 1; n <= 20; n++){
     const i = n - 1, x = CP.x0 + (i % CP.cols) * (CP.cw + CP.gx), y = CP.y0 + (3 - Math.floor(i / CP.cols)) * (CP.ch + CP.gy);
     const s = screens.get(n);
-    if(s) out += cpScreen(s, x, y);
-    else if(b && b.kind === 'screen' && b.level === n) out += cpSite(x, y, CP.cw, CP.ch);
-    else out += `<rect x="${x + .5}" y="${y + .5}" width="${CP.cw - 1}" height="${CP.ch - 1}" rx="6" fill="rgba(255,255,255,.03)" stroke="rgba(255,227,218,.22)" stroke-dasharray="4 3"/>`
-              + (n === lv.screen + 1 ? `<text x="${x + CP.cw / 2}" y="${y + CP.ch / 2 + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="rgba(255,227,218,.35)">+</text>` : '');
+    if(s) rooms += cpScreen(s, x, y);
+    else if(b && b.kind === 'screen' && b.level === n) rooms += cpSite(x, y, CP.cw, CP.ch);
+    else rooms += cpEmpty(x, y, n === lv.screen + 1);
   }
-  return `<svg viewBox="0 0 360 ${CP.hallY + CP.hallH + 8}" preserveAspectRatio="xMidYMid meet">
+  return `<svg viewBox="0 0 ${CP.W} ${CP.H}" preserveAspectRatio="xMidYMid meet">
     <defs>
       <pattern id="cpHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="8" height="8" fill="rgba(60,40,10,.7)"/><rect width="4" height="8" fill="rgba(246,196,83,.5)"/></pattern>
+        <rect width="8" height="8" fill="#3a2a10"/><rect width="4" height="8" fill="#f6c453"/></pattern>
+      <pattern id="cpCarpet" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="#5a1520"/><circle cx="3" cy="3" r=".9" fill="#7a2230"/></pattern>
+      <pattern id="cpConcrete" width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#3b3438"/><circle cx="2" cy="3" r=".7" fill="#4a4247"/><circle cx="7" cy="8" r=".6" fill="#2e282c"/></pattern>
+      <pattern id="cpCorridor" width="14" height="14" patternUnits="userSpaceOnUse">
+        <rect width="14" height="14" fill="#2c1a1d"/><path d="M0 7h14M7 0v14" stroke="#24151a" stroke-width="1"/></pattern>
+      <pattern id="cpTilesWorn" width="12" height="12" patternUnits="userSpaceOnUse">
+        <rect width="12" height="12" fill="#3d2d28"/><rect width="6" height="6" fill="#342622"/><rect x="6" y="6" width="6" height="6" fill="#342622"/></pattern>
       <pattern id="cpTiles" width="12" height="12" patternUnits="userSpaceOnUse">
-        <rect width="6" height="6" fill="rgba(255,255,255,.06)"/><rect x="6" y="6" width="6" height="6" fill="rgba(255,255,255,.06)"/></pattern>
+        <rect width="12" height="12" fill="#e9d9bd"/><rect width="6" height="6" fill="#4a2a24"/><rect x="6" y="6" width="6" height="6" fill="#4a2a24"/></pattern>
+      <pattern id="cpTilesLux" width="14" height="14" patternUnits="userSpaceOnUse">
+        <rect width="14" height="14" fill="#6b1d2a"/><path d="M7 1 13 7 7 13 1 7z" fill="#7d2633" stroke="#c9963a" stroke-width=".6"/></pattern>
+      <pattern id="cpNeon" width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#1d1640"/><circle cx="2" cy="2" r=".9" fill="#ff5bd0"/><circle cx="7" cy="6" r=".9" fill="#5be7ff"/><path d="M4 9l2-1.5" stroke="#f6e05b" stroke-width=".7"/></pattern>
+      <pattern id="cpStripes" width="4" height="4" patternUnits="userSpaceOnUse">
+        <rect width="4" height="4" fill="#fff4e0"/><rect width="2" height="4" fill="#d8283c"/></pattern>
+      <linearGradient id="cpBeam" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#fff6c8" stop-opacity=".05"/><stop offset="1" stop-color="#fff6c8" stop-opacity=".55"/></linearGradient>
+      <linearGradient id="cpGlass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#bfe8ff"/><stop offset="1" stop-color="#5a8fc0"/></linearGradient>
     </defs>
-    ${out}${cpHall(lv, b)}
+    <rect ${cpBox(2, 2, CP.W - 4, CP.hallY + CP.hallH + 2)} rx="9" fill="url(#cpCorridor)" stroke="#12060a" stroke-width="3"/>
+    ${rooms}
+    ${cpHall(lv, b)}
+    ${cpStreet(lv)}
   </svg>`;
 }
-// Salle construite : écran, rangées de fauteuils, numéro, petite affiche du film (bordure de sa rareté)
+
+// Salle construite : moquette, écran, faisceau, fauteuils, affiche, numéro
 function cpScreen(s, x, y){
-  const w = CP.cw, h = CP.ch;
-  const poster = s.poster
-    ? `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="#000" style="stroke:var(--${s.rarity})" stroke-width="1.6"/>
-       <image href="https://image.tmdb.org/t/p/w92${esc(s.poster)}" x="${x + w - 20.2}" y="${y + 11.8}" width="13.4" height="22.4" preserveAspectRatio="xMidYMid slice"/>`
-    : `<rect x="${x + w - 21}" y="${y + 11}" width="15" height="24" rx="2" fill="none" stroke="rgba(255,227,218,.3)" stroke-dasharray="2 2"/>`;
+  const w = CP.cw, h = CP.ch, film = !!s.film_id;
+  let seats = '';
+  for(let r = 0; r < 3; r++){
+    for(let k = 0; k < 6; k++){
+      const sx = x + 7 + k * 6 + (k >= 3 ? 2 : 0);                 // allée au milieu
+      seats += `<rect ${cpBox(sx, y + 15 + r * 7, 4.6, 4.2)} rx="1.3" fill="${film ? '#d22e44' : '#7d2a33'}" stroke="#4a0a14" stroke-width=".6"/>`;
+    }
+  }
+  const px = x + w - 18, py = y + h - 24;
+  const poster = film && s.poster
+    ? `<rect ${cpBox(px - 1.2, py - 1.2, 15.4, 21.4)} rx="1.5" fill="#000" style="fill:var(--${s.rarity})"/>
+       <image href="https://image.tmdb.org/t/p/w92${esc(s.poster)}" ${cpBox(px, py, 13, 19)} preserveAspectRatio="xMidYMid slice"/>
+       ${['legendary', 'ultra'].includes(s.rarity) ? `<path class="cp-glow" d="M${px + 13} ${py - 3}l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#fff6c8"/>` : ''}`
+    : `<rect ${cpBox(px, py, 13, 19)} rx="1.5" fill="rgba(0,0,0,.35)" stroke="rgba(255,227,218,.45)" stroke-dasharray="2 1.5"/>
+       <text x="${px + 6.5}" y="${py + 13}" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,227,218,.55)">?</text>`;
   return `<g data-screen="${s.no}" role="button" tabindex="0"
       aria-label="Salle ${s.no} : ${s.title ? esc(s.title) + ', ' + fmtN(s.income) + ' billets par heure' : 'sans film'}. Choisir le film">
     <title>Salle ${s.no}${s.title ? ' : ' + esc(s.title) : ' (sans film)'}</title>
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#4a121b" stroke="#22060b" stroke-width="1.5"/>
-    <rect x="${x + 7}" y="${y + 4}" width="${w - 14}" height="3" rx="1.5" fill="#fff4d6" opacity=".85"/>
-    <path d="M${x + 8} ${y + 15}h32M${x + 8} ${y + 22}h32M${x + 8} ${y + 29}h32" stroke="#b7303f" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="3.2 2.2"/>
-    <text x="${x + 6}" y="${y + h - 3}" font-size="8" font-weight="800" fill="#ffe3da">${s.no}</text>${poster}</g>`;
+    <rect ${cpBox(x, y, w, h)} rx="4" fill="url(#cpCarpet)" stroke="#16040a" stroke-width="2.5"/>
+    <rect ${cpBox(x + w / 2 - 6, y + h - 1.6, 12, 3.2)} fill="#2c1a1d"/>
+    ${film ? `<path class="cp-flick" d="M${x + w / 2 - 6} ${y + h - 4} L${x + 7} ${y + 7} L${x + w - 7} ${y + 7} Z" fill="url(#cpBeam)"/>` : ''}
+    <rect ${cpBox(x + 6, y + 3, w - 12, 3.6)} rx="1.6" fill="${film ? '#fffbe8' : '#8d8a85'}" stroke="#16040a" stroke-width=".6"/>
+    ${seats}${poster}
+    <circle cx="${x + 7.5}" cy="${y + h - 6.5}" r="5" fill="#f6c453" stroke="#5a3a0a" stroke-width="1"/>
+    <text x="${x + 7.5}" y="${y + h - 4.3}" text-anchor="middle" font-size="6.4" font-weight="800" fill="#3a1a00">${s.no}</text></g>`;
 }
-// Chantier : échafaudage hachuré (il « respire ») + bulle du minuteur
+// Emplacement libre : dalle de béton ; le prochain constructible porte un « + »
+function cpEmpty(x, y, next){
+  return `<rect ${cpBox(x + 1, y + 1, CP.cw - 2, CP.ch - 2)} rx="4" fill="url(#cpConcrete)" opacity=".55" stroke="rgba(255,227,218,.2)" stroke-dasharray="4 3"/>`
+    + (next ? `<g class="cp-next"><circle cx="${x + CP.cw / 2}" cy="${y + CP.ch / 2}" r="8" fill="rgba(246,196,83,.18)" stroke="#f6c453" stroke-width="1.2"/>
+        <path d="M${x + CP.cw / 2 - 4} ${y + CP.ch / 2}h8M${x + CP.cw / 2} ${y + CP.ch / 2 - 4}v8" stroke="#f6c453" stroke-width="1.8" stroke-linecap="round"/></g>` : '');
+}
+// Chantier : hachures, plots, marteau qui tape, bulle du minuteur
 function cpSite(x, y, w, h){
-  const cx = x + w / 2, cy = y + h / 2;
-  return `<rect class="cp-build" x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="url(#cpHatch)" stroke="#f6c453" stroke-width="1.5" stroke-dasharray="5 3"/>
-    <rect x="${cx - 27}" y="${cy - 9}" width="54" height="18" rx="9" fill="rgba(0,0,0,.78)"/>
-    <text id="cpTimer" x="${cx}" y="${cy + 3.5}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fff1c4"></text>`;
+  const cx = x + w / 2, cy = y + h / 2, bw = Math.max(40, Math.min(54, w));   // bulle à la taille du chantier
+  const cone = (ox, oy) => `<path d="M${ox} ${oy}l3-8 3 8z" fill="#ff8a1e" stroke="#5a2a00" stroke-width=".6"/><path d="M${ox + 1.4} ${oy - 3.5}h3.2" stroke="#fff" stroke-width="1"/>`;
+  return `<rect class="cp-build" ${cpBox(x, y, w, h)} rx="4" fill="url(#cpHatch)" opacity=".85" stroke="#f6c453" stroke-width="1.5" stroke-dasharray="5 3"/>
+    ${w > 30 ? cone(x + 3, y + h - 3) + cone(x + w - 9, y + h - 3) : ''}
+    ${w > 30 ? `<g class="cp-hammer"><rect ${cpBox(x + 5, y + 4, 2, 9)} rx="1" fill="#8a5a2b"/><rect ${cpBox(x + 2.5, y + 2.5, 7, 3.4)} rx="1" fill="#9aa3ad" stroke="#3a3f45" stroke-width=".6"/></g>` : ''}
+    <rect ${cpBox(cx - bw / 2, cy - 9, bw, 18)} rx="9" fill="rgba(0,0,0,.8)" stroke="#f6c453" stroke-width="1"/>
+    <text id="cpTimer" x="${cx}" y="${cy + 3.3}" text-anchor="middle" font-size="${bw < 54 ? 8.5 : 9.5}" font-weight="800" fill="#fff1c4"></text>`;
 }
-// Hall : délabré tant que le guichet n'est pas amélioré ; guichet et arcade s'élargissent avec leur niveau
+
+// Hall : sol selon le niveau du guichet, tapis rouge, guichet, arcade, équipements
 function cpHall(lv, b){
-  const Y = CP.hallY, H = CP.hallH, worn = lv.box_office === 0;
+  const Y = CP.hallY, H = CP.hallH, bo = lv.box_office, worn = bo === 0, lux = bo >= 5;
   const site = kind => b && b.kind === kind;
-  let g = `<rect x="6" y="${Y}" width="348" height="${H}" rx="10" fill="${worn ? '#3f2c25' : '#5a3a2c'}" stroke="#1d0f0b" stroke-width="2"/>
-    <rect x="6" y="${Y}" width="348" height="${H}" rx="10" fill="url(#cpTiles)"/>
-    <rect x="166" y="${Y + 34}" width="28" height="${H - 34}" fill="#a3212f" opacity=".9"/>
-    <text x="180" y="${Y + H - 6}" text-anchor="middle" font-size="7.5" font-weight="800" fill="#ffe3da">ENTRÉE</text>`;
-  if(worn) g += `<path d="M40 ${Y + 8}l8 10-5 8 9 9M300 ${Y + H - 10}l-10-6 4-9M220 ${Y + 6}l-6 9 7 5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.5" stroke-linecap="round"/>`;
-  // Guichet (à gauche)
-  const gw = 56 + Math.min(lv.box_office, 10) * 5, gx = 14, gy = Y + 8, gh = H - 16;
-  g += site('box_office') ? cpSite(gx, gy, gw, gh)
-    : `<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" rx="6" fill="${worn ? '#5b2a2f' : '#7a2430'}" stroke="#22060b" stroke-width="1.5"/>
-       <rect x="${gx + 4}" y="${gy + gh - 13}" width="${gw - 8}" height="7" rx="3" fill="#d9a441"/>
-       <text x="${gx + gw / 2}" y="${gy + 18}" text-anchor="middle" font-size="9" font-weight="800" fill="#fff1c4">Guichet</text>
-       <text x="${gx + gw / 2}" y="${gy + 30}" text-anchor="middle" font-size="7.5" fill="#ffe3da">${worn ? 'délabré' : 'niv. ' + lv.box_office}</text>`;
-  // Arcade (à droite)
+  let g = `<rect ${cpBox(6, Y, 348, H)} rx="8" fill="url(#${worn ? 'cpTilesWorn' : lux ? 'cpTilesLux' : 'cpTiles'})" stroke="#12060a" stroke-width="2.5"/>
+    ${worn ? '' : `<rect ${cpBox(6, Y, 348, H)} rx="8" fill="rgba(40,10,14,${lux ? 0 : .35})"/>`}
+    <rect ${cpBox(164, Y + 30, 32, H - 30)} fill="#b3202f" stroke="${lux ? '#e8c46a' : '#7a1220'}" stroke-width="1.2"/>`;
+  // poteaux à cordon de part et d'autre du tapis
+  if(!worn) [158, 202].forEach(px => {
+    g += `<path d="M${px} ${Y + 36}v30" stroke="#b3202f" stroke-width="1.6" stroke-dasharray="0 0"/>
+      ${[36, 51, 66].map(py => `<circle cx="${px}" cy="${Y + py}" r="2" fill="#e8c46a" stroke="#5a3a0a" stroke-width=".6"/>`).join('')}`;
+  });
+  if(worn){                                                                     // fissures, toiles d'araignée, flaque
+    g += `<path d="M96 ${Y + 40}l5 4 3-2 4 6 5 1M250 ${Y + H - 14}l-6 2-3 5-7 1M214 ${Y + 6}l3 6-2 4 4 5" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M8 ${Y + 2}q8 3 12 12M8 ${Y + 8}q5 1 6 6M8 ${Y + 2}l9 6" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".7"/>
+      <ellipse cx="128" cy="${Y + 58}" rx="11" ry="4" fill="rgba(120,160,190,.25)"/>`;
+  }
+  if(bo >= 3){                                                                  // plantes vertes dans les coins
+    [[126, Y + 10], [234, Y + 10]].forEach(([px, py]) => {
+      g += `<circle cx="${px}" cy="${py}" r="5" fill="#8a5a2b"/><circle cx="${px - 2}" cy="${py - 2}" r="4" fill="#2f9a55"/>
+        <circle cx="${px + 2.5}" cy="${py - 1}" r="3.5" fill="#46c06e"/><circle cx="${px}" cy="${py + 2}" r="3" fill="#2a8a4b"/>`;
+    });
+  }
+  // Guichet (à gauche) : comptoir, vitres avec caissiers, caisse enregistreuse
+  const gw = 56 + Math.min(bo, 10) * 5, gx = 14, gy = Y + 8, gh = H - 16;
+  if(site('box_office')) g += cpSite(gx, gy, gw, gh);
+  else{
+    const wins = worn ? 1 : 1 + Math.min(3, Math.floor(bo / 3));
+    let w = '';
+    for(let k = 0; k < wins; k++){
+      const wx = gx + 6 + k * ((gw - 12) / wins), ww = (gw - 12) / wins - 4;
+      w += worn
+        ? `<rect ${cpBox(wx, gy + 18, ww, 18)} rx="2" fill="#2a1c18"/><path d="M${wx} ${gy + 20}l${ww} 14M${wx + ww} ${gy + 20}l${-ww} 14" stroke="#a0703a" stroke-width="2.4"/>`
+        : `<rect ${cpBox(wx, gy + 18, ww, 18)} rx="2" fill="url(#cpGlass)" opacity=".85"/>
+           <circle cx="${wx + ww / 2}" cy="${gy + 30}" r="3.6" fill="#f2c79b"/><path d="M${wx + ww / 2 - 4.5} ${gy + 36}q4.5-5 9 0" fill="#c8283c"/>`;
+    }
+    g += `<rect ${cpBox(gx, gy, gw, gh)} rx="5" fill="${worn ? '#4a2a2c' : '#7a2430'}" stroke="#1a0509" stroke-width="2"/>
+      <rect ${cpBox(gx + 4, gy + 3, gw - 8, 11)} rx="3" fill="${worn ? '#3a2422' : '#2b0a10'}" stroke="${worn ? '#5a4040' : '#e8c46a'}" stroke-width=".8"/>
+      <text x="${gx + gw / 2}" y="${gy + 11.2}" text-anchor="middle" font-size="7" font-weight="800" letter-spacing=".08em" fill="${worn ? '#8a7470' : '#f6c453'}">GUICHET${worn ? '' : ' · ' + bo}</text>
+      ${w}
+      <rect ${cpBox(gx + 3, gy + gh - 15, gw - 6, 6)} rx="2" fill="${worn ? '#6a5040' : '#d9a441'}" stroke="#5a3a0a" stroke-width=".6"/>
+      ${worn ? '' : `<rect ${cpBox(gx + gw - 16, gy + gh - 22, 9, 7)} rx="1.5" fill="#3a3f45"/><rect ${cpBox(gx + gw - 14.5, gy + gh - 21, 6, 2.4)} fill="#8af5b9"/>`}`;
+  }
+  // Arcade (à droite) : moquette néon et bornes qui clignotent
   const aw = 56 + Math.min(lv.arcade, 10) * 5, ax = 346 - aw, ay = gy, ah = gh;
   if(site('arcade')) g += cpSite(ax, ay, aw, ah);
-  else if(lv.arcade === 0) g += `<rect x="${ax}" y="${ay}" width="${aw}" height="${ah}" rx="6" fill="rgba(255,255,255,.03)" stroke="rgba(255,227,218,.25)" stroke-dasharray="4 3"/>
-       <text x="${ax + aw / 2}" y="${ay + ah / 2 + 3}" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,227,218,.45)">Arcade</text>`;
-  else{
-    const neon = ['#ff5b72', '#5b97f0', '#f6c453', '#4db38a', '#b65cf2'];
+  else if(lv.arcade === 0){
+    g += `<rect ${cpBox(ax, ay, aw, ah)} rx="5" fill="rgba(255,255,255,.04)" stroke="rgba(255,227,218,.3)" stroke-dasharray="4 3"/>
+      <text x="${ax + aw / 2}" y="${ay + ah / 2 + 3}" text-anchor="middle" font-size="8.5" font-weight="800" fill="rgba(255,227,218,.45)">Arcade</text>`;
+  }else{
+    const neon = ['#ff5b72', '#5be7ff', '#f6e05b', '#46d98a', '#c08bff'];
     let cab = '';
-    for(let k = 0; k < Math.min(lv.arcade, 10); k++){
-      cab += `<rect x="${ax + 7 + (k % 5) * ((aw - 14) / 5)}" y="${ay + 18 + Math.floor(k / 5) * 18}" width="8" height="13" rx="2" fill="${neon[k % 5]}"/>`;
+    const n = Math.min(lv.arcade, 10), per = 5, cw = (aw - 12) / per;
+    for(let k = 0; k < n; k++){
+      const cx = ax + 6 + (k % per) * cw + (cw - 9) / 2, cy = ay + 16 + Math.floor(k / per) * 20;
+      cab += `<rect ${cpBox(cx, cy, 9, 15)} rx="2" fill="#2a2440" stroke="#0a0818" stroke-width=".8"/>
+        <rect class="cp-glow" ${cpBox(cx + 1.5, cy + 2, 6, 5)} rx="1" fill="${neon[k % 5]}" style="animation-delay:${(k * .37) % 1.8}s"/>
+        <circle cx="${cx + 3}" cy="${cy + 10.5}" r="1.1" fill="#ff5b72"/><circle cx="${cx + 6}" cy="${cy + 10.5}" r="1.1" fill="#5be7ff"/>`;
     }
-    g += `<rect x="${ax}" y="${ay}" width="${aw}" height="${ah}" rx="6" fill="#23244a" stroke="#0c0c22" stroke-width="1.5"/>
-       <text x="${ax + aw / 2}" y="${ay + 12}" text-anchor="middle" font-size="8" font-weight="800" fill="#fff1c4">Arcade niv. ${lv.arcade}</text>${cab}`;
+    g += `<rect ${cpBox(ax, ay, aw, ah)} rx="5" fill="url(#cpNeon)" stroke="#0c0c22" stroke-width="2"/>
+      <rect ${cpBox(ax + aw / 2 - 26, ay + 3, 52, 10)} rx="3" fill="#0c0820" stroke="#ff5bd0" stroke-width=".7"/>
+      <text class="cp-glow" x="${ax + aw / 2}" y="${ay + 10.6}" text-anchor="middle" font-size="7.5" font-weight="800" letter-spacing=".1em" fill="#ff5bd0">ARCADE ${lv.arcade}</text>${cab}`;
   }
-  // Équipements : pastilles au centre du hall (ou chantier)
-  [['popcorn', '🍿', 150], ['vip', '💺', 180], ['sound', '🔊', 210]].forEach(([k, ico, cx]) => {
-    if(site(k)) g += cpSite(cx - 20, Y + 6, 40, 24);
-    else if(lv[k] > 0) g += `<circle cx="${cx}" cy="${Y + 18}" r="11" fill="rgba(0,0,0,.35)" stroke="#d9a441" stroke-width="1.2"/>
-       <text x="${cx}" y="${Y + 22}" text-anchor="middle" font-size="11">${ico}</text>
-       <text x="${cx + 12}" y="${Y + 30}" font-size="7" font-weight="800" fill="#fff1c4">${lv[k]}</text>`;
+  // Équipements : machine à pop-corn, fauteuil VIP, enceinte Dolby (pastille du niveau)
+  const eq = {
+    popcorn: (cx, cy) => `<rect ${cpBox(cx - 7, cy - 4, 14, 12)} rx="1.5" fill="url(#cpStripes)" stroke="#5a0a14" stroke-width=".8"/>
+      <circle cx="${cx - 3.5}" cy="${cy - 5}" r="3" fill="#ffe58a"/><circle cx="${cx + 1}" cy="${cy - 6.5}" r="3.2" fill="#fff2b8"/><circle cx="${cx + 4.5}" cy="${cy - 4.5}" r="2.8" fill="#ffd75a"/>`,
+    vip: (cx, cy) => `<rect ${cpBox(cx - 7, cy - 7, 14, 6)} rx="3" fill="#c9963a" stroke="#5a3a0a" stroke-width=".8"/>
+      <rect ${cpBox(cx - 8, cy - 2, 16, 8)} rx="3" fill="#e8c46a" stroke="#5a3a0a" stroke-width=".8"/><rect ${cpBox(cx - 5, cy - 1, 10, 5)} rx="2" fill="#b3202f"/>`,
+    sound: (cx, cy) => `<rect ${cpBox(cx - 6, cy - 8, 12, 16)} rx="2" fill="#26262e" stroke="#0a0a10" stroke-width=".8"/>
+      <circle cx="${cx}" cy="${cy - 3.5}" r="2.4" fill="#5a5a68"/><circle cx="${cx}" cy="${cy + 3}" r="3.6" fill="#5a5a68" stroke="#9a9ab0" stroke-width=".6"/>`
+  };
+  [['popcorn', 146], ['vip', 180], ['sound', 214]].forEach(([k, cx]) => {
+    if(site(k)) g += cpSite(cx - 15, Y + 4, 30, 24);
+    else if(lv[k] > 0) g += `<g><title>${BUILD_INFO[k].name} niveau ${lv[k]}</title>${eq[k](cx, Y + 17)}
+      <circle cx="${cx + 9}" cy="${Y + 25}" r="4.2" fill="#2b0a10" stroke="#f6c453" stroke-width=".8"/>
+      <text x="${cx + 9}" y="${Y + 27.2}" text-anchor="middle" font-size="5.8" font-weight="800" fill="#f6c453">${lv[k]}</text></g>`;
   });
   return g;
+}
+// Trottoir, portes vitrées et enseigne lumineuse (éteinte tant que le hall est délabré)
+function cpStreet(lv){
+  const Y = CP.hallY + CP.hallH, worn = lv.box_office === 0;
+  let bulbs = '';
+  for(let k = 0; k < 11; k++){
+    const bx = 124 + k * 11.2;
+    [Y + 7, Y + 25].forEach((by, r) => {
+      bulbs += `<circle${worn ? '' : ` class="cp-bulb${(k + r) % 2 ? ' b2' : ''}"`} cx="${bx}" cy="${by}" r="1.5" fill="${worn ? '#5a5054' : '#fff2b8'}"/>`;
+    });
+  }
+  return `<rect ${cpBox(0, Y + 3, CP.W, CP.H - Y - 3)} fill="#3a3540"/>
+    <path d="M0 ${Y + 4}H${CP.W}" stroke="#57505e" stroke-width="2"/>
+    <rect ${cpBox(166, Y - 3, 28, 7)} rx="1.5" fill="url(#cpGlass)" stroke="#1a2a3a" stroke-width="1"/>
+    <path d="M180 ${Y - 3}v7" stroke="#1a2a3a" stroke-width="1"/>
+    <rect ${cpBox(118, Y + 4, 124, 24)} rx="5" fill="#2b0a10" stroke="${worn ? '#5a4040' : '#e8c46a'}" stroke-width="1.6"/>
+    ${bulbs}
+    <text x="180" y="${Y + 20.5}" text-anchor="middle" font-family="Limelight,serif" font-size="11.5" letter-spacing=".18em"
+      fill="${worn ? '#6a5a5c' : '#f6c453'}">${worn ? 'CIN&#160;MA' : 'CINÉMA'}</text>`;
 }
 
 /* =====================================================================
