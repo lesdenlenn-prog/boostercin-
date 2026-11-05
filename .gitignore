@@ -1,3 +1,6 @@
 .env
 node_modules/
 .import-cache/
+.vercel
+.env*
+supabase/.temp/

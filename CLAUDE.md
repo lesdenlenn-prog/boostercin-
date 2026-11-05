@@ -140,6 +140,15 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
 
 - **Secrets** : les clés sont dans `.env` (ignoré par git). Ne jamais afficher ni lire son contenu dans la conversation.
   Seule la *publishable key* Supabase peut apparaître dans `index.html` ; jamais la secret/service_role key ni la clé TMDB.
+  **Ne jamais afficher un secret, ni demander à l'utilisateur d'en coller un dans le chat** : s'il en manque un, lui demander
+  de l'ajouter lui-même dans `.env` (seuls les *noms* des variables peuvent être listés, `grep -o '^[A-Z_]*=' .env`).
+- **Confirmation obligatoire avant toute action irréversible** : suppression de données (joueurs réels, cartes, tables,
+  colonnes), reset de la base ou du cinéma d'un vrai joueur, changement des réglages Auth ou de la sécurité (RLS, grants,
+  policies, clés, URL autorisées, SMTP). Seule exception : les joueurs de test créés par Claude, supprimés sans demander.
+- **Accès Supabase en autonomie** (migrations, tests, Edge Functions, secrets des fonctions) via `.env` :
+  `SUPABASE_DB_URL` (base) et `SUPABASE_ACCESS_TOKEN` (CLI / Management API, projet `tubjlfbqadwgclhbfuco`, ex.
+  `npx supabase functions deploy tmdb --project-ref tubjlfbqadwgclhbfuco`, `npx supabase secrets set … --project-ref …`
+  avec les valeurs lues depuis `.env`, jamais écrites en clair dans la commande affichée).
 - **Le client n'écrit jamais de cartes** : pas de `insert`/`delete` sur `collection` ni `openings`, aucun droit d'écriture sur
   `films`. Toute écriture de cartes, de bobines/gemmes, d'énergie ou de `is_admin`/`demo_mode` passe par des fonctions
   `security definer`. Le client ne peut modifier que `profiles.username/top_films/favs/wishlist` et
