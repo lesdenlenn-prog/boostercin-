@@ -140,6 +140,23 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      chantier (hachures, plots, marteau), hall délabré → carrelage (guichet 1+) → plantes (3+) → dorures (5+), guichet à vitres,
      arcade néon, équipements dessinés, enseigne « CINÉMA » à ampoules (éteinte tant que le hall est délabré). Animations
      `.cp-*` en opacity/transform, en pause hors de la page Cinéma, coupées avec prefers-reduced-motion.
+   - **C6 vue pixel art** (branche `cinema-vue`, à tester) : le plan SVG cartoon est remplacé par un canvas pixel art
+     (`CINE_PLAN`, `CPX`, `cpRender`, `initCinePlan`) en vue de dessus trois quarts (sol vu de haut, murs du fond de face,
+     murs de côté et de façade en épaisseur) : parquet à lattes, papier peint bordeaux + lambris, plinthes, ombres douces,
+     néons « CINÉMA » / « BILLETS », affiches imaginaires, cordons, pop-corn. Dessiné une fois à 16 px par case puis agrandi
+     par un facteur entier (`image-rendering: pixelated`). Le plan glisse au doigt / à la souris (pointeurs, `transform`),
+     zoom ×1 à ×5 au pincement ou à la molette ; le carrousel ignore les gestes commencés sur `.cine-plan`. Base identique
+     pour tous : couloir d'accueil (entrée + paillasson) et guichet (comptoir, caisse, file entre cordons) ; le reste de la
+     grille est verrouillé (violet sombre, grille légère). Le plan n'a pas encore de salles : le choix du film se fait par
+     les puces « Salle n » de l'onglet Salles (`screenChips`). Serveur et économie inchangés. Référence visuelle dans
+     `ref/` (ignoré par git, ne pas publier).
+   - **Plus tard (pas encore codé) : agrandir le cinéma sur la grille.** Le joueur achète des pièces posées sur des cases
+     libres, payées en Billets au nombre de cases. Exemple : arcade niveau 1 = 4 × 3 = 12 cases × 20 billets = 240 billets.
+     Types prévus : `arcade`, `projection` (salle), `toilets`, `snacks`, `corridor`. Données : une pièce =
+     `{id, type, level, x, y, w, h, doors:[{side:'n'|'s'|'e'|'w', at, len}]}` (x, y = case du coin haut-gauche, w × h cases,
+     `cellsOf(r) = w × h`) ; une case est libre si aucune pièce ne la couvre ; la base (`hall`, `box_office`) est fixe.
+     À faire côté serveur le moment venu : table `cinema_rooms` (user_id, type, level, x, y, w, h), prix par case et par type
+     dans une table d'équilibrage, contrôle des chevauchements et des limites de grille dans une fonction `security definer`.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
