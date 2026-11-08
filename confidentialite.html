@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12070b">
+<title>Confidentialité · Booster ciné</title>
+<meta name="description" content="Règles de confidentialité de Booster ciné : données collectées, hébergement, conservation et droits des joueurs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Limelight&display=swap" rel="stylesheet">
+<style>
+/* Mêmes couleurs et polices que le jeu (index.html) */
+:root{
+  --bg:#0a0608; --surface:#25111a; --line:#4b2330; --text:#f7eee6; --muted:#b99c9a;
+  --gold:#e8c46a; --gold-hi:#fff2c2; --title:#fff1c4;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  background:radial-gradient(120% 60% at 50% 0%,#3a0f1c 0%,#1a0a10 45%,var(--bg) 100%) fixed,var(--bg);
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:500;line-height:1.55;
+}
+main{max-width:680px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 28px) 16px calc(env(safe-area-inset-bottom,0px) + 48px)}
+a{color:var(--gold-hi);text-underline-offset:3px}
+a:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px;border-radius:4px}
+.back{display:inline-block;padding:8px 0;font-weight:800;text-decoration:none;color:var(--gold)}
+.back:hover{text-decoration:underline}
+h1{margin:14px 0 4px;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:clamp(1.7rem,7vw,2.3rem);
+  line-height:1.15;letter-spacing:.04em;color:var(--title);text-shadow:0 2px 14px rgba(232,196,106,.25)}
+.date{margin:0 0 22px;color:var(--muted);font-size:.9rem}
+.lead{margin:0 0 22px;padding:14px 16px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line)}
+h2{margin:28px 0 8px;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:1.25rem;letter-spacing:.03em;color:var(--title)}
+p{margin:0 0 10px}
+ul{margin:0 0 10px;padding-left:1.2em}
+li{margin:0 0 6px}
+li::marker{color:var(--gold)}
+b{color:#fff;font-weight:800}
+.muted{color:var(--muted);font-size:.9rem}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← Retour au jeu</a>
+  <h1>Règles de confidentialité</h1>
+  <p class="date">Mise à jour le 8 novembre 2026</p>
+
+  <p class="lead">En bref : Booster ciné garde seulement ce qu'il faut pour <b>sauvegarder ta partie</b>.
+    Pas de publicité, pas de revente, pas de pistage. Tu peux demander à tout moment à voir ou à supprimer tes données.</p>
+
+  <h2>Données collectées</h2>
+  <ul>
+    <li><b>Identifiant de compte</b> : un numéro attribué automatiquement dès ta première partie, même sans inscription.</li>
+    <li><b>Adresse e-mail</b>, si tu sauvegardes ta partie avec ton e-mail.</li>
+    <li><b>Identifiant et e-mail Google</b>, si tu te connectes avec Google.</li>
+    <li><b>Pseudo</b> que tu choisis.</li>
+    <li><b>Collection</b> : les films obtenus, ceux marqués « à voir » ou « vus », ton Top films, tes favoris et tes envies.</li>
+    <li><b>Progression</b> : bobines, gemmes, boosters ouverts, historique des ouvertures, et ton cinéma (salles, billets, constructions).</li>
+    <li><b>Statistiques de jeu</b> calculées à partir de ces données (nombre de cartes, raretés…).</li>
+  </ul>
+  <p>Sur ton appareil, le navigateur garde aussi ta session de connexion et quelques préférences d'affichage.</p>
+
+  <h2>À quoi elles servent</h2>
+  <p>Uniquement à <b>sauvegarder ta partie</b>, à la retrouver sur un autre appareil et à afficher ton profil dans le jeu.</p>
+  <p><b>Aucune publicité, aucune revente</b> et aucun partage à des fins commerciales. Le jeu n'utilise pas d'outil de mesure d'audience.</p>
+
+  <h2>Hébergement</h2>
+  <ul>
+    <li>Les données de jeu sont stockées chez <b>Supabase</b>, sur des serveurs situés en <b>Irlande (Union européenne)</b>.</li>
+    <li>Le site est hébergé par <b>Vercel</b>, qui peut conserver des journaux techniques (adresse IP, date de visite) pour faire fonctionner le service.</li>
+    <li>Les polices viennent de Google Fonts et une bibliothèque technique de jsDelivr : ces services reçoivent ton adresse IP quand la page se charge.</li>
+  </ul>
+
+  <h2>Données de films</h2>
+  <p>Les titres, affiches et résumés des films sont fournis par <b>TMDB</b> (The Movie Database). Les affiches sont chargées depuis
+    les serveurs de TMDB, qui reçoivent donc ton adresse IP. Aucune donnée de ton compte n'est envoyée à TMDB.</p>
+  <p class="muted">Ce jeu utilise l'API de TMDB mais n'est ni approuvé ni certifié par TMDB.</p>
+
+  <h2>Durée de conservation</h2>
+  <p>Tes données sont conservées <b>tant que ton compte existe</b>. Si tu demandes la suppression de ton compte,
+    elles sont effacées dans un délai d'un mois.</p>
+
+  <h2>Tes droits</h2>
+  <p>Tu peux demander à <b>accéder</b> à tes données, à les <b>corriger</b> ou à les <b>supprimer</b>. Écris à
+    <a href="mailto:lesden.lenn@gmail.com?subject=Booster%20cin%C3%A9%20%3A%20mes%20donn%C3%A9es">lesden.lenn@gmail.com</a>
+    en indiquant ton pseudo ou l'e-mail de ton compte. Réponse sous un mois.</p>
+  <p>Si tu estimes que tes droits ne sont pas respectés, tu peux aussi contacter la <a href="https://www.cnil.fr/fr/plaintes" rel="noopener">CNIL</a>.</p>
+
+  <footer>
+    <p class="muted">Ces règles peuvent évoluer avec le jeu ; la date en haut de la page indique la dernière modification.</p>
+    <a class="back" href="./">← Retour au jeu</a>
+  </footer>
+</main>
+</body>
+</html>
