@@ -94,7 +94,16 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      Rappel « Sauvegarde ta collection » après le 3e booster (localStorage `saveNudgeAt`). Migration
      `20261104120000_username.sql` (appliquée) : pseudo 3–20 caractères (`USERNAME_RE` côté client, à garder identique),
      unique sans tenir compte des majuscules, `username_available()`, policy restrictive : pas de pseudo sur un compte anonyme.
-     **Accueil obligatoire** (`ACCOUNT_REQUIRED = true`, actif seulement si `EMAIL_READY`) : au démarrage et après une
+   - **4f Google** (à tester) : la sauvegarde passe par Google tant que `EMAIL_READY = false` (code e-mail gardé, masqué).
+     Supabase (8/11/2026, via Management API) : fournisseur Google activé (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` de
+     `.env`), *manual linking* activé, Site URL `https://boostercin.vercel.app`, Redirect URLs `https://boostercin.vercel.app/**`
+     et `http://127.0.0.1:5500/**`. Client `flowType: 'pkce'`. Écran `data-pane="google"` : « Continuer avec Google » =
+     `linkIdentity` (même `user.id`), « J'ai déjà un compte » = avertissement si cartes puis `signInWithOAuth`. Mode noté dans
+     `sessionStorage.oauthPending` ; au retour `handleOAuthReturn()` (erreur lue dans `OAUTH_RET` avant l'init : ex.
+     `identity_already_exists` = Google déjà lié à un autre joueur), puis pseudo si absent. `account.anon` = `user.is_anonymous`.
+     Rappel : l'écran de sauvegarde s'ouvre une fois après le 3e booster (`savePromptShown`), puis pastille non bloquante sur
+     l'Accueil tant que le compte est anonyme (la croix la cache jusqu'au prochain lancement). `ACCOUNT_REQUIRED = false`.
+     **Accueil obligatoire** (`ACCOUNT_REQUIRED`, actif seulement si `EMAIL_READY`) : au démarrage et après une
      déconnexion, `enterGate()` ouvre `#acctModal` en mode « Bienvenue » (sans croix ni Échap ni écran Paramètres) tant que
      le compte est anonyme ou sans pseudo ; la session anonyme du démarrage reçoit l'e-mail (même `user.id`), « J'ai déjà un
      compte » toujours proposé. Les anciens joueurs anonymes le voient aussi et gardent leur collection.

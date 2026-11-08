@@ -595,6 +595,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   text-decoration:underline;text-underline-offset:3px}
 .ac-link:disabled{opacity:.5;text-decoration:none}
 .ac-legal{display:table;margin:26px auto 0;padding:10px 8px;font-size:.78rem;color:var(--muted);text-underline-offset:3px}
+/* Bouton Google : fond blanc et logo officiel (charte « Sign in with Google ») */
+.ac-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:0;
+  box-shadow:0 0 0 1px #dadce0,0 4px 14px rgba(0,0,0,.3);font-weight:800}
+.ac-google svg{width:20px;height:20px;flex:none}
 .ac-legal-sm{margin-top:14px;font-size:.68rem;opacity:.6;text-decoration-thickness:1px}   /* accueil : à peine visible */
 .ac-warn{background:rgba(120,30,10,.55);box-shadow:inset 0 0 0 1.5px rgba(255,150,90,.55),0 6px 16px rgba(0,0,0,.28)}
 
@@ -1859,6 +1863,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         </div>
         <a class="ac-legal" href="confidentialite.html" target="_blank" rel="noopener">Règles de confidentialité</a>
       </div>
+      <!-- Sauvegarde avec Google : linkIdentity sur le compte anonyme (même user_id), puis le pseudo au retour -->
+      <div class="ac-pane" data-pane="google">
+        <p class="ac-p" id="acGIntro">Sauvegarde ta collection avec ton compte Google : tu garderas tes cartes et tu pourras les retrouver sur n'importe quel appareil.</p>
+        <p class="ac-hint" id="acGMsg" role="status"></p>
+        <div class="ac-actions">
+          <button class="btn ac-google" type="button" data-go="google-link" id="acGLink">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+            <span>Continuer avec Google</span>
+          </button>
+        </div>
+        <button class="ac-link" type="button" data-go="login" id="acGHave">J'ai déjà un compte</button>
+        <button class="ac-link" type="button" data-go="later" id="acGBack">Plus tard</button>
+      </div>
       <!-- Sauvegarde, étape 1 : pseudo + e-mail (ou pseudo seul) -->
       <form class="ac-pane" data-pane="save" id="acSaveForm" novalidate>
         <p class="ac-p" id="acSaveIntro"></p>
@@ -2031,7 +2048,15 @@ async function tmdb(path, params = {}){
    Le serveur fait foi : tirage, bobines, gemmes, énergie et collection viennent de Supabase.
    Seule la clé publique (publishable) est ici : tout le reste est protégé par la RLS et les fonctions SQL.
    ===================================================================== */
-const sb = supabase.createClient('https://tubjlfbqadwgclhbfuco.supabase.co', 'sb_publishable_nFQ-gI89Abage0sXqTdZjg_9xW7j-QL');
+// Retour de Google (section COMPTE) : erreur éventuelle lue dans l'adresse AVANT que Supabase ne traite le ?code=…
+const OAUTH_RET = (() => {
+  const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.slice(1));
+  const get = k => q.get(k) || h.get(k) || '';
+  return {code: get('code'), error: get('error'), errorCode: get('error_code'), errorText: get('error_description')};
+})();
+// Flux PKCE : Google renvoie ?code=…, échangé contre une session au démarrage (detectSessionInUrl)
+const sb = supabase.createClient('https://tubjlfbqadwgclhbfuco.supabase.co', 'sb_publishable_nFQ-gI89Abage0sXqTdZjg_9xW7j-QL',
+  {auth:{flowType:'pkce'}});
 let userId = null;
 let player = {boostersOpened:0, demo:false, admin:false};   // dernier état connu du serveur (hors soldes et énergie)
 const demoOn = () => player.demo;
@@ -2054,10 +2079,11 @@ async function ensureSession(){
   if(error) throw new Error(netMsg(error.message));
   readAccount(data.user);
 }
-// Compte rattaché = e-mail confirmé (un compte anonyme n'a pas d'e-mail, même avec un changement d'e-mail en attente)
+// Compte rattaché = Google lié ou e-mail confirmé (un compte anonyme n'a pas d'e-mail, même avec un changement d'e-mail en attente)
 function readAccount(user){
   userId = user.id;
-  account = {anon: !user.email, email: user.email || null};
+  const google = (user.identities || []).some(i => i.provider === 'google');
+  account = {anon: user.is_anonymous ?? !user.email, email: user.email || null, google};
 }
 
 function preload(cards){
@@ -3745,9 +3771,14 @@ document.addEventListener('keydown', e => {
    - Accueil obligatoire (ACCOUNT_REQUIRED) : dès le 1er lancement, un compte sans e-mail ou sans pseudo voit l'écran
      « Bienvenue » (pseudo + e-mail, ou « J'ai déjà un compte »), impossible à fermer tant que le compte n'est pas complet.
      La session anonyme ouverte au démarrage est celle qui reçoit l'e-mail : rien n'est perdu.
+   - Google (actif) : « Continuer avec Google » = linkIdentity({provider:'google'}) sur le compte anonyme → même user.id,
+     cartes gardées ; au retour, demande du pseudo. « J'ai déjà un compte » = signInWithOAuth Google (avertissement si le
+     compte anonyme a des cartes : elles seront perdues). Google déjà lié à un autre joueur → error_code identity_already_exists.
+     Le mode (link / login) est noté dans sessionStorage avant de partir chez Google, et lu au retour (handleOAuthReturn).
+   - Sans EMAIL_READY, la sauvegarde passe par Google et le code e-mail reste caché (gardé pour plus tard).
    ===================================================================== */
 const EMAIL_READY = false;             // SMTP + modèles d'e-mail configurés dans Supabase ? false : sauvegarde et connexion masquées
-const ACCOUNT_REQUIRED = true;         // true : pseudo + e-mail exigés pour jouer (si EMAIL_READY) ; false : sauvegarde facultative
+const ACCOUNT_REQUIRED = false;        // true : pseudo + e-mail exigés pour jouer (si EMAIL_READY) ; false : sauvegarde facultative
 const OTP_LENGTH = 8;                  // longueur des codes : doit être égale au réglage Supabase « Email OTP Length »
 const OTP_TTL = 3600 * 1000;           // validité d'un code : réglage Supabase « Email OTP Expiration » (3 600 s par défaut)
 const OTP_RESEND = 60 * 1000;          // délai avant « Renvoyer le code » (Supabase refuse un nouvel envoi avant 60 s)
@@ -3760,9 +3791,14 @@ const acctModal = $('#acctModal'), acCode = $('#acCode');
 let acctBusy = false;                  // appel au serveur en cours : boutons désactivés
 let otp = null;                        // code en attente : {mode:'link'|'login', email, name, sentAt, tries}
 let nameOnly = false;                  // écran « pseudo seul » (compte déjà rattaché à un e-mail mais sans pseudo)
+let acctEntry = 'home';                // écran d'ouverture (« Plus tard » ferme, « Retour » revient aux Paramètres)
 let acctGate = false;                  // écran d'accueil obligatoire affiché (pas de fermeture, pas d'écran Paramètres)
 const needsGate = () => EMAIL_READY && ACCOUNT_REQUIRED && (account.anon || !username);
-const AC_TITLES = {home:'Paramètres', save:'Sauvegarde', warn:'Connexion', login:'Connexion', code:'Code reçu', logout:'Déconnexion'};
+const AC_TITLES = {home:'Paramètres', save:'Sauvegarde', warn:'Connexion', login:'Connexion', code:'Code reçu', logout:'Déconnexion', google:'Sauvegarde'};
+const OAUTH_KEY = 'oauthPending';      // sessionStorage : 'link' ou 'login' pendant l'aller-retour chez Google
+const returnUrl = () => location.origin + location.pathname;   // autorisée dans Supabase (Redirect URLs)
+const ssGet = k => { try{ return sessionStorage.getItem(k); }catch(e){ return null; } };
+const ssSet = (k, v) => { try{ v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); }catch(e){} };
 acCode.maxLength = OTP_LENGTH;
 acCode.placeholder = '•'.repeat(OTP_LENGTH);
 
@@ -3789,6 +3825,11 @@ function acctError(err, ctx = ''){
     return {text:'Aucun compte n\'utilise cet e-mail. Vérifie l\'adresse, ou sauvegarde plutôt ta progression actuelle.'};
   if(code === 'email_address_invalid' || code === 'validation_failed' || /email/i.test(msg) && /invalid/i.test(msg))
     return {text:'Adresse e-mail invalide.'};
+  if(code === 'identity_already_exists' || /already linked|identity.*exists/i.test(msg))
+    return {kind:'linked', text:'Ce compte Google est déjà lié à un autre joueur. Pour jouer avec lui, choisis « J\'ai déjà un compte » : la partie de cet appareil sera remplacée.'};
+  if(code === 'access_denied' || /access.denied|cancel/i.test(msg)) return {text:'Connexion Google annulée.'};
+  if(code === 'manual_linking_disabled' || /provider is not enabled|unsupported provider/i.test(msg))
+    return {text:'La connexion Google n\'est pas disponible pour le moment. Réessaie plus tard.'};
   if(code === 'email_address_not_authorized') return {text:'L\'envoi des e-mails n\'est pas encore activé. Réessaie plus tard.'};
   console.warn('compte', err);
   return {text:'Une erreur est survenue. Réessaie dans un instant.'};
@@ -3800,7 +3841,9 @@ function openAcct(pane = 'home'){
   acctOpen = true;
   hideNudge();
   setMsg('#acHomeMsg', '');
-  if(pane === 'save' || pane === 'name') startSave(pane === 'name'); else goPane(pane);
+  acctEntry = pane;
+  if(pane === 'save' && !EMAIL_READY) showGoogle();
+  else if(pane === 'save' || pane === 'name') startSave(pane === 'name'); else goPane(pane);
   acctModal.classList.remove('hidden'); void acctModal.offsetWidth; acctModal.classList.add('on');
   if(pane === 'home') $('#acClose').focus({preventScroll:true});
 }
@@ -3826,6 +3869,7 @@ function closeAcct(){
   acctModal.classList.remove('on');
   setTimeout(() => { if(!acctOpen) acctModal.classList.add('hidden'); }, 300);
   (profileOpen ? $('#pmSettings') : profileBtn).focus({preventScroll:true});
+  maybeNudge();                                        // toujours anonyme : la pastille de sauvegarde revient sur l'Accueil
 }
 function goPane(name){
   if(name === 'home' && acctGate){ gatePane(); return; }   // pas d'écran Paramètres pendant l'accueil : « Retour » ramène au formulaire
@@ -3841,10 +3885,12 @@ function renderAcctHome(){
   $('#acStatus').classList.toggle('warn', anon);
   $('#acStatusSub').textContent = anon
     ? 'Ta progression n\'est liée qu\'à ce navigateur : si tu effaces ses données ou changes d\'appareil, elle sera perdue.'
-      + (EMAIL_READY ? '' : ' La sauvegarde par e-mail arrive bientôt.')
+      + ' Sauvegarde-la avec ton compte Google pour la retrouver partout.'
+    : account.google
+      ? 'Progression sauvegardée avec Google. Sur un autre appareil, choisis « J\'ai déjà un compte » dans les Paramètres.'
     : 'Progression sauvegardée. Sur un autre appareil, choisis « J\'ai déjà un compte » dans les Paramètres et saisis cet e-mail.';
-  $('#acSaveBtn').hidden = !anon || !EMAIL_READY;      // sans SMTP, aucun code ne peut partir
-  $('#acLoginBtn').hidden = !anon || !EMAIL_READY;
+  $('#acSaveBtn').hidden = !anon;                      // sans EMAIL_READY : sauvegarde et connexion par Google
+  $('#acLoginBtn').hidden = !anon;
   $('#acNameBtn').hidden = anon || !!username;
   $('#acLogoutBtn').hidden = anon;                     // déconnexion réservée aux comptes rattachés : un compte anonyme serait perdu
 }
@@ -3870,7 +3916,9 @@ acctModal.addEventListener('click', e => {
   if(!b || acctBusy) return;
   const go = b.dataset.go;
   if(go === 'home') goPane('home');
-  else if(go === 'save') startSave(false);
+  else if(go === 'save') EMAIL_READY ? startSave(false) : showGoogle();
+  else if(go === 'google-link') googleLink();
+  else if(go === 'later') closeAcct();
   else if(go === 'name') startSave(true);
   else if(go === 'login') startLogin(b.id === 'acHaveAcct' ? cleanEmail($('#acEmail').value) : '');
   else if(go === 'login-ok') showLogin();
@@ -3901,7 +3949,7 @@ function startSave(onlyName = false){
   $('#acSaveBack').hidden = acctGate;
   $('#acSaveLegal').hidden = !acctGate;                // les règles restent lisibles avant de donner son e-mail
   goPane('save');
-  if(acctGate) $('#acTitle').textContent = onlyName ? 'Ton pseudo' : 'Bienvenue';
+  if(acctGate || onlyName) $('#acTitle').textContent = onlyName ? 'Ton pseudo' : 'Bienvenue';
   (nameIn.value && !onlyName ? $('#acEmail') : nameIn).focus({preventScroll:true});
 }
 
@@ -3977,7 +4025,77 @@ async function sendCode(mode, email){
   return false;
 }
 
-/* ---------- « J'ai déjà un compte » : avertissement, puis e-mail ---------- */
+/* ---------- Sauvegarde avec Google : linkIdentity sur le compte anonyme (même user.id), pseudo demandé au retour ---------- */
+function showGoogle(msg = '', kind = 'err'){
+  const n = Object.keys(getCol()).length;
+  $('#acGIntro').textContent = n
+    ? `Sauvegarde tes ${nf(n)} carte${n > 1 ? 's' : ''} avec ton compte Google : tu les gardes, et tu pourras les retrouver sur n'importe quel appareil.`
+    : 'Sauvegarde ta collection avec ton compte Google : tu pourras la retrouver sur n\'importe quel appareil.';
+  setMsg('#acGMsg', msg, msg ? kind : '');
+  const back = $('#acGBack'), fromHome = acctEntry === 'home';
+  back.textContent = fromHome ? 'Retour' : 'Plus tard';
+  back.dataset.go = fromHome ? 'home' : 'later';
+  goPane('google');
+}
+// Départ chez Google : le mode est noté pour le retour ; le bouton garde son logo (pas de setAcctBusy(…, btn))
+function oauthBusy(on){
+  setAcctBusy(on);
+  $('#acGLink span').textContent = on ? 'Ouverture de Google…' : 'Continuer avec Google';
+}
+async function googleLink(){
+  if(acctBusy) return;
+  oauthBusy(true);
+  ssSet(OAUTH_KEY, 'link');
+  try{
+    const {error} = await sb.auth.linkIdentity({provider:'google', options:{redirectTo:returnUrl()}});
+    if(error) throw error;                             // sinon le navigateur part chez Google
+  }catch(err){
+    ssSet(OAUTH_KEY, null); oauthBusy(false);
+    setMsg('#acGMsg', acctError(err).text, 'err');
+  }
+}
+async function googleLogin(){
+  if(acctBusy) return;
+  oauthBusy(true);
+  ssSet(OAUTH_KEY, 'login');
+  try{
+    const {error} = await sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:returnUrl()}});
+    if(error) throw error;
+  }catch(err){
+    ssSet(OAUTH_KEY, null); oauthBusy(false);
+    goPane('home'); setMsg('#acHomeMsg', acctError(err).text, 'err');
+  }
+}
+// Retour de Google (au démarrage, session déjà échangée) : message, pseudo à choisir, ou erreur (ex. Google déjà lié ailleurs)
+function handleOAuthReturn(){
+  const mode = ssGet(OAUTH_KEY);
+  ssSet(OAUTH_KEY, null);
+  if(OAUTH_RET.code || OAUTH_RET.error) history.replaceState(null, '', returnUrl());   // adresse propre (sans ?code=…)
+  if(OAUTH_RET.error){
+    const m = acctError({code: OAUTH_RET.errorCode || OAUTH_RET.error, message: OAUTH_RET.errorText});
+    if(mode === 'login'){ openAcct('home'); setMsg('#acHomeMsg', m.text, 'err'); }
+    else{ openAcct('save'); setMsg('#acGMsg', m.text, 'err'); }
+    return true;
+  }
+  if(!mode) return false;
+  if(account.anon){                                    // échange du code raté (ex. ouvert dans un autre navigateur)
+    openAcct(mode === 'login' ? 'home' : 'save');
+    setMsg(mode === 'login' ? '#acHomeMsg' : '#acGMsg', 'La connexion Google n\'a pas abouti. Réessaie.', 'err');
+    return true;
+  }
+  if(!username){
+    openAcct('name');
+    $('#acSaveIntro').textContent = mode === 'link'
+      ? 'Ta collection est sauvegardée avec Google ! Dernière étape : choisis le pseudo affiché sur ton profil.'
+      : 'Te voilà connecté avec Google. Choisis le pseudo affiché sur ton profil.';
+    return true;
+  }
+  openAcct('home');
+  setMsg('#acHomeMsg', mode === 'link' ? 'Progression sauvegardée avec Google !' : `Bon retour, ${username} !`, 'ok');
+  return true;
+}
+
+/* ---------- « J'ai déjà un compte » : avertissement, puis e-mail (ou Google, voir showLogin) ---------- */
 function startLogin(email = ''){
   if(email) $('#acLoginEmail').value = email;
   const n = Object.keys(getCol()).length;
@@ -3990,6 +4108,7 @@ function startLogin(email = ''){
   showLogin();
 }
 function showLogin(){
+  if(!EMAIL_READY){ googleLogin(); return; }
   $('#acLoginIntro').textContent = `Saisis l'e-mail de ton compte : tu vas recevoir un code à ${OTP_LENGTH} chiffres pour te connecter.`;
   setMsg('#acLoginMsg', ''); setInvalid($('#acLoginEmail'), false);
   goPane('login');
@@ -4144,31 +4263,30 @@ $('#acLogoutGo').addEventListener('click', async () => {
   doneHome('Tu es déconnecté.');
 });
 
-/* ---------- Rappel discret « Sauvegarde ta collection » (comptes anonymes) ----------
-   Après le 3e booster, puis tous les 10 boosters tant qu'il n'est pas fermé par la croix (fermé = plus jamais sur ce navigateur).
-   Il disparaît seul au bout de 12 s, et n'apparaît que sur l'Accueil au repos. */
-const NUDGE_FIRST = 3, NUDGE_EVERY = 10, NUDGE_MS = 12000;
+/* ---------- Rappel « Sauvegarde ta collection » (comptes anonymes) ----------
+   Après le 3e booster : l'écran de sauvegarde s'ouvre une fois (localStorage savePromptShown, simple confort d'affichage).
+   Ensuite, une pastille discrète et non bloquante reste sur l'Accueil au repos tant que le compte est anonyme ;
+   la croix la cache jusqu'au prochain lancement du jeu. */
+const NUDGE_FIRST = 3;
 const saveNudge = $('#saveNudge');
-let nudgeTimer = 0;
+let nudgeOff = false;                                 // fermée par la croix (pour cette session)
 function maybeNudge(){
   setTimeout(showNudgeIfDue, 700);                    // « Ouvrir un autre booster » repasse par l'Accueil : on attend que tout soit posé
 }
 function showNudgeIfDue(){
-  if(!EMAIL_READY || !account.anon || state !== 'idle' || profileOpen || acctOpen || payOpen) return;
-  const at = store.get('saveNudgeAt', NUDGE_FIRST);   // -1 = fermé pour de bon
-  if(at < 0 || player.boostersOpened < at) return;
-  store.set('saveNudgeAt', player.boostersOpened + NUDGE_EVERY);
+  if(!account.anon || state !== 'idle' || profileOpen || acctOpen || payOpen) return;
+  if(player.boostersOpened < NUDGE_FIRST) return;
+  if(!store.get('savePromptShown', false)){ store.set('savePromptShown', true); openAcct('save'); return; }
+  if(nudgeOff || !saveNudge.hidden) return;
   saveNudge.hidden = false; void saveNudge.offsetWidth; saveNudge.classList.add('on');
-  clearTimeout(nudgeTimer); nudgeTimer = setTimeout(hideNudge, NUDGE_MS);
 }
 function hideNudge(){
-  clearTimeout(nudgeTimer);
   if(saveNudge.hidden) return;
   saveNudge.classList.remove('on');
   setTimeout(() => { if(!saveNudge.classList.contains('on')) saveNudge.hidden = true; }, 320);
 }
 $('#snOpen').addEventListener('click', () => { if(canNavigate()) openAcct('save'); });
-$('#snClose').addEventListener('click', () => { store.set('saveNudgeAt', -1); hideNudge(); });
+$('#snClose').addEventListener('click', () => { nudgeOff = true; hideNudge(); });
 
 // Boutons « + » des ressources → page Magasin (la barre du bas suit via showView)
 document.querySelectorAll('.res-plus[data-goto]').forEach(b => b.addEventListener('click', () => {
@@ -5114,7 +5232,7 @@ function cpStreet(lv){
    ===================================================================== */
 const OLD_KEYS = ['wallet', 'energy', 'collection', 'boostersOuverts', 'demo', 'rarity_model',   // données locales v53 : on repart de zéro
                   'topFilms', 'favs', 'wishlist', 'vc_thresholds', 'tmdb_key',    // la clé TMDB est désormais sur le serveur
-                  'peopleSuggest2'];
+                  'peopleSuggest2', 'saveNudgeAt'];                                // ancien rappel (remplacé par savePromptShown)
 async function boot(){
   $('#bootTitle').textContent = 'Connexion…';
   $('#bootStatus').textContent = '';
@@ -5128,7 +5246,7 @@ async function boot(){
     $('#app').classList.remove('hidden');
     measureTitle();
     loadCinema();                                // Billets et caisse prêts avant la 1re visite (sans bloquer le démarrage)
-    enterGate();                                 // pas encore d'e-mail ou de pseudo : écran « Bienvenue » obligatoire
+    if(!handleOAuthReturn() && !enterGate()) maybeNudge();   // retour de Google, accueil obligatoire, ou rappel de sauvegarde
   }catch(err){
     $('#bootTitle').textContent = 'Connexion impossible';
     $('#bootStatus').textContent = err.message || 'Réessaie dans un instant.';
