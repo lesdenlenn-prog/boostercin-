@@ -91,22 +91,23 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      `signOut({ scope: 'local' })`, réservée aux comptes rattachés. Constantes `OTP_LENGTH` (8, = réglage « Email OTP Length »),
      `OTP_TTL`, `OTP_RESEND` (60 s). **`EMAIL_READY = false`** tant que le SMTP et les modèles d'e-mail (« Change email
      address » et « Magic link » avec `{{ .Token }}`) ne sont pas configurés : sauvegarde, connexion et rappel masqués.
-     Rappel « Sauvegarde ta collection » après le 3e booster (localStorage `saveNudgeAt`). Migration
+     Migration
      `20261104120000_username.sql` (appliquée) : pseudo 3–20 caractères (`USERNAME_RE` côté client, à garder identique),
      unique sans tenir compte des majuscules, `username_available()`, policy restrictive : pas de pseudo sur un compte anonyme.
-   - **4f Google** (à tester) : la sauvegarde passe par Google tant que `EMAIL_READY = false` (code e-mail gardé, masqué).
-     Supabase (8/11/2026, via Management API) : fournisseur Google activé (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` de
-     `.env`), *manual linking* activé, Site URL `https://boostercin.vercel.app`, Redirect URLs `https://boostercin.vercel.app/**`
-     et `http://127.0.0.1:5500/**`. Client `flowType: 'pkce'`. Écran `data-pane="google"` : « Continuer avec Google » =
-     `linkIdentity` (même `user.id`), « J'ai déjà un compte » = avertissement si cartes puis `signInWithOAuth`. Mode noté dans
-     `sessionStorage.oauthPending` ; au retour `handleOAuthReturn()` (erreur lue dans `OAUTH_RET` avant l'init : ex.
-     `identity_already_exists` = Google déjà lié à un autre joueur), puis pseudo si absent. `account.anon` = `user.is_anonymous`.
-     Rappel : l'écran de sauvegarde s'ouvre une fois après le 3e booster (`savePromptShown`), puis pastille non bloquante sur
-     l'Accueil tant que le compte est anonyme (la croix la cache jusqu'au prochain lancement). `ACCOUNT_REQUIRED = false`.
-     **Accueil obligatoire** (`ACCOUNT_REQUIRED`, actif seulement si `EMAIL_READY`) : au démarrage et après une
-     déconnexion, `enterGate()` ouvre `#acctModal` en mode « Bienvenue » (sans croix ni Échap ni écran Paramètres) tant que
-     le compte est anonyme ou sans pseudo ; la session anonyme du démarrage reçoit l'e-mail (même `user.id`), « J'ai déjà un
-     compte » toujours proposé. Les anciens joueurs anonymes le voient aussi et gardent leur collection.
+   - **4f Google** : Supabase (8/11/2026, via Management API) : fournisseur Google activé (`GOOGLE_CLIENT_ID` /
+     `GOOGLE_CLIENT_SECRET` de `.env`), *manual linking* activé, Site URL `https://boostercin.vercel.app`, Redirect URLs
+     `https://boostercin.vercel.app/**` et `http://127.0.0.1:5500/**`. Client `flowType: 'pkce'`.
+   - **4g Google obligatoire** (à tester) : le jeu ne crée plus de compte anonyme (`ensureSession()` renvoie `hasSession`).
+     Au démarrage, `startGate()` ouvre `#acctModal` en mode accueil (sans croix ni Échap ni Paramètres) tant que
+     `needsGate()` : pas de session, compte anonyme ou pas de pseudo. Écran « Bienvenue » (`data-pane="google"`), un seul
+     bouton « Continuer avec Google » + lien discret « Confidentialité » : `signInWithOAuth` (nouveau joueur ou retour sur un
+     autre appareil), sauf ancien compte anonyme AVEC cartes (`keepsCards()`) → `linkIdentity` (même `user.id`). Si ce Google
+     a déjà sa partie (`identity_already_exists`, lu dans `OAUTH_RET` avant l'init), bouton « Utiliser ce compte Google »
+     (`signInWithOAuth`, cartes de l'appareil perdues). Mode noté dans `sessionStorage.oauthPending`. Puis « Ton pseudo »
+     obligatoire s'il manque. Paramètres : e-mail masqué, Déconnexion (`signOut` local puis rechargement → « Bienvenue »),
+     lien de confidentialité. Plus de rappel « Sauvegarde ta collection » ni d'`ACCOUNT_REQUIRED`. `account.anon` =
+     `user.is_anonymous`. Parcours e-mail/OTP gardé mais masqué (`EMAIL_READY = false`). À faire après validation :
+     désactiver « Allow anonymous sign-ins » (avec confirmation), puis supprimer les comptes anonymes sans carte.
      4a à 4d ne doivent dépendre d'aucun e-mail.
 
 5. **Mode Cinéma** (jeu de gestion idle), découpé en C0 → C5, chaque étape testée avant commit :
