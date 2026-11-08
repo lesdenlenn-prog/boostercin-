@@ -97,7 +97,7 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
    - **4f Google** : Supabase (8/11/2026, via Management API) : fournisseur Google activé (`GOOGLE_CLIENT_ID` /
      `GOOGLE_CLIENT_SECRET` de `.env`), *manual linking* activé, Site URL `https://boostercin.vercel.app`, Redirect URLs
      `https://boostercin.vercel.app/**` et `http://127.0.0.1:5500/**`. Client `flowType: 'pkce'`.
-   - **4g Google obligatoire** (à tester) : le jeu ne crée plus de compte anonyme (`ensureSession()` renvoie `hasSession`).
+   - **4g Google obligatoire** (validé) : le jeu ne crée plus de compte anonyme (`ensureSession()` renvoie `hasSession`).
      Au démarrage, `startGate()` ouvre `#acctModal` en mode accueil (sans croix ni Échap ni Paramètres) tant que
      `needsGate()` : pas de session, compte anonyme ou pas de pseudo. Écran « Bienvenue » (`data-pane="google"`), un seul
      bouton « Continuer avec Google » + lien discret « Confidentialité » : `signInWithOAuth` (nouveau joueur ou retour sur un
@@ -106,8 +106,11 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      (`signInWithOAuth`, cartes de l'appareil perdues). Mode noté dans `sessionStorage.oauthPending`. Puis « Ton pseudo »
      obligatoire s'il manque. Paramètres : e-mail masqué, Déconnexion (`signOut` local puis rechargement → « Bienvenue »),
      lien de confidentialité. Plus de rappel « Sauvegarde ta collection » ni d'`ACCOUNT_REQUIRED`. `account.anon` =
-     `user.is_anonymous`. Parcours e-mail/OTP gardé mais masqué (`EMAIL_READY = false`). À faire après validation :
-     désactiver « Allow anonymous sign-ins » (avec confirmation), puis supprimer les comptes anonymes sans carte.
+     `user.is_anonymous`. Parcours e-mail/OTP gardé mais masqué (`EMAIL_READY = false`). Le 8/11/2026 : « Allow anonymous
+     sign-ins » désactivé (`external_anonymous_users_enabled = false`) et tous les comptes anonymes supprimés (13 sans
+     carte, puis 6 avec cartes) : il ne reste que des comptes Google. Le cas `keepsCards()` / `linkIdentity` ne sert plus
+     qu'aux sessions anonymes restées dans un navigateur : leur compte n'existe plus, le rafraîchissement du jeton échoue et
+     la session est effacée (écran « Bienvenue ») ; tant que le jeton (1 h) n'a pas expiré, le démarrage peut échouer.
      4a à 4d ne doivent dépendre d'aucun e-mail.
 
 5. **Mode Cinéma** (jeu de gestion idle), découpé en C0 → C5, chaque étape testée avant commit :
