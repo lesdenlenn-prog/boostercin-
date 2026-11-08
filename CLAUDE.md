@@ -94,6 +94,10 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      Rappel « Sauvegarde ta collection » après le 3e booster (localStorage `saveNudgeAt`). Migration
      `20261104120000_username.sql` (appliquée) : pseudo 3–20 caractères (`USERNAME_RE` côté client, à garder identique),
      unique sans tenir compte des majuscules, `username_available()`, policy restrictive : pas de pseudo sur un compte anonyme.
+     **Accueil obligatoire** (`ACCOUNT_REQUIRED = true`, actif seulement si `EMAIL_READY`) : au démarrage et après une
+     déconnexion, `enterGate()` ouvre `#acctModal` en mode « Bienvenue » (sans croix ni Échap ni écran Paramètres) tant que
+     le compte est anonyme ou sans pseudo ; la session anonyme du démarrage reçoit l'e-mail (même `user.id`), « J'ai déjà un
+     compte » toujours proposé. Les anciens joueurs anonymes le voient aussi et gardent leur collection.
      4a à 4d ne doivent dépendre d'aucun e-mail.
 
 5. **Mode Cinéma** (jeu de gestion idle), découpé en C0 → C5, chaque étape testée avant commit :

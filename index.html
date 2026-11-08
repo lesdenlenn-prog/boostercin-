@@ -595,6 +595,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   text-decoration:underline;text-underline-offset:3px}
 .ac-link:disabled{opacity:.5;text-decoration:none}
 .ac-legal{display:table;margin:26px auto 0;padding:10px 8px;font-size:.78rem;color:var(--muted);text-underline-offset:3px}
+.ac-legal-sm{margin-top:14px;font-size:.68rem;opacity:.6;text-decoration-thickness:1px}   /* accueil : à peine visible */
 .ac-warn{background:rgba(120,30,10,.55);box-shadow:inset 0 0 0 1.5px rgba(255,150,90,.55),0 6px 16px rgba(0,0,0,.28)}
 
 /* Rappel discret « Sauvegarde ta collection » (comptes anonymes) : sous le HUD de l'Accueil, se ferme d'un appui */
@@ -1871,7 +1872,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <p class="ac-hint" id="acSaveMsg" role="status"></p>
         <div class="ac-actions"><button class="btn cta" type="submit" id="acSaveSubmit">Recevoir le code</button></div>
         <button class="ac-link" type="button" data-go="login" id="acHaveAcct" hidden>J'ai déjà un compte</button>
-        <button class="ac-link" type="button" data-go="home">Retour</button>
+        <button class="ac-link" type="button" data-go="home" id="acSaveBack">Retour</button>
+        <a class="ac-legal ac-legal-sm" id="acSaveLegal" href="confidentialite.html" target="_blank" rel="noopener" hidden>Confidentialité</a>
       </form>
       <!-- Avant de se connecter à un autre compte : les cartes du compte anonyme seront perdues -->
       <div class="ac-pane" data-pane="warn">
@@ -3740,8 +3742,12 @@ document.addEventListener('keydown', e => {
    - J'ai déjà un compte : signInWithOtp({shouldCreateUser:false}) puis verifyOtp({type:'email'}) → on bascule sur ce compte ;
      le compte anonyme en cours est abandonné (pas de fusion), d'où l'avertissement s'il contient des cartes.
    Codes envoyés par Supabase (SMTP personnalisé ; modèles « Change email address » et « Magic link » avec {{ .Token }}).
+   - Accueil obligatoire (ACCOUNT_REQUIRED) : dès le 1er lancement, un compte sans e-mail ou sans pseudo voit l'écran
+     « Bienvenue » (pseudo + e-mail, ou « J'ai déjà un compte »), impossible à fermer tant que le compte n'est pas complet.
+     La session anonyme ouverte au démarrage est celle qui reçoit l'e-mail : rien n'est perdu.
    ===================================================================== */
 const EMAIL_READY = false;             // SMTP + modèles d'e-mail configurés dans Supabase ? false : sauvegarde et connexion masquées
+const ACCOUNT_REQUIRED = true;         // true : pseudo + e-mail exigés pour jouer (si EMAIL_READY) ; false : sauvegarde facultative
 const OTP_LENGTH = 8;                  // longueur des codes : doit être égale au réglage Supabase « Email OTP Length »
 const OTP_TTL = 3600 * 1000;           // validité d'un code : réglage Supabase « Email OTP Expiration » (3 600 s par défaut)
 const OTP_RESEND = 60 * 1000;          // délai avant « Renvoyer le code » (Supabase refuse un nouvel envoi avant 60 s)
@@ -3754,6 +3760,8 @@ const acctModal = $('#acctModal'), acCode = $('#acCode');
 let acctBusy = false;                  // appel au serveur en cours : boutons désactivés
 let otp = null;                        // code en attente : {mode:'link'|'login', email, name, sentAt, tries}
 let nameOnly = false;                  // écran « pseudo seul » (compte déjà rattaché à un e-mail mais sans pseudo)
+let acctGate = false;                  // écran d'accueil obligatoire affiché (pas de fermeture, pas d'écran Paramètres)
+const needsGate = () => EMAIL_READY && ACCOUNT_REQUIRED && (account.anon || !username);
 const AC_TITLES = {home:'Paramètres', save:'Sauvegarde', warn:'Connexion', login:'Connexion', code:'Code reçu', logout:'Déconnexion'};
 acCode.maxLength = OTP_LENGTH;
 acCode.placeholder = '•'.repeat(OTP_LENGTH);
@@ -3792,12 +3800,26 @@ function openAcct(pane = 'home'){
   acctOpen = true;
   hideNudge();
   setMsg('#acHomeMsg', '');
-  if(pane === 'save') startSave(); else goPane(pane);
+  if(pane === 'save' || pane === 'name') startSave(pane === 'name'); else goPane(pane);
   acctModal.classList.remove('hidden'); void acctModal.offsetWidth; acctModal.classList.add('on');
   if(pane === 'home') $('#acClose').focus({preventScroll:true});
 }
+// Accueil obligatoire : ouvert au démarrage (et après une déconnexion) tant que le compte n'a pas d'e-mail ou de pseudo
+function gatePane(){ startSave(!account.anon); }       // anonyme : pseudo + e-mail ; rattaché sans pseudo : pseudo seul
+function enterGate(){
+  if(!needsGate()) return false;
+  acctGate = true;
+  $('#acClose').style.visibility = 'hidden';   // garde sa place : titre centré, et plus focalisable
+  if(acctOpen) gatePane(); else openAcct(account.anon ? 'save' : 'name');
+  return true;
+}
+function leaveGate(){
+  acctGate = false;
+  $('#acClose').style.visibility = '';
+  closeAcct();
+}
 function closeAcct(){
-  if(!acctOpen) return;
+  if(!acctOpen || acctGate) return;
   acctOpen = false;
   clearTimeout(resendTimer); clearTimeout(nameTimer);
   if(acctModal.contains(document.activeElement)) document.activeElement.blur();
@@ -3806,6 +3828,7 @@ function closeAcct(){
   (profileOpen ? $('#pmSettings') : profileBtn).focus({preventScroll:true});
 }
 function goPane(name){
+  if(name === 'home' && acctGate){ gatePane(); return; }   // pas d'écran Paramètres pendant l'accueil : « Retour » ramène au formulaire
   acctModal.querySelectorAll('.ac-pane').forEach(p => p.hidden = p.dataset.pane !== name);
   $('#acTitle').textContent = AC_TITLES[name];
   $('#acBody').scrollTop = 0;
@@ -3825,7 +3848,11 @@ function renderAcctHome(){
   $('#acNameBtn').hidden = anon || !!username;
   $('#acLogoutBtn').hidden = anon;                     // déconnexion réservée aux comptes rattachés : un compte anonyme serait perdu
 }
-const doneHome = msg => { goPane('home'); setMsg('#acHomeMsg', msg, 'ok'); };
+// Fin d'une action : pendant l'accueil, on ferme s'il ne manque plus rien (sinon l'étape suivante, ex. le pseudo)
+function doneHome(msg){
+  if(acctGate){ if(needsGate()) gatePane(); else leaveGate(); return; }
+  goPane('home'); setMsg('#acHomeMsg', msg, 'ok');
+}
 
 // Appel en cours : tous les boutons de l'écran sont désactivés, le bouton appuyé affiche « Un instant… »
 function setAcctBusy(on, btn = null){
@@ -3857,16 +3884,24 @@ document.addEventListener('keydown', e => { if(acctOpen && e.key === 'Escape') c
 function startSave(onlyName = false){
   nameOnly = onlyName;
   $('#acEmailLbl').hidden = onlyName;
+  const hasCards = Object.keys(getCol()).length > 0;
   $('#acSaveIntro').textContent = onlyName
-    ? 'Choisis le pseudo affiché sur ton profil.'
-    : `Choisis un pseudo et indique ton e-mail. Tu vas recevoir un code à ${OTP_LENGTH} chiffres : ta collection sera sauvegardée et tu pourras la retrouver sur n'importe quel appareil.`;
+    ? (acctGate ? 'Dernière étape : choisis le pseudo affiché sur ton profil.' : 'Choisis le pseudo affiché sur ton profil.')
+    : !acctGate
+      ? `Choisis un pseudo et indique ton e-mail. Tu vas recevoir un code à ${OTP_LENGTH} chiffres : ta collection sera sauvegardée et tu pourras la retrouver sur n'importe quel appareil.`
+      : hasCards
+        ? `Pour continuer, sauvegarde ta collection : choisis un pseudo et indique ton e-mail. Tu vas recevoir un code à ${OTP_LENGTH} chiffres, puis tu pourras la retrouver sur n'importe quel appareil.`
+        : `Pour commencer, choisis un pseudo et indique ton e-mail. Tu vas recevoir un code à ${OTP_LENGTH} chiffres : ta collection sera liée à ton compte, sur n'importe quel appareil.`;
   $('#acSaveSubmit').textContent = onlyName ? 'Enregistrer' : 'Recevoir le code';
   const nameIn = $('#acName');
   if(!nameIn.value && username) nameIn.value = username;
   setInvalid(nameIn, false); setInvalid($('#acEmail'), false);
   setMsg('#acNameHint', NAME_RULES); setMsg('#acSaveMsg', '');
-  $('#acHaveAcct').hidden = true;
+  $('#acHaveAcct').hidden = !acctGate || onlyName;     // accueil : « J'ai déjà un compte » toujours proposé
+  $('#acSaveBack').hidden = acctGate;
+  $('#acSaveLegal').hidden = !acctGate;                // les règles restent lisibles avant de donner son e-mail
   goPane('save');
+  if(acctGate) $('#acTitle').textContent = onlyName ? 'Ton pseudo' : 'Bienvenue';
   (nameIn.value && !onlyName ? $('#acEmail') : nameIn).focus({preventScroll:true});
 }
 
@@ -3894,7 +3929,7 @@ $('#acSaveForm').addEventListener('submit', async e => {
   const name = cleanName(nameIn.value), email = cleanEmail(emailIn.value);
   nameIn.value = name; nameSeq++; clearTimeout(nameTimer);
   setInvalid(nameIn, false); setInvalid(emailIn, false);
-  setMsg('#acSaveMsg', ''); $('#acHaveAcct').hidden = true;
+  setMsg('#acSaveMsg', ''); $('#acHaveAcct').hidden = !acctGate || nameOnly;
   if(!USERNAME_RE.test(name)){
     setInvalid(nameIn, true);
     setMsg('#acNameHint', name.length < 3 || name.length > 20 ? 'Le pseudo doit faire de 3 à 20 caractères.' : 'Uniquement des lettres, des chiffres et _ - .', 'err');
@@ -3983,7 +4018,8 @@ function showCode(){
   $('#acCodeIntro').innerHTML = `Saisis le code à ${OTP_LENGTH} chiffres envoyé à <b>${esc(otp.email)}</b>. ` +
     `Il peut mettre une minute à arriver : pense à regarder dans les courriers indésirables.`;
   setMsg('#acCodeMsg', '');
-  $('#acCodeSubmit').textContent = otp.mode === 'link' ? 'Sauvegarder ma progression' : 'Se connecter';
+  $('#acCodeSubmit').textContent = otp.mode === 'login' ? 'Se connecter'
+    : acctGate && !Object.keys(getCol()).length ? 'Créer mon compte' : 'Sauvegarder ma progression';
   goPane('code');
   acCode.focus({preventScroll:true});
 }
@@ -4104,6 +4140,7 @@ $('#acLogoutGo').addEventListener('click', async () => {
   try{ username = null; otp = null; await ensureSession(); await reloadPlayer(); }
   catch(err){ location.reload(); return; }
   finally{ setAcctBusy(false); }
+  if(enterGate()) return;                              // accueil obligatoire : nouveau compte ou reconnexion
   doneHome('Tu es déconnecté.');
 });
 
@@ -5091,6 +5128,7 @@ async function boot(){
     $('#app').classList.remove('hidden');
     measureTitle();
     loadCinema();                                // Billets et caisse prêts avant la 1re visite (sans bloquer le démarrage)
+    enterGate();                                 // pas encore d'e-mail ou de pseudo : écran « Bienvenue » obligatoire
   }catch(err){
     $('#bootTitle').textContent = 'Connexion impossible';
     $('#bootStatus').textContent = err.message || 'Réessaie dans un instant.';
