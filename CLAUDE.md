@@ -144,7 +144,12 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      (`CINE_PLAN`, `CPX`, `cpRender`, `initCinePlan`) en vue de dessus trois quarts (sol vu de haut, murs du fond de face,
      murs de côté et de façade en épaisseur) : parquet à lattes, papier peint bordeaux + lambris, plinthes, ombres douces,
      néons « CINÉMA » / « BILLETS », affiches imaginaires, cordons, pop-corn. Dessiné une fois à 16 px par case puis agrandi
-     par un facteur entier (`image-rendering: pixelated`). Le plan glisse au doigt / à la souris (pointeurs, `transform`),
+     par un facteur entier (`image-rendering: pixelated`). **Règle de rendu** : une pièce occupe exactement ses cases ; tout
+     ce qui lui appartient (dessus des murs, mur du fond, sol, épaisseurs, façade, plinthes, ombres, décor, paillasson) est
+     dessiné dans son rectangle de cases (`cpZones`, `drawRoom` avec `clip`) ; de haut en bas : CAP · mur du fond WH · sol ·
+     CAP · face avant FRONT, CAP à gauche et à droite ; les portes laissent passer le sol. Décor par type dans `DECOR`.
+     Affichage : zoom 1 à 5 traduit en pixels PHYSIQUES entiers (`cpv.ds = round(niveau × devicePixelRatio)`), décalage
+     arrondi au pixel physique (`cpPlace`). Hors pièces : aplat violet + quadrillage seulement (vérifié pixel par pixel). Le plan glisse au doigt / à la souris (pointeurs, `transform`),
      zoom ×1 à ×5 au pincement ou à la molette ; le carrousel ignore les gestes commencés sur `.cine-plan`. Base identique
      pour tous : couloir d'accueil (entrée + paillasson) et guichet (comptoir, caisse, file entre cordons) ; le reste de la
      grille est verrouillé (violet sombre, grille légère). Le plan n'a pas encore de salles : le choix du film se fait par

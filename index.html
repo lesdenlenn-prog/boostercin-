@@ -4955,30 +4955,34 @@ async function chooseScreenFilm(no, filmId){
 }
 
 /* ---------- Plan du cinéma : pixel art, vue de dessus en trois quarts (canvas) ----------
-   Grille de cases carrées (CINE_PLAN.cols × rows) : sol vu de haut, murs du fond vus de face (CPX.WH pixels de haut),
-   murs de côté et de façade en épaisseur (CPX.CAP). Tout est dessiné une seule fois, en code, sur un canvas à la
-   résolution « pixel art » (CPX.T pixels par case), puis agrandi par un facteur ENTIER (image-rendering: pixelated) :
-   aucun lissage. Le plan, plus grand que l'écran, glisse au doigt (ou à la souris) ; on zoome en pinçant ou à la molette.
-   Pour l'instant, seule la base commune à tous les joueurs est construite (couloir d'accueil + guichet) ;
-   le reste de la grille est verrouillé (aplat violet sombre, grille légère).
+   Grille de cases carrées (CINE_PLAN.cols × rows, CPX.T pixels de dessin par case). Vue trois quarts : sol vu de haut,
+   mur du fond vu de face (CPX.WH de haut), murs de côté et de façade en épaisseur (CPX.CAP), face avant de la façade
+   (CPX.FRONT). RÈGLE : une pièce occupe exactement ses cases. Tout ce qui lui appartient (dessus des murs, mur du fond,
+   sol, épaisseurs, façade, plinthes, ombres, décor) est dessiné À L'INTÉRIEUR de son rectangle de cases, et son dessin
+   est découpé à ce rectangle (clip) : les cases voisines restent entières. De haut en bas, une pièce contient :
+     dessus du mur du fond (CAP) · mur du fond (WH) · sol · dessus de la façade (CAP) · face avant de la façade (FRONT),
+   et à gauche / à droite l'épaisseur des murs de côté (CAP). Les portes (doors) laissent le sol passer jusqu'au bord.
+   Affichage : dessiné une fois, puis agrandi par un facteur ENTIER de pixels PHYSIQUES (devicePixelRatio compris),
+   décalage arrondi au pixel physique : aucun lissage, quelle que soit la densité de l'écran.
    Structure prévue pour l'agrandissement (voir CLAUDE.md) : une pièce = {id, type, level, x, y, w, h, doors}
-   (x, y = case du coin haut-gauche ; w × h cases ; doors = ouvertures {side:'n'|'s'|'e'|'w', at, len} en cases).
-   Une case est libre si aucune pièce ne la couvre ; le prix d'une pièce = w × h × prix par case de son type. */
+   (x, y = case du coin haut-gauche ; w × h cases ; doors = ouvertures {side:'n'|'s'|'e'|'w', at, len} en cases,
+   comptées depuis le coin haut-gauche de la pièce). Une case est libre si aucune pièce ne la couvre ;
+   le prix d'une pièce = w × h × prix par case de son type. */
 const CINE_PLAN = {
   cols: 28, rows: 24,
   rooms: [
-    {id:'hall',    type:'hall',       level:1, x:9,  y:10, w:6, h:10, doors:[{side:'s', at:2, len:2}, {side:'e', at:4, len:3}]},
-    {id:'guichet', type:'box_office', level:1, x:15, y:12, w:8, h:6,  doors:[{side:'w', at:2, len:3}]},
+    {id:'hall',    type:'hall',       level:1, x:9,  y:10, w:6, h:10, doors:[{side:'s', at:2, len:2}, {side:'e', at:5, len:3}]},
+    {id:'guichet', type:'box_office', level:1, x:15, y:12, w:8, h:7,  doors:[{side:'w', at:3, len:3}]},
   ],
 };
-const CPX = {T:16, WH:32, CAP:4, FRONT:6, MIN:1, MAX:5};   // pixels par case, hauteur des murs du fond, épaisseurs, zoom
+const CPX = {T:16, WH:32, CAP:4, FRONT:6, MIN:1, MAX:5};   // pixels par case, hauteur du mur du fond, épaisseurs, zoom
 CPX.W = CINE_PLAN.cols * CPX.T;
 CPX.H = CINE_PLAN.rows * CPX.T;
 const cellsOf = r => r.w * r.h;                             // nombre de cases d'une pièce (base du prix futur)
 
 // Palette (chaude, bois et velours ; violet pour l'hors-plan)
 const CPC = {
-  void:'#221630', voidLine:'#2b1c3c', voidDot:'#30203f',
+  void:'#221630', voidLine:'#2b1c3c',
   cap:'#3b2547', capHi:'#54376a', capJoint:'#2c1b37',
   wood:['#c99a61', '#d3a66c', '#bd8f58', '#c49562'], woodSeam:'#8d6339', woodHi:'#e0b97f', woodKnot:'#9a6c3f',
   paper:'#5c1d29', paperHi:'#6e2733', paperDot:'#7d3340',
@@ -5008,6 +5012,16 @@ function cpRng(seed){
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
 
+// Zones d'une pièce, en pixels de dessin, toutes contenues dans son rectangle de cases P
+function cpZones(r){
+  const {T, WH, CAP, FRONT} = CPX;
+  const P = {x:r.x * T, y:r.y * T, w:r.w * T, h:r.h * T};
+  const F = {x:P.x + CAP, y:P.y + CAP + WH, w:P.w - 2 * CAP, h:P.h - 2 * CAP - WH - FRONT};   // sol libre (hors murs)
+  const Wl = {x:P.x + CAP, y:P.y + CAP, w:P.w - 2 * CAP, h:WH};                              // mur du fond (face)
+  const span = side => (r.doors || []).filter(d => d.side === side).map(d => [d.at * T, (d.at + d.len) * T]);
+  return {P, F, Wl, doors:{n:span('n'), s:span('s'), e:span('e'), w:span('w')}};
+}
+
 function cpRender(cv){
   const {T, WH, CAP, FRONT} = CPX;
   cv.width = CPX.W; cv.height = CPX.H;
@@ -5015,17 +5029,15 @@ function cpRender(cv){
   g.imageSmoothingEnabled = false;
   const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   const shade = (x, y, w, h, a) => R(x, y, w, h, CPC.shadow + a + ')');
-  const rooms = CINE_PLAN.rooms, px = r => ({x:r.x * T, y:r.y * T, w:r.w * T, h:r.h * T});
-  const doorSpan = (r, side) => (r.doors || []).filter(d => d.side === side).map(d => [d.at * T, (d.at + d.len) * T]);
-  const inSpan = (spans, v) => spans.some(([a, b]) => v >= a && v < b);
+  const out = (x, y, w, h) => { R(x - 1, y - 1, w + 2, 1, CPC.ink); R(x - 1, y + h, w + 2, 1, CPC.ink); R(x - 1, y, 1, h, CPC.ink); R(x + w, y, 1, h, CPC.ink); };
+  const glow = (x, y, w, h, c, a) => { g.globalAlpha = a; R(x, y, w, h, c); g.globalAlpha = 1; };
 
-  // --- Hors plan : aplat violet sombre, grille de cases à peine visible
+  // --- Hors plan : aplat violet sombre et léger quadrillage (le trait appartient à la case qui commence là)
   R(0, 0, CPX.W, CPX.H, CPC.void);
-  for(let i = 0; i <= CINE_PLAN.cols; i++) R(i * T, 0, 1, CPX.H, CPC.voidLine);
-  for(let j = 0; j <= CINE_PLAN.rows; j++) R(0, j * T, CPX.W, 1, CPC.voidLine);
-  for(let i = 0; i < CINE_PLAN.cols; i++) for(let j = 0; j < CINE_PLAN.rows; j++) R(i * T + 8, j * T + 8, 1, 1, CPC.voidDot);
+  for(let i = 0; i < CINE_PLAN.cols; i++) R(i * T, 0, 1, CPX.H, CPC.voidLine);
+  for(let j = 0; j < CINE_PLAN.rows; j++) R(0, j * T, CPX.W, 1, CPC.voidLine);
 
-  // --- Sols
+  // --- Matières
   function parquet(x, y, w, h, seed){
     const rnd = cpRng(seed), PH = 4;                       // lattes de 4 px, joints décalés d'une rangée à l'autre
     for(let yy = y; yy < y + h; yy += PH){
@@ -5035,7 +5047,7 @@ function cpRender(cv){
         if(b > a){
           R(a, yy, b - a, PH, CPC.wood[Math.floor(rnd() * CPC.wood.length)]);
           if(rnd() < .5) R(a, yy, b - a, 1, CPC.woodHi);                   // reflet sur le haut de la latte
-          if(rnd() < .12) R(a + 3 + Math.floor(rnd() * Math.max(1, b - a - 6)), yy + 2, 2, 1, CPC.woodKnot);   // nœud
+          if(rnd() < .12 && b - a >= 8) R(a + 3 + Math.floor(rnd() * (b - a - 6)), yy + 2, 2, 1, CPC.woodKnot);   // nœud, dans sa latte
           if(xx + len < x + w) R(xx + len - 1, yy, 1, PH, CPC.woodSeam);   // joint de bout
         }
         xx += len;
@@ -5048,7 +5060,7 @@ function cpRender(cv){
     R(x, y, 1, h, CPC.carpetGold); R(x + w - 1, y, 1, h, CPC.carpetGold);
     R(x + 2, y, 1, h, CPC.carpetLo); R(x + w - 3, y, 1, h, CPC.carpetLo);
     const cx = x + (w >> 1);
-    for(let yy = y + 6; yy < y + h - 6; yy += 14){
+    for(let yy = y + 6; yy + 9 < y + h; yy += 14){
       for(let k = 0; k < 5; k++){                                          // losange creux de 9 px
         R(cx - k, yy + k, 1, 1, CPC.carpetHi); R(cx + k - 1, yy + k, 1, 1, CPC.carpetHi);
         R(cx - k, yy + 8 - k, 1, 1, CPC.carpetHi); R(cx + k - 1, yy + 8 - k, 1, 1, CPC.carpetHi);
@@ -5057,48 +5069,47 @@ function cpRender(cv){
   }
   function theatre(x, y, w, h){                                            // moquette de cinéma : bordeaux, pastilles dorées
     R(x, y, w, h, CPC.theatre);
-    for(let yy = y + 3; yy < y + h; yy += 6) for(let xx = x + 3 + ((yy / 6) % 2 ? 3 : 0); xx < x + w - 1; xx += 6){
+    for(let yy = y + 3; yy < y + h - 1; yy += 6) for(let xx = x + 3 + ((yy - y) / 6 % 2 ? 3 : 0); xx < x + w - 1; xx += 6){
       R(xx, yy, 1, 1, CPC.theatreDot); R(xx - 1, yy + 1, 3, 1, CPC.theatreLo);
     }
     R(x, y, w, 1, CPC.theatreLo); R(x, y + h - 1, w, 1, CPC.theatreLo);
   }
-
-  rooms.forEach((r, i) => { const p = px(r); parquet(p.x, p.y, p.w, p.h, 17 + i * 101); });
-  const hall = px(rooms[0]), gui = px(rooms[1]);
-  runner(hall.x + 2 * T, hall.y, 2 * T, hall.h + CAP + FRONT);              // du fond du hall jusqu'au paillasson
-  theatre(gui.x, gui.y + 2 * T + 4, gui.w, gui.h - 2 * T - 4);               // devant le comptoir
-
-  // --- Murs du fond (face visible) : corniche, papier peint bordeaux, cimaise, lambris, plinthe
-  function backWall(p){
-    const x = p.x, w = p.w, top = p.y - WH;
+  function backWall(Wl){                                                   // corniche, papier peint, cimaise, lambris, plinthe
+    const {x, y:top, w} = Wl;
     R(x, top, w, 2, CPC.cornice); R(x, top + 2, w, 1, CPC.corniceHi);
     R(x, top + 3, w, 13, CPC.paper);
-    for(let yy = top + 5; yy < top + 15; yy += 4) for(let xx = x + ((yy - top) % 8 ? 2 : 4); xx < x + w; xx += 4){
-      R(xx, yy, 1, 1, CPC.paperDot);
-    }
+    for(let yy = top + 5; yy < top + 15; yy += 4) for(let xx = x + ((yy - top) % 8 ? 2 : 4); xx < x + w; xx += 4) R(xx, yy, 1, 1, CPC.paperDot);
     R(x, top + 15, w, 1, CPC.paperHi);
     R(x, top + 16, w, 2, CPC.rail); R(x, top + 16, w, 1, CPC.railHi);
     for(let xx = x, k = 0; xx < x + w; xx += 6, k++){                      // lattes verticales du lambris
       R(xx, top + 18, Math.min(5, x + w - xx), WH - 21, CPC.lamb[k % 3]);
       if(xx + 5 < x + w) R(xx + 5, top + 18, 1, WH - 21, CPC.lambGroove);
     }
-    R(x, p.y - 3, w, 3, CPC.plinth); R(x, p.y - 3, w, 1, CPC.plinthHi);
+    R(x, top + WH - 3, w, 3, CPC.plinth); R(x, top + WH - 3, w, 1, CPC.plinthHi);
   }
-  rooms.forEach(r => backWall(px(r)));
-
-  // --- Ombres douces au pied des murs (fond et côtés)
-  rooms.forEach(r => {
-    const p = px(r);
-    shade(p.x, p.y, p.w, 2, .28); shade(p.x, p.y + 2, p.w, 2, .16); shade(p.x, p.y + 4, p.w, 3, .07);
-    const W_ = doorSpan(r, 'w'), E_ = doorSpan(r, 'e');
-    for(let yy = 0; yy < p.h; yy++){
-      if(!inSpan(W_, yy)) shade(p.x + 2, p.y + yy, 2, 1, .12);
-      if(!inSpan(E_, yy)) shade(p.x + p.w - 4, p.y + yy, 2, 1, .08);
+  function cap(x, y, w, h){                                                // dessus d'un mur (épaisseur), joints tous les 8 px
+    if(w <= 0 || h <= 0) return;
+    R(x, y, w, h, CPC.cap); R(x, y, w, 1, CPC.capHi); R(x, y, 1, h, CPC.capHi);
+    if(w > h) for(let xx = x + 8; xx < x + w; xx += 8) R(xx, y, 1, h, CPC.capJoint);
+    else for(let yy = y + 8; yy < y + h; yy += 8) R(x, yy, w, 1, CPC.capJoint);
+  }
+  function frontFace(x, y, w){                                             // face avant de la façade (lambris sombre)
+    if(w <= 0) return;
+    for(let xx = x, k = 0; xx < x + w; xx += 6, k++){
+      R(xx, y, Math.min(5, x + w - xx), FRONT, CPC.front);
+      if(xx + 5 < x + w) R(xx + 5, y, 1, FRONT, CPC.frontGroove);
     }
-  });
+    R(x, y + FRONT - 1, w, 1, CPC.frontLo);
+  }
+  // Morceaux d'un segment [a, b[ privé des ouvertures (portes)
+  const pieces = (a, b, spans) => {
+    const out_ = []; let p = a;
+    for(const [s, e] of [...spans].sort((u, v) => u[0] - v[0])){ if(s > p) out_.push([p, Math.min(s, b)]); p = Math.max(p, e); }
+    if(p < b) out_.push([p, b]);
+    return out_;
+  };
 
-  // --- Décor (dessiné du fond vers l'avant)
-  const out = (x, y, w, h) => { R(x - 1, y - 1, w + 2, 1, CPC.ink); R(x - 1, y + h, w + 2, 1, CPC.ink); R(x - 1, y, 1, h, CPC.ink); R(x + w, y, 1, h, CPC.ink); };
+  // --- Décor
   function text(s, x, y, k, c){
     for(const ch of s){
       const gl = CP_FONT[ch] || CP_FONT[' '];
@@ -5107,11 +5118,10 @@ function cpRender(cv){
       x += (gl[0].length + 1) * k;
     }
   }
-  function neon(s, cx, y, k, c, glow){                                     // tube lumineux sur plaque sombre, halo en escalier
-    const w = cpTextW(s, k), x = cx - (w >> 1);
-    R(x - 4, y - 4 - (s.includes('É') ? 2 * k : 0), w + 8, 5 * k + 8 + (s.includes('É') ? 2 * k : 0), '#1d0d17');
-    out(x - 4, y - 4 - (s.includes('É') ? 2 * k : 0), w + 8, 5 * k + 8 + (s.includes('É') ? 2 * k : 0));
-    g.globalAlpha = .28; text(s, x - 1, y, k, glow); text(s, x + 1, y, k, glow); text(s, x, y - 1, k, glow); text(s, x, y + 1, k, glow);
+  function neon(s, cx, y, k, c, halo){                                     // tube lumineux sur plaque sombre, halo en escalier
+    const w = cpTextW(s, k), x = cx - (w >> 1), acc = s.includes('É') ? 2 * k : 0;
+    R(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc, '#1d0d17'); out(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc);
+    g.globalAlpha = .28; text(s, x - 1, y, k, halo); text(s, x + 1, y, k, halo); text(s, x, y - 1, k, halo); text(s, x, y + 1, k, halo);
     g.globalAlpha = 1; text(s, x, y, k, c);
   }
   function poster(x, y, w, h, pal){                                        // affiche de film imaginaire, cadre doré
@@ -5119,16 +5129,16 @@ function cpRender(cv){
     R(x, y, w, h, CPC.goldLo); R(x + 1, y + 1, w - 2, h - 2, CPC.gold);
     const ix = x + 2, iy = y + 2, iw = w - 4, ih = h - 4;
     R(ix, iy, iw, ih, pal[0]); R(ix, iy + (ih >> 1), iw, ih - (ih >> 1), pal[1]);
-    R(ix + (iw >> 1) - 1, iy + 3, 3, 3, pal[2]);                               // soleil / projecteur
-    for(let i = 0; i < iw; i++) R(ix + i, iy + (ih >> 1) - (Math.abs(i - (iw >> 1)) < 3 ? 2 : 0), 1, 1, pal[3]);   // silhouette
-    R(ix + 1, iy + ih - 3, iw - 2, 1, pal[2]); R(ix + 2, iy + ih - 2, iw - 4, 1, pal[3]);   // titre
+    R(ix + (iw >> 1) - 1, iy + 3, 3, 3, pal[2]);
+    for(let i = 0; i < iw; i++) R(ix + i, iy + (ih >> 1) - (Math.abs(i - (iw >> 1)) < 3 ? 2 : 0), 1, 1, pal[3]);
+    R(ix + 1, iy + ih - 3, iw - 2, 1, pal[2]); R(ix + 2, iy + ih - 2, iw - 4, 1, pal[3]);
     out(x, y, w, h);
   }
   function sconce(x, y){                                                   // applique murale, halo chaud
-    g.globalAlpha = .16; R(x - 5, y - 4, 13, 12, '#ffd27a'); g.globalAlpha = .12; R(x - 8, y - 6, 19, 16, '#ffd27a'); g.globalAlpha = 1;
+    glow(x - 5, y - 4, 13, 12, '#ffd27a', .16); glow(x - 8, y - 6, 19, 16, '#ffd27a', .12);
     R(x, y + 4, 3, 3, CPC.goldLo); R(x - 1, y, 5, 4, '#fff1c4'); R(x - 1, y, 5, 1, '#ffffff'); out(x - 1, y, 5, 4);
   }
-  function post(x, y){                                                     // poteau à cordon doré (base au point x, y)
+  function post(x, y){                                                     // poteau à cordon doré (pied au point x, y)
     shade(x - 2, y, 6, 1, .3);
     R(x - 1, y - 1, 4, 1, CPC.goldLo); R(x, y - 8, 2, 7, CPC.gold); R(x, y - 8, 1, 7, CPC.goldHi);
     R(x - 1, y - 10, 4, 2, CPC.gold); R(x, y - 10, 1, 1, CPC.goldHi);
@@ -5139,17 +5149,15 @@ function cpRender(cv){
       R(x, y + sag, 1, 1, CPC.rope); R(x, y + sag + 1, 1, 1, CPC.ropeLo);
     }
   }
-  function ropeV(x, y1, y2){                                               // cordon vu dans la profondeur (vertical)
-    for(let y = y1; y < y2; y++){ R(x, y, 1, 1, CPC.rope); R(x + 1, y, 1, 1, CPC.ropeLo); }
-  }
-  function plant(x, y){                                                    // plante en pot (base au point x, y)
-    shade(x - 1, y, 10, 2, .3);
+  function ropeV(x, y1, y2){ for(let y = y1; y < y2; y++){ R(x, y, 1, 1, CPC.rope); R(x + 1, y, 1, 1, CPC.ropeLo); } }
+  function plant(x, y){                                                    // plante en pot (pied au point x, y)
+    shade(x - 1, y - 1, 10, 2, .3);
     R(x, y - 6, 8, 6, '#b5653a'); R(x, y - 6, 8, 1, '#d27f4c'); R(x + 1, y - 1, 6, 1, '#8c4a27'); out(x, y - 6, 8, 6);
-    [[1, -14, 3, 9], [4, -16, 3, 11], [0, -10, 2, 5], [6, -11, 3, 6], [2, -18, 2, 4]].forEach(([a, b, w, h], i) =>
+    [[1, -14, 3, 9], [4, -16, 3, 11], [0, -10, 2, 5], [6, -11, 2, 6], [2, -18, 2, 4]].forEach(([a, b, w, h], i) =>
       R(x + a, y + b, w, h, ['#3f8a4a', '#2f6f3b', '#56a85e'][i % 3]));
     R(x + 4, y - 16, 1, 1, '#8fd18f'); R(x + 1, y - 13, 1, 1, '#8fd18f');
   }
-  function popcornMachine(x, y){                                           // machine à pop-corn (pied à y)
+  function popcornMachine(x, y){                                           // machine à pop-corn (pied au point x, y)
     shade(x - 1, y, 18, 3, .32);
     R(x, y - 14, 16, 14, '#b8282f'); for(let i = 2; i < 16; i += 4) R(x + i, y - 14, 2, 14, '#e9e1d6');
     R(x, y - 14, 16, 1, '#7d1820');
@@ -5159,10 +5167,13 @@ function cpRender(cv){
     R(x - 1, y - 30, 18, 3, '#b8282f'); R(x - 1, y - 30, 18, 1, '#e04a50');
     out(x, y - 27, 16, 27); out(x - 1, y - 30, 18, 3);
   }
-  function counter(x, y, w){                                               // comptoir du guichet : dessus en bois clair, façade en lambris
+  function counter(x, y, w){                                               // comptoir : dessus en bois clair, façade en lambris
     shade(x + 1, y + 18, w, 3, .3);
     R(x, y, w, 6, '#d9ab70'); R(x, y, w, 1, '#f0c88d'); R(x, y + 5, w, 1, '#b4834c');
-    for(let xx = x, k = 0; xx < x + w; xx += 6, k++){ R(xx, y + 6, Math.min(5, x + w - xx), 12, CPC.lamb[k % 3]); if(xx + 5 < x + w) R(xx + 5, y + 6, 1, 12, CPC.lambGroove); }
+    for(let xx = x, k = 0; xx < x + w; xx += 6, k++){
+      R(xx, y + 6, Math.min(5, x + w - xx), 12, CPC.lamb[k % 3]);
+      if(xx + 5 < x + w) R(xx + 5, y + 6, 1, 12, CPC.lambGroove);
+    }
     R(x, y + 7, w, 1, CPC.gold); R(x, y + 16, w, 2, CPC.plinth);
     out(x, y, w, 18);
   }
@@ -5185,103 +5196,120 @@ function cpRender(cv){
     for(let i = 0; i < 4; i++){ R(x + 2, y + 3 + i * 3, 10, 1, '#d8e6dc'); R(x + 15, y + 3 + i * 3, 3, 1, CPC.gold); }
   }
 
-  // Hall : néon « CINÉMA », deux affiches, machine à pop-corn, cordons le long du tapis, plantes
-  const hx = hall.x, hy = hall.y;
-  neon('CINÉMA', hx + (hall.w >> 1), hy - WH + 8, 2, '#ff6fae', '#ff2f86');
-  poster(hx + 2, hy - WH + 6, 12, 20, ['#2a3f78', '#162248', '#ffd36b', '#0b1230']);
-  poster(hx + hall.w - 14, hy - WH + 6, 12, 20, ['#7a2f5c', '#3a1430', '#ffb25c', '#1d0a18']);
-  popcornMachine(hx + 6, hy + 30);
-  plant(hx + hall.w - 13, hy + 22);
-  for(let yy = hy + 52; yy <= hy + 132; yy += 40){
-    post(hx + 2 * T - 6, yy); post(hx + 4 * T + 4, yy);
-    if(yy + 40 <= hy + 132){ ropeV(hx + 2 * T - 5, yy - 8, yy + 32); ropeV(hx + 4 * T + 5, yy - 8, yy + 32); }
-  }
-  plant(hx + 5, hy + hall.h - 4); plant(hx + hall.w - 13, hy + hall.h - 4);
+  // --- Décor propre à chaque type de pièce (coordonnées relatives au sol F et au mur du fond Wl de la pièce)
+  const DECOR = {
+    hall(z){
+      const {F, Wl, P, doors} = z, [d0, d1] = doors.s[0] || [2 * T, 4 * T], rx = P.x + d0, rw = d1 - d0;
+      runner(rx, F.y, rw, P.y + P.h - F.y);                                 // du fond du hall jusqu'à la porte d'entrée
+      neon('CINÉMA', Wl.x + (Wl.w >> 1), Wl.y + 8, 2, '#ff6fae', '#ff2f86');
+      poster(Wl.x + 2, Wl.y + 6, 12, 20, ['#2a3f78', '#162248', '#ffd36b', '#0b1230']);
+      poster(Wl.x + Wl.w - 14, Wl.y + 6, 12, 20, ['#7a2f5c', '#3a1430', '#ffb25c', '#1d0a18']);
+      popcornMachine(F.x + 3, F.y + 30);
+      plant(F.x + F.w - 11, F.y + 22);
+      const posts = [F.y + 36, F.y + 70, F.y + 104];
+      posts.forEach((yy, i) => {
+        post(rx - 6, yy); post(rx + rw + 4, yy);
+        if(i < posts.length - 1){ ropeV(rx - 5, yy - 8, posts[i + 1] - 8); ropeV(rx + rw + 5, yy - 8, posts[i + 1] - 8); }
+      });
+      plant(F.x + 2, F.y + F.h - 1); plant(F.x + F.w - 10, F.y + F.h - 1);
+    },
+    box_office(z){
+      const {F, Wl} = z;
+      neon('BILLETS', Wl.x + (Wl.w >> 1), Wl.y + 9, 2, '#7ff6ff', '#22c8ff');
+      priceBoard(Wl.x + 3, Wl.y + 6);
+      poster(Wl.x + Wl.w - 14, Wl.y + 5, 12, 20, ['#2f6b4f', '#163626', '#f7e08a', '#0a1d14']);
+      sconce(Wl.x + Wl.w - 23, Wl.y + 8);                                   // entre le néon et l'affiche
+      const cy = F.y + 8, cw = F.w - 16;
+      theatre(F.x, cy + 18, F.w, F.y + F.h - cy - 18);                      // moquette devant le comptoir
+      counter(F.x + 8, cy, cw);
+      register(F.x + 28, cy + 4); tickets(F.x + 50, cy + 4); bucket(F.x + 66, cy + 4); bucket(F.x + 74, cy + 4);
+      const q1 = cy + 34, q2 = cy + 52, qx = [F.x + 16, F.x + 42, F.x + 68, F.x + 94];
+      qx.forEach((x, i) => { post(x, q1); if(i) rope(qx[i - 1], x, q1 - 9); });
+      qx.slice(1).forEach((x, i, a) => { post(x, q2); if(i) rope(a[i - 1], x, q2 - 9); });
+      plant(F.x + F.w - 10, F.y + F.h - 1);
+    },
+  };
+  const MAT = {                                                            // paillasson d'une porte de façade (hall : « ENTRÉE »)
+    hall(x, y, w){
+      R(x, y, w, 14, CPC.carpetLo); R(x + 1, y + 1, w - 2, 12, CPC.carpet);
+      R(x + 1, y + 1, w - 2, 1, CPC.carpetGold); R(x + 1, y + 12, w - 2, 1, CPC.carpetGold);
+      text('ENTRÉE', x + (w >> 1) - (cpTextW('ENTRÉE') >> 1), y + 5, 1, CPC.carpetGold);
+    },
+  };
 
-  // Guichet : néon « BILLETS », tarifs, affiche, appliques ; comptoir avec caisse ; petite file entre cordons
-  const gx = gui.x, gy = gui.y;
-  neon('BILLETS', gx + (gui.w >> 1), gy - WH + 9, 2, '#7ff6ff', '#22c8ff');
-  priceBoard(gx + 3, gy - WH + 6);
-  poster(gx + gui.w - 16, gy - WH + 5, 12, 20, ['#2f6b4f', '#163626', '#f7e08a', '#0a1d14']);
-  sconce(gx + 27, gy - WH + 8); sconce(gx + gui.w - 25, gy - WH + 8);
-  const cy = gy + 2 * T - 14;
-  counter(gx + 10, cy, gui.w - 20);
-  register(gx + 32, cy + 4); tickets(gx + 54, cy + 4); bucket(gx + 70, cy + 4); bucket(gx + 78, cy + 4);
-  const q1 = cy + 34, q2 = cy + 52, qx = [gx + 22, gx + 48, gx + 74, gx + 100];
-  qx.forEach((x, i) => { post(x, q1); if(i) rope(qx[i - 1], x, q1 - 9); });
-  qx.slice(1).forEach((x, i, a) => { post(x, q2); if(i) rope(a[i - 1], x, q2 - 9); });
-  plant(gx + gui.w - 12, gy + gui.h - 4);
-
-  // --- Dessus des murs (épaisseur) : côtés, façade avec sa face avant, ouvertures (portes) laissées libres
-  function cap(x, y, w, h){
-    R(x, y, w, h, CPC.cap); R(x, y, w, 1, CPC.capHi); R(x, y, 1, h, CPC.capHi);
-    if(w > h) for(let xx = x + 8; xx < x + w; xx += 8) R(xx, y, 1, h, CPC.capJoint);
-    else for(let yy = y + 8; yy < y + h; yy += 8) R(x, yy, w, 1, CPC.capJoint);
+  // --- Une pièce : tout est dessiné dans son rectangle de cases (clip), du fond vers l'avant
+  function drawRoom(r, i){
+    const z = cpZones(r), {P, F, Wl, doors} = z;
+    g.save();
+    g.beginPath(); g.rect(P.x, P.y, P.w, P.h); g.clip();
+    parquet(P.x, P.y, P.w, P.h, 17 + i * 101);                               // le sol passe sous les murs et par les portes
+    backWall(Wl);
+    shade(F.x, F.y, F.w, 2, .28); shade(F.x, F.y + 2, F.w, 2, .16); shade(F.x, F.y + 4, F.w, 3, .07);   // pied du mur du fond
+    for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.w)) shade(F.x, P.y + a, 2, b - a, .12);
+    for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.e)) shade(F.x + F.w - 2, P.y + a, 2, b - a, .08);
+    (DECOR[r.type] || (() => {}))(z);
+    // dessus du mur du fond (et ouvertures au nord : le sol continue jusqu'au bord)
+    for(const [a, b] of pieces(0, P.w, doors.n)) cap(P.x + a, P.y, b - a, CAP);
+    // murs de côté : épaisseur sur toute la hauteur, sauf les portes
+    const sideEnd = P.h - FRONT;
+    for(const [a, b] of pieces(0, sideEnd, doors.w)) cap(P.x, P.y + a, CAP, b - a);
+    for(const [a, b] of pieces(0, sideEnd, doors.e)) cap(P.x + P.w - CAP, P.y + a, CAP, b - a);
+    for(const [a, b] of doors.w){ R(P.x, P.y + a - 3, CAP, 3, CPC.goldLo); R(P.x, P.y + b, CAP, 3, CPC.goldLo); }       // montants de porte
+    for(const [a, b] of doors.e){ R(P.x + P.w - CAP, P.y + a - 3, CAP, 3, CPC.goldLo); R(P.x + P.w - CAP, P.y + b, CAP, 3, CPC.goldLo); }
+    // façade : dessus + face avant, sauf les portes ; paillasson dans l'embrasure
+    for(const [a, b] of pieces(0, P.w, doors.s)){ cap(P.x + a, P.y + P.h - FRONT - CAP, b - a, CAP); frontFace(P.x + a, P.y + P.h - FRONT, b - a); }
+    for(const [a, b] of doors.s) if(MAT[r.type]) MAT[r.type](P.x + a, P.y + P.h - 14, b - a);
+    g.restore();
   }
-  rooms.forEach(r => {
-    const p = px(r), H2 = CAP >> 1, top = p.y - WH - CAP;
-    cap(p.x - H2, top, p.w + CAP, CAP);                                     // haut du mur du fond
-    for(const [side, x0] of [['w', p.x - H2], ['e', p.x + p.w - H2]]){
-      const spans = doorSpan(r, side);
-      let y0 = top;
-      for(const [a, b] of spans.sort((u, v) => u[0] - v[0])){ cap(x0, y0, CAP, p.y + a - y0); R(x0, p.y + a - 3, CAP, 3, CPC.goldLo); y0 = p.y + b; R(x0, y0, CAP, 3, CPC.goldLo); }
-      cap(x0, y0, CAP, p.y + p.h + H2 - y0);
-    }
-    const S = doorSpan(r, 's');
-    let x0 = p.x - H2;
-    for(const [a, b] of S){ const e = p.x + a; cap(x0, p.y + p.h - H2, e - x0, CAP); frontFace(x0, e - x0, p.y + p.h + H2); x0 = p.x + b; }
-    cap(x0, p.y + p.h - H2, p.x + p.w + H2 - x0, CAP); frontFace(x0, p.x + p.w + H2 - x0, p.y + p.h + H2);
-  });
-  function frontFace(x, w, y){
-    for(let xx = x, k = 0; xx < x + w; xx += 6, k++){ R(xx, y, Math.min(5, x + w - xx), FRONT, CPC.front); if(xx + 5 < x + w) R(xx + 5, y, 1, FRONT, CPC.frontGroove); }
-    R(x, y + FRONT - 1, w, 1, CPC.frontLo); shade(x, y + FRONT, w, 2, .35);
-  }
-
-  // Entrée : paillasson « ENTRÉE » qui dépasse sur le trottoir, deux lampadaires
-  const ex = hx + 2 * T, ey = hy + hall.h + CAP + FRONT;
-  R(ex - 2, ey, 2 * T + 4, 14, CPC.carpetLo); R(ex - 1, ey + 1, 2 * T + 2, 12, CPC.carpet);
-  R(ex - 1, ey + 1, 2 * T + 2, 1, CPC.carpetGold); R(ex - 1, ey + 12, 2 * T + 2, 1, CPC.carpetGold);
-  text('ENTRÉE', ex + 16 - (cpTextW('ENTRÉE') >> 1), ey + 5, 1, CPC.carpetGold);
-  shade(ex - 2, ey + 14, 2 * T + 4, 2, .3);
-  for(const lx of [ex - 12, ex + 2 * T + 10]){
-    g.globalAlpha = .14; R(lx - 6, ey - 12, 14, 14, '#ffd27a'); g.globalAlpha = 1;
-    shade(lx - 1, ey + 14, 5, 1, .35); R(lx, ey - 4, 2, 18, '#3a2a30'); R(lx - 1, ey - 9, 4, 5, '#fff1c4'); out(lx - 1, ey - 9, 4, 5);
-  }
+  CINE_PLAN.rooms.forEach(drawRoom);
 }
 
-/* ---------- Plan : glisser (pointeurs), zoom par paliers entiers (pincement, molette) ---------- */
+/* ---------- Plan : glisser (pointeurs), zoom par paliers entiers (pincement, molette) ----------
+   Le zoom (niveau 1 à 5) se traduit en un nombre ENTIER de pixels physiques par pixel de dessin (cpv.ds), et le décalage
+   est arrondi au pixel physique, en tenant compte de la position exacte du cadre : le rendu reste net à toute densité. */
 const cpPlan = $('#cinePlan'), cpCanvas = $('#cpCanvas');
-const cpv = {s:2, x:0, y:0, ready:false};                   // zoom (pixels écran par pixel du dessin) et décalage
+const cpv = {lv:2, ds:2, dpr:1, x:0, y:0, ready:false};    // niveau de zoom, pixels physiques par pixel de dessin, décalage (px CSS)
+const cpCssW = () => CPX.W * cpv.ds / cpv.dpr, cpCssH = () => CPX.H * cpv.ds / cpv.dpr;
+function cpScale(){
+  cpv.dpr = window.devicePixelRatio || 1;
+  cpv.ds = Math.max(1, Math.round(cpv.lv * cpv.dpr));
+  cpCanvas.style.width = cpCssW() + 'px'; cpCanvas.style.height = cpCssH() + 'px';
+}
 function cpPlace(){
-  const vw = cpPlan.clientWidth, vh = cpPlan.clientHeight, cw = CPX.W * cpv.s, ch = CPX.H * cpv.s;
+  const vw = cpPlan.clientWidth, vh = cpPlan.clientHeight, cw = cpCssW(), ch = cpCssH();
   cpv.x = cw <= vw ? (vw - cw) / 2 : clamp(cpv.x, vw - cw, 0);
   cpv.y = ch <= vh ? (vh - ch) / 2 : clamp(cpv.y, vh - ch, 0);
-  cpCanvas.style.transform = `translate3d(${Math.round(cpv.x)}px,${Math.round(cpv.y)}px,0)`;
+  const r = cpPlan.getBoundingClientRect(), d = cpv.dpr;       // origine du canvas sur un pixel physique entier
+  const bx = r.left + cpPlan.clientLeft, by = r.top + cpPlan.clientTop;
+  const tx = (Math.round((bx + cpv.x) * d) - bx * d) / d, ty = (Math.round((by + cpv.y) * d) - by * d) / d;
+  cpCanvas.style.transform = `translate3d(${tx}px,${ty}px,0)`;
 }
-function cpSize(){ cpCanvas.style.width = CPX.W * cpv.s + 'px'; cpCanvas.style.height = CPX.H * cpv.s + 'px'; }
-function cpZoom(s, ax, ay){                                  // zoom autour du point (ax, ay) du cadre
-  s = clamp(Math.round(s), CPX.MIN, CPX.MAX);
-  if(s === cpv.s) return;
-  const k = s / cpv.s;
-  cpv.x = ax - (ax - cpv.x) * k; cpv.y = ay - (ay - cpv.y) * k; cpv.s = s;
-  cpSize(); cpPlace();
+function cpZoom(lv, ax, ay){                                 // zoom autour du point (ax, ay) du cadre
+  lv = clamp(Math.round(lv), CPX.MIN, CPX.MAX);
+  if(lv === cpv.lv) return;
+  const before = cpv.ds;
+  cpv.lv = lv; cpScale();
+  const k = cpv.ds / before;
+  cpv.x = ax - (ax - cpv.x) * k; cpv.y = ay - (ay - cpv.y) * k;
+  cpPlace();
 }
-function cpFocus(){                                          // la base (toutes les pièces, murs compris) au centre du cadre
-  const rs = CINE_PLAN.rooms, T = CPX.T;
+function cpFocus(){                                          // la base (toutes les pièces) au centre du cadre
+  const rs = CINE_PLAN.rooms, T = CPX.T, s = cpv.ds / cpv.dpr;
   const x0 = Math.min(...rs.map(r => r.x)) * T, x1 = Math.max(...rs.map(r => r.x + r.w)) * T;
-  const y0 = Math.min(...rs.map(r => r.y)) * T - CPX.WH, y1 = Math.max(...rs.map(r => r.y + r.h)) * T + 24;
-  cpv.x = cpPlan.clientWidth / 2 - (x0 + x1) / 2 * cpv.s;
-  cpv.y = cpPlan.clientHeight / 2 - (y0 + y1) / 2 * cpv.s;
+  const y0 = Math.min(...rs.map(r => r.y)) * T, y1 = Math.max(...rs.map(r => r.y + r.h)) * T;
+  cpv.x = cpPlan.clientWidth / 2 - (x0 + x1) / 2 * s;
+  cpv.y = cpPlan.clientHeight / 2 - (y0 + y1) / 2 * s;
   cpPlace();
 }
 function initCinePlan(){
   if(cpv.ready || !cpPlan.clientWidth) return;
   cpRender(cpCanvas);
-  cpv.s = cpPlan.clientWidth < 520 ? 2 : 3;                  // téléphone : cases de 32 px ; grand écran : 48 px
-  cpSize(); cpFocus();
+  cpv.lv = cpPlan.clientWidth < 520 ? 2 : 3;                 // téléphone : cases de 32 px CSS ; grand écran : 48 px
+  cpScale(); cpFocus();
   cpv.ready = true;
 }
-new ResizeObserver(() => { if(cpv.ready) cpPlace(); else initCinePlan(); }).observe(cpPlan);
+new ResizeObserver(() => { if(cpv.ready){ cpScale(); cpPlace(); } else initCinePlan(); }).observe(cpPlan);
+window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRatio || 1) !== cpv.dpr){ cpScale(); cpPlace(); } });
 (function cpGestures(){
   const pts = new Map();
   let drag = null, pinch = null;
@@ -5293,12 +5321,12 @@ new ResizeObserver(() => { if(cpv.ready) cpPlace(); else initCinePlan(); }).obse
     cpPlan.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if(pts.size === 1){ startDrag({x:e.clientX, y:e.clientY}); cpPlan.classList.add('grabbing'); }
-    else if(pts.size === 2){ drag = null; pinch = {d:two().d, s:cpv.s}; }
+    else if(pts.size === 2){ drag = null; pinch = {d:two().d, lv:cpv.lv}; }
   });
   cpPlan.addEventListener('pointermove', e => {
     if(!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
-    if(pinch && pts.size >= 2){ const t = two(); cpZoom(pinch.s * t.d / Math.max(1, pinch.d), t.m.x, t.m.y); }
+    if(pinch && pts.size >= 2){ const t = two(); cpZoom(pinch.lv * t.d / Math.max(1, pinch.d), t.m.x, t.m.y); }
     else if(drag){ cpv.x = e.clientX - drag.dx; cpv.y = e.clientY - drag.dy; cpPlace(); }
   });
   function up(e){
@@ -5313,7 +5341,7 @@ new ResizeObserver(() => { if(cpv.ready) cpPlace(); else initCinePlan(); }).obse
     if(!cpv.ready) return;
     e.preventDefault();
     const p = rel({x:e.clientX, y:e.clientY});
-    cpZoom(cpv.s + (e.deltaY < 0 ? 1 : -1), p.x, p.y);
+    cpZoom(cpv.lv + (e.deltaY < 0 ? 1 : -1), p.x, p.y);
   }, {passive:false});
 })();
 
