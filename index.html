@@ -104,9 +104,45 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .cine-plan{position:absolute;left:0;right:0;top:0;bottom:var(--bar);overflow:hidden;background:#221630;
   touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
 .cine-plan.grabbing{cursor:grabbing}
-#cpCanvas{position:absolute;left:0;top:0;display:block;transform-origin:0 0;will-change:transform;
+/* scène : plan + calques (surbrillance des emplacements, aperçu fantôme), déplacés ensemble */
+#cpStage{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#cpStage canvas{position:absolute;left:0;top:0;display:block;width:100%;height:100%;
   image-rendering:crisp-edges;image-rendering:pixelated}
+#cpHl.on{animation:cp-pulse 1.4s ease-in-out infinite}
+@keyframes cp-pulse{50%{opacity:.45}}
 .cine-ui{position:absolute;z-index:4}
+.view-cine.ghosting .cine-bottom{opacity:0;pointer-events:none}
+/* menu de construction : même feuille que « Mes pièces » */
+.bm-item{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:9px 10px;border:0;border-radius:14px;text-align:left;
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.3);color:inherit;transition:transform .12s ease}
+.bm-item:active{transform:scale(.98)}
+.bm-item.short{opacity:.8}
+.bm-size{flex:none;width:40px;display:grid;place-items:center}
+.bm-price{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-weight:800;font-size:.85rem;color:#fff1c4;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.bm-price svg{width:16px;height:16px;vertical-align:-3px;margin-left:2px}
+.bm-price small{font-size:.66rem;font-weight:700;color:#ffb3a3}
+.csh-back{flex:none;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#fff1c4;font-size:1.1rem}
+.csh-back[hidden]{display:none}
+/* barre de l'aperçu fantôme */
+.cine-ghost{left:50%;bottom:calc(var(--bar) + 12px);transform:translateX(-50%);width:min(360px,calc(100% - 20px));
+  display:flex;flex-direction:column;gap:7px;padding:9px 10px 10px;border-radius:18px;
+  background:rgba(28,6,11,.94);box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.5),0 8px 20px rgba(0,0,0,.5)}
+.cine-ghost[hidden]{display:none}
+.cine-ghost.nudge{animation:nudge .4s ease}
+.gh-info{display:flex;flex-direction:column;align-items:center;line-height:1.25;text-align:center}
+.gh-info b{font-size:.86rem;color:#fff1c4}
+.gh-info span{font-size:.76rem;font-weight:700;color:#8af5b9}
+.gh-info span.bad{color:#ffb3a3}
+.gh-row{display:flex;gap:6px}
+.gh-btn{flex:none;min-width:44px;height:46px;padding:0 8px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff1c4;
+  font-size:1rem;font-weight:800;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);transition:transform .12s ease}
+.gh-btn:active{transform:scale(.94)}
+.gh-go{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;
+  background:linear-gradient(180deg,#46d98a,#1f9a57);color:#06301a;box-shadow:inset 0 0 0 1.5px #0b4728,0 3px 0 #0b4728}
+.gh-go small{display:flex;align-items:center;gap:3px;font-size:.72rem}
+.gh-go svg{width:15px;height:15px}
+.gh-go.no{background:#3a2a2c;color:#c9b3ae;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.4)}
 /* colonne de boutons ronds, à droite sous les compteurs */
 .cine-side{right:10px;top:calc(env(safe-area-inset-top,0px) + 92px);display:flex;flex-direction:column;gap:10px}
 .cside-btn{position:relative;width:46px;height:46px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;
@@ -183,7 +219,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   padding:8px 12px;border-radius:12px;background:rgba(20,4,8,.92);color:#fff1c4;font-size:.8rem;font-weight:700;text-align:center;
   box-shadow:inset 0 0 0 1px rgba(246,196,83,.45);pointer-events:none;opacity:0;transition:opacity .25s}
 .cine-tip.on{opacity:1}
-@media (prefers-reduced-motion:reduce){.cine-sheet,.cine-tip{transition:none}}
+@media (prefers-reduced-motion:reduce){.cine-sheet,.cine-tip{transition:none}#cpHl.on{animation:none}}
 /* HUD de la page Cinéma : Billets + gemmes, sans profil ni bobines */
 .res-tickets{display:none}
 .app[data-page="cinema"] .res-tickets{display:flex}
@@ -1635,7 +1671,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </section>
     <!-- Cinéma (mode gestion) : plan pixel art en plein écran, HUD par-dessus. Tout est calculé par Supabase (cine_*). -->
     <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
-      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><canvas id="cpCanvas"></canvas></div>
+      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><div id="cpStage"><canvas id="cpCanvas"></canvas><canvas id="cpHl"></canvas><canvas id="cpGhost"></canvas></div></div>
       <!-- colonne de boutons ronds : Construire, Mes pièces, outils admin -->
       <div class="cine-ui cine-side" id="cineSide">
         <button class="cside-btn" id="cineBuild" type="button" aria-pressed="false" aria-label="Construire" title="Construire">🔨</button>
@@ -1668,6 +1704,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           <button class="csh-close" id="cineSheetClose" type="button" aria-label="Fermer">✕</button>
         </div>
         <div class="csh-list" id="cineRooms"></div>
+      </div>
+      <!-- Construire : type, puis taille (prix et durée du serveur) -->
+      <div class="cine-ui cine-sheet" id="cineBuildSheet" role="dialog" aria-modal="false" aria-labelledby="cineBuildTitle">
+        <div class="csh-head">
+          <button class="csh-back" id="cineBuildBack" type="button" aria-label="Retour" hidden>‹</button>
+          <div style="flex:1;min-width:0"><h3 id="cineBuildTitle">Construire</h3><p id="cineBuildSub"></p></div>
+          <button class="csh-close" id="cineBuildClose" type="button" aria-label="Fermer">✕</button>
+        </div>
+        <div class="csh-list" id="cineBuildList"></div>
+      </div>
+      <!-- Aperçu fantôme : décaler le long du mur, pivoter, annuler, construire -->
+      <div class="cine-ui cine-ghost" id="cineGhostBar" hidden>
+        <p class="gh-info" style="margin:0"><b id="ghName"></b><span id="ghMsg"></span></p>
+        <div class="gh-row">
+          <button class="gh-btn" id="ghCancel" type="button" aria-label="Annuler">✕</button>
+          <button class="gh-btn" id="ghPrev" type="button">◀</button>
+          <button class="gh-btn" id="ghRot" type="button" aria-label="Pivoter">⟳</button>
+          <button class="gh-btn" id="ghNext" type="button">▶</button>
+          <button class="gh-btn gh-go" id="ghGo" type="button">Construire</button>
+        </div>
       </div>
     </section>
     <section class="view view-ph" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
@@ -4806,8 +4862,6 @@ function floatGain(n){
        {duration:1100, easing:'cubic-bezier(.2,.8,.3,1)'}).then(() => el.remove());
 }
 
-// « Construire » : le choix d'une case arrive à l'étape J3
-$('#cineBuild').addEventListener('click', () => { buzz(6); cineTip('Bientôt : touche une case violette collée au cinéma pour y construire une pièce.'); });
 
 // OUTILS DE TEST (admin) : +1 000 billets, terminer le chantier, retour à la base
 async function cineAdmin(fn, args){
@@ -4824,7 +4878,7 @@ function openCineSheet(on){
   cineSheet.classList.toggle('on', on);
   cineRoomsBtn.setAttribute('aria-expanded', String(on));
   cineRoomsBtn.setAttribute('aria-pressed', String(on));
-  if(on){ renderCineRooms(); tickCinema(); }
+  if(on){ closeBuildMenu(); renderCineRooms(); tickCinema(); }
 }
 cineRoomsBtn.addEventListener('click', () => { buzz(6); openCineSheet(!cineSheet.classList.contains('on')); });
 $('#cineSheetClose').addEventListener('click', () => openCineSheet(false));
@@ -5295,18 +5349,20 @@ function cinePlanSet(st){
   if(!cpv.ready) return;                                    // dessiné à la 1re mise en page
   cpRender(cpCanvas); cpScale();
   if(first) cpFocus(); else cpPlace();
+  if(ghost) renderGhostBar();
+  cpDrawOverlay();
 }
 
 /* ---------- Plan : glisser (pointeurs), zoom par paliers entiers (pincement, molette) ----------
    Le zoom (niveau 1 à 5) se traduit en un nombre ENTIER de pixels physiques par pixel de dessin (cpv.ds), et le décalage
    est arrondi au pixel physique, en tenant compte de la position exacte du cadre : le rendu reste net à toute densité. */
-const cpPlan = $('#cinePlan'), cpCanvas = $('#cpCanvas');
+const cpPlan = $('#cinePlan'), cpCanvas = $('#cpCanvas'), cpStage = $('#cpStage');
 const cpv = {lv:2, ds:2, dpr:1, x:0, y:0, ready:false};    // niveau de zoom, pixels physiques par pixel de dessin, décalage (px CSS)
 const cpCssW = () => CPX.W * cpv.ds / cpv.dpr, cpCssH = () => CPX.H * cpv.ds / cpv.dpr;
 function cpScale(){
   cpv.dpr = window.devicePixelRatio || 1;
   cpv.ds = Math.max(1, Math.round(cpv.lv * cpv.dpr));
-  cpCanvas.style.width = cpCssW() + 'px'; cpCanvas.style.height = cpCssH() + 'px';
+  cpStage.style.width = cpCssW() + 'px'; cpStage.style.height = cpCssH() + 'px';
 }
 function cpPlace(){
   const vw = cpPlan.clientWidth, vh = cpPlan.clientHeight, cw = cpCssW(), ch = cpCssH();
@@ -5315,7 +5371,7 @@ function cpPlace(){
   const r = cpPlan.getBoundingClientRect(), d = cpv.dpr;       // origine du canvas sur un pixel physique entier
   const bx = r.left + cpPlan.clientLeft, by = r.top + cpPlan.clientTop;
   const tx = (Math.round((bx + cpv.x) * d) - bx * d) / d, ty = (Math.round((by + cpv.y) * d) - by * d) / d;
-  cpCanvas.style.transform = `translate3d(${tx}px,${ty}px,0)`;
+  cpStage.style.transform = `translate3d(${tx}px,${ty}px,0)`;
 }
 function cpZoom(lv, ax, ay){                                 // zoom autour du point (ax, ay) du cadre
   lv = clamp(Math.round(lv), CPX.MIN, CPX.MAX);
@@ -5336,7 +5392,7 @@ function cpFocus(){                                          // la base (toutes 
 }
 function initCinePlan(){
   if(cpv.ready || !cpPlan.clientWidth) return;
-  cpRender(cpCanvas);
+  cpRender(cpCanvas); cpDrawOverlay();
   cpv.lv = cpPlan.clientWidth < 520 ? 2 : 3;                 // téléphone : cases de 32 px CSS ; grand écran : 48 px
   cpScale(); cpFocus();
   cpv.ready = true;
@@ -5345,7 +5401,7 @@ new ResizeObserver(() => { if(cpv.ready){ cpScale(); cpPlace(); } else initCineP
 window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRatio || 1) !== cpv.dpr){ cpScale(); cpPlace(); } });
 (function cpGestures(){
   const pts = new Map();
-  let drag = null, pinch = null;
+  let drag = null, pinch = null, tap = null;          // tap : appui en cours qui n'a pas (encore) glissé
   const rel = p => { const r = cpPlan.getBoundingClientRect(); return {x:p.x - r.left, y:p.y - r.top}; };
   const two = () => { const [a, b] = [...pts.values()]; return {d:Math.hypot(a.x - b.x, a.y - b.y), m:rel({x:(a.x + b.x) / 2, y:(a.y + b.y) / 2})}; };
   const startDrag = p => { drag = {dx:p.x - cpv.x, dy:p.y - cpv.y}; };
@@ -5353,12 +5409,13 @@ window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRat
     if(!cpv.ready) return;
     cpPlan.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
-    if(pts.size === 1){ startDrag({x:e.clientX, y:e.clientY}); cpPlan.classList.add('grabbing'); }
-    else if(pts.size === 2){ drag = null; pinch = {d:two().d, lv:cpv.lv}; }
+    if(pts.size === 1){ startDrag({x:e.clientX, y:e.clientY}); cpPlan.classList.add('grabbing'); tap = {id:e.pointerId, x:e.clientX, y:e.clientY}; }
+    else if(pts.size === 2){ drag = null; pinch = {d:two().d, lv:cpv.lv}; tap = null; }
   });
   cpPlan.addEventListener('pointermove', e => {
     if(!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 8) tap = null;
     if(pinch && pts.size >= 2){ const t = two(); cpZoom(pinch.lv * t.d / Math.max(1, pinch.d), t.m.x, t.m.y); }
     else if(drag){ cpv.x = e.clientX - drag.dx; cpv.y = e.clientY - drag.dy; cpPlace(); }
   });
@@ -5367,6 +5424,8 @@ window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRat
     if(pts.size < 2) pinch = null;
     if(pts.size === 1) startDrag([...pts.values()][0]);     // un doigt reste posé : on continue de glisser avec lui
     if(!pts.size){ drag = null; cpPlan.classList.remove('grabbing'); }
+    if(tap && tap.id === e.pointerId && e.type === 'pointerup' && !pts.size) cineTap(e.clientX, e.clientY);
+    if(!pts.size) tap = null;
   }
   cpPlan.addEventListener('pointerup', up);
   cpPlan.addEventListener('pointercancel', up);
@@ -5377,6 +5436,293 @@ window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRat
     cpZoom(cpv.lv + (e.deltaY < 0 ? 1 : -1), p.x, p.y);
   }, {passive:false});
 })();
+
+/* ---------- Construction sur le plan (J3) ----------
+   Une case violette libre collée au bâtiment (mur commun avec une pièce construite) → menu : type, puis taille (prix et durée
+   lus dans state.offers) → aperçu fantôme, vert si la place est valide, rouge sinon ; on le décale le long du mur, on le
+   pivote, puis « Construire » appelle cine_build_room qui revérifie tout. Les règles ci-dessous reproduisent à l'identique
+   celles du serveur (_cine_door, cine_build_room ; CLAUDE.md § 6) : la porte affichée est celle que le serveur créera. */
+const cpHl = $('#cpHl'), cpGhostCv = $('#cpGhost');
+let cineBuildMode = false;            // 🔨 activé : emplacements possibles en surbrillance
+let ghost = null;                     // {type, size, rot, side, wall, along, cell} : aperçu en cours
+let buildCell = null;                 // case touchée qui a ouvert le menu {x, y}
+
+// Porte possible entre une nouvelle pièce n et une pièce o (copie de _cine_door) : {side, at, len, span} ou null
+function cineDoor(n, o){
+  if(n.x + n.w === o.x || o.x + o.w === n.x){
+    const lo = Math.max(n.y, o.y) + 2, hi = Math.min(n.y + n.h, o.y + o.h) - 1, l = hi - lo;
+    if(l < 1) return null;
+    const len = Math.min(3, l), st = lo + Math.floor((l - len) / 2);
+    return {side: n.x + n.w === o.x ? 'e' : 'w', at: st - n.y, len, span:l};
+  }
+  if(n.y + n.h === o.y || o.y + o.h === n.y){
+    const lo = Math.max(n.x, o.x) + 1, hi = Math.min(n.x + n.w, o.x + o.w) - 1, l = hi - lo;
+    if(l < 2) return null;
+    const len = 2, st = lo + Math.floor((l - len) / 2);
+    return {side: n.y + n.h === o.y ? 's' : 'n', at: st - n.x, len, span:l};
+  }
+  return null;
+}
+const cellTaken = (x, y) => cpRooms.some(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+// Vérification d'une place (mêmes refus que cine_build_room) : {ok, reason, message, door}
+function cineCheck(n){
+  if(n.x < 0 || n.y < 0 || n.x + n.w > cpGrid.cols || n.y + n.h > cpGrid.rows) return {ok:false, reason:'out_of_grid', message:'La pièce sort du terrain.'};
+  if(cpRooms.some(r => n.x < r.x + r.w && r.x < n.x + n.w && n.y < r.y + r.h && r.y < n.y + n.h)) return {ok:false, reason:'overlap', message:'La place est déjà prise.'};
+  let best = null, rank = -1;
+  for(const o of [...cpRooms].filter(r => r.built !== false).sort((a, b) => a.id - b.id)){
+    const d = cineDoor(n, o);
+    if(!d) continue;
+    const k = d.span * 10 + (o.type === 'corridor' || o.type === 'hall' ? 1 : 0);
+    if(k > rank){ best = d; rank = k; }
+  }
+  if(!best) return {ok:false, reason:'no_door', message:'La pièce doit toucher le bâtiment par un mur assez long pour une porte.'};
+  return {ok:true, door:best};
+}
+// Cases libres collées à une pièce construite : les emplacements possibles. Côté = où la nouvelle pièce s'étend.
+function cineSpots(){
+  const out = new Map();
+  for(const r of cpRooms) if(r.built !== false){
+    const add = (x, y, side) => { if(x >= 0 && y >= 0 && x < cpGrid.cols && y < cpGrid.rows && !cellTaken(x, y)){
+      const k = x + ',' + y; if(!out.has(k)) out.set(k, {x, y, sides:[]}); out.get(k).sides.push(side); } };
+    for(let y = r.y; y < r.y + r.h; y++){ add(r.x - 1, y, 'w'); add(r.x + r.w, y, 'e'); }
+    for(let x = r.x; x < r.x + r.w; x++){ add(x, r.y - 1, 'n'); add(x, r.y + r.h, 's'); }
+  }
+  return out;
+}
+const offerOf = (type, size) => cine && cine.st.offers.find(o => o.type === type && o.size === size);
+// Rectangle de l'aperçu : collé au mur (side, wall = 1re colonne/rangée hors du bâtiment), décalé de « along »
+function ghostRect(g){
+  const o = offerOf(g.type, g.size), w = g.rot ? o.h : o.w, h = g.rot ? o.w : o.h;
+  if(g.side === 'e') return {x:g.wall, y:g.along, w, h};
+  if(g.side === 'w') return {x:g.wall - w + 1, y:g.along, w, h};
+  if(g.side === 's') return {x:g.along, y:g.wall, w, h};
+  return {x:g.along, y:g.wall - h + 1, w, h};
+}
+const alongLen = g => { const r = ghostRect(g); return g.side === 'e' || g.side === 'w' ? r.h : r.w; };
+// Place la plus proche de « center » (le long du mur) qui soit valide ; sinon reste centré (rouge)
+function ghostSeat(g, center){
+  const len = alongLen(g);
+  for(let d = 0; d <= len + 2; d++) for(const s of d ? [-1, 1] : [1]){
+    const along = center - (len >> 1) + d * s, c = cineCheck(ghostRect({...g, along}));
+    if(c.ok){ g.along = along; return true; }
+  }
+  g.along = center - (len >> 1);
+  return false;
+}
+// Nouvel aperçu à partir d'une case touchée : le côté qui permet une place valide, sinon le premier
+function ghostAt(cell, type, size, rot = false){
+  const spot = cineSpots().get(cell.x + ',' + cell.y);
+  if(!spot) return null;
+  let first = null;
+  for(const side of spot.sides){
+    const g = {type, size, rot, side, wall: side === 'e' || side === 'w' ? cell.x : cell.y, along:0, cell};
+    const center = side === 'e' || side === 'w' ? cell.y : cell.x;
+    if(ghostSeat(g, center)) return g;
+    first ||= g;
+  }
+  return first;
+}
+
+// --- Dessin des calques : surbrillance des emplacements (pulsation CSS en opacity) et aperçu fantôme
+function cpDrawOverlay(){
+  const T = CPX.T;
+  for(const cv of [cpHl, cpGhostCv]){ if(cv.width !== CPX.W) cv.width = CPX.W; if(cv.height !== CPX.H) cv.height = CPX.H; }
+  const h = cpHl.getContext('2d');
+  h.clearRect(0, 0, CPX.W, CPX.H);
+  if(cineBuildMode || ghost){
+    for(const s of cineSpots().values()){
+      h.fillStyle = 'rgba(246,196,83,.30)'; h.fillRect(s.x * T + 1, s.y * T + 1, T - 1, T - 1);
+      h.fillStyle = 'rgba(255,240,184,.85)';
+      h.fillRect(s.x * T + 6, s.y * T + 6, 4, 4);
+    }
+  }
+  cpHl.classList.toggle('on', cineBuildMode && !ghost);
+  const g = cpGhostCv.getContext('2d');
+  g.clearRect(0, 0, CPX.W, CPX.H);
+  if(!ghost) return;
+  const r = ghostRect(ghost), c = cineCheck(r), ok = c.ok;
+  const X = r.x * T, Y = r.y * T, W = r.w * T, H = r.h * T;
+  g.fillStyle = ok ? 'rgba(70,217,138,.42)' : 'rgba(255,80,90,.42)'; g.fillRect(X, Y, W, H);
+  g.fillStyle = ok ? 'rgba(70,217,138,.25)' : 'rgba(255,80,90,.22)';     // cases de la pièce
+  for(let i = 1; i < r.w; i++) g.fillRect(X + i * T, Y, 1, H);
+  for(let j = 1; j < r.h; j++) g.fillRect(X, Y + j * T, W, 1);
+  g.fillStyle = ok ? '#bdf7d4' : '#ffb3b8';                              // contour
+  g.fillRect(X, Y, W, 2); g.fillRect(X, Y + H - 2, W, 2); g.fillRect(X, Y, 2, H); g.fillRect(X + W - 2, Y, 2, H);
+  if(ok){                                                                // porte qui sera créée
+    const d = c.door; g.fillStyle = '#f6c453';
+    if(d.side === 'n') g.fillRect(X + d.at * T, Y - 2, d.len * T, 5);
+    if(d.side === 's') g.fillRect(X + d.at * T, Y + H - 3, d.len * T, 5);
+    if(d.side === 'w') g.fillRect(X - 2, Y + d.at * T, 5, d.len * T);
+    if(d.side === 'e') g.fillRect(X + W - 3, Y + d.at * T, 5, d.len * T);
+  }
+}
+
+// --- Touché sur le plan (appelé par les gestes : appui court sans glisser)
+function cineTap(clientX, clientY){
+  if(!cine) return;
+  const b = cpStage.getBoundingClientRect();
+  const cx = Math.floor((clientX - b.left) / (b.width / cpGrid.cols)), cy = Math.floor((clientY - b.top) / (b.height / cpGrid.rows));
+  if(cx < 0 || cy < 0 || cx >= cpGrid.cols || cy >= cpGrid.rows) return;
+  if(cellTaken(cx, cy)) return;                                          // une pièce : rôles des pièces en J5
+  const spot = cineSpots().get(cx + ',' + cy);
+  if(!spot){ if(cineBuildMode || ghost) cineTip('Touche une case en surbrillance, collée au cinéma.'); return; }
+  if(cine.st.build){ cineTip('Une construction est déjà en cours.'); return; }
+  buzz(8);
+  if(ghost){                                                             // aperçu déjà là : on le déplace sur cette case
+    const g = ghostAt({x:cx, y:cy}, ghost.type, ghost.size, ghost.rot);
+    if(g){ ghost = g; renderGhostBar(); cpDrawOverlay(); }
+    return;
+  }
+  buildCell = {x:cx, y:cy};
+  openBuildMenu('type');
+}
+
+// --- 🔨 Construire : met en évidence les emplacements possibles (ou annonce le chantier en cours)
+$('#cineBuild').addEventListener('click', () => {
+  if(!cine) return;
+  buzz(6);
+  if(ghost){ cancelGhost(); return; }
+  if(cine.st.build && !cineBuildMode){ cineTip('Une construction est déjà en cours.'); return; }
+  setBuildMode(!cineBuildMode);
+  if(cineBuildMode) cineTip('Touche une case en surbrillance pour y construire une pièce.');
+});
+function setBuildMode(on){
+  cineBuildMode = on;
+  $('#cineBuild').setAttribute('aria-pressed', String(on || !!ghost));
+  cpDrawOverlay();
+}
+
+// --- Menu : type puis taille
+const ROOM_ROLE = {
+  projection: () => 'Projette un film : revenus × rareté',
+  arcade:     () => `1 machine offerte · +${fmtN(cine.st.machine_income)} / h par machine`,
+  toilets:    () => 'Bonus de revenus pour tout le cinéma',
+  snacks:     () => 'Bonus de revenus pour tout le cinéma',
+  corridor:   () => 'Relie et agrandit le bâtiment',
+};
+const BUILD_TYPES = ['projection', 'arcade', 'toilets', 'snacks', 'corridor'];
+const ROOM_FULL = {projection:'Salle de projection', arcade:'Salle d\'arcade', toilets:'Toilettes', snacks:'Boutique / snacks', corridor:'Couloir'};
+const buildSheet = $('#cineBuildSheet');
+let buildType = null;
+function openBuildMenu(step){
+  openCineSheet(false);
+  const box = $('#cineBuildList');
+  if(step === 'type'){
+    buildType = null;
+    $('#cineBuildTitle').textContent = 'Construire';
+    $('#cineBuildSub').textContent = 'Choisis le type de pièce';
+    $('#cineBuildBack').hidden = true;
+    box.innerHTML = BUILD_TYPES.map(t => {
+      const from = Math.min(...cine.st.offers.filter(o => o.type === t).map(o => o.cost));
+      return `<button class="bm-item" type="button" data-btype="${t}"><span class="rm-ico" aria-hidden="true">${ROOM_INFO[t].ico}</span>
+        <span class="rm-main"><b>${ROOM_FULL[t]}</b><span>${esc(ROOM_ROLE[t]())}</span></span>
+        <span class="bm-price"><span>${from ? 'dès ' + from.toLocaleString('fr-FR') + TICKET_ICO : 'offerte'}</span></span></button>`;
+    }).join('');
+  }else{
+    const t = buildType;
+    $('#cineBuildTitle').textContent = ROOM_FULL[t];
+    $('#cineBuildSub').textContent = 'Choisis la taille';
+    $('#cineBuildBack').hidden = false;
+    box.innerHTML = ['S', 'M', 'L'].map(s => {
+      const o = offerOf(t, s), miss = o.cost - ticketsTotal;
+      const gain = t === 'projection' ? `+${fmtN(o.income)} / h × rareté` : t === 'arcade' ? `${(o.w - 2) * (o.h - 3)} machines max`
+                 : o.bonus_pct > 0 ? `+${fmtN(o.bonus_pct)} % pour tout le cinéma` : `${o.w * o.h} cases`;
+      return `<button class="bm-item${miss > 0 ? ' short' : ''}" type="button" data-bsize="${s}">
+        <span class="bm-size" aria-hidden="true">${bmShape(o.w, o.h)}</span>
+        <span class="rm-main"><b>${SIZE_NAME[s][0].toUpperCase() + SIZE_NAME[s].slice(1)} · ${o.w} × ${o.h} cases</b>
+          <span class="gain">${esc(gain)}</span><span>⏱ ${o.minutes ? fmtMin(o.minutes) : 'immédiat'}</span></span>
+        <span class="bm-price"><span>${o.cost ? o.cost.toLocaleString('fr-FR') + TICKET_ICO : 'offerte'}</span>${miss > 0 ? `<small>il manque ${miss.toLocaleString('fr-FR')}</small>` : ''}</span></button>`;
+    }).join('');
+  }
+  buildSheet.classList.add('on');
+  box.scrollTop = 0;
+}
+// petite silhouette de la pièce (cases)
+const bmShape = (w, h) => `<svg viewBox="0 0 ${w * 4 + 1} ${h * 4 + 1}" style="width:${Math.max(w, h) * 6}px">` +
+  `<rect x=".5" y=".5" width="${w * 4}" height="${h * 4}" rx="1" fill="rgba(246,196,83,.25)" stroke="#f6c453" stroke-width="1"/></svg>`;
+function closeBuildMenu(){ buildSheet.classList.remove('on'); }
+$('#cineBuildClose').addEventListener('click', () => { closeBuildMenu(); buildCell = null; });
+$('#cineBuildBack').addEventListener('click', () => openBuildMenu('type'));
+$('#cineBuildList').addEventListener('click', e => {
+  const t = e.target.closest('[data-btype]'), s = e.target.closest('[data-bsize]');
+  if(t){ buzz(6); buildType = t.dataset.btype; openBuildMenu('size'); return; }
+  if(s && buildCell){
+    buzz(8);
+    const g = ghostAt(buildCell, buildType, s.dataset.bsize);
+    closeBuildMenu();
+    if(!g) return;
+    ghost = g;
+    $('#view-cinema').classList.add('ghosting');
+    setBuildMode(cineBuildMode);
+    renderGhostBar(); cpDrawOverlay(); cpReveal(ghostRect(ghost));
+  }
+});
+
+// --- Barre de l'aperçu : décaler le long du mur, pivoter, annuler, construire
+function renderGhostBar(){
+  if(!ghost) return;
+  const o = offerOf(ghost.type, ghost.size), r = ghostRect(ghost), c = cineCheck(r);
+  $('#cineGhostBar').hidden = false;
+  const vert = ghost.side === 'e' || ghost.side === 'w';
+  $('#ghPrev').textContent = vert ? '▲' : '◀'; $('#ghPrev').setAttribute('aria-label', vert ? 'Décaler vers le haut' : 'Décaler vers la gauche');
+  $('#ghNext').textContent = vert ? '▼' : '▶'; $('#ghNext').setAttribute('aria-label', vert ? 'Décaler vers le bas' : 'Décaler vers la droite');
+  $('#ghName').textContent = `${ROOM_FULL[ghost.type]} · ${SIZE_NAME[ghost.size]} (${r.w} × ${r.h})`;
+  const miss = o.cost - ticketsTotal;
+  $('#ghMsg').textContent = !c.ok ? c.message : miss > 0 ? `Il te manque ${miss.toLocaleString('fr-FR')} billets.` : `⏱ ${o.minutes ? fmtMin(o.minutes) : 'immédiat'}`;
+  $('#ghMsg').classList.toggle('bad', !c.ok || miss > 0);
+  const go = $('#ghGo');
+  go.innerHTML = `Construire<small>${o.cost ? o.cost.toLocaleString('fr-FR') + TICKET_ICO : 'offerte'}</small>`;
+  go.classList.toggle('no', !c.ok || miss > 0);
+}
+function cancelGhost(){
+  ghost = null; buildCell = null;
+  $('#cineGhostBar').hidden = true;
+  $('#view-cinema').classList.remove('ghosting');
+  setBuildMode(false);
+}
+function ghostMove(d){
+  if(!ghost) return;
+  buzz(5); ghost.along += d;
+  renderGhostBar(); cpDrawOverlay(); cpReveal(ghostRect(ghost));
+}
+$('#ghPrev').addEventListener('click', () => ghostMove(-1));
+$('#ghNext').addEventListener('click', () => ghostMove(1));
+$('#ghRot').addEventListener('click', () => {
+  if(!ghost) return;
+  buzz(6);
+  const center = ghost.along + (alongLen(ghost) >> 1);
+  ghost.rot = !ghost.rot;
+  ghostSeat(ghost, center);
+  renderGhostBar(); cpDrawOverlay(); cpReveal(ghostRect(ghost));
+});
+$('#ghCancel').addEventListener('click', () => { buzz(6); cancelGhost(); });
+$('#ghGo').addEventListener('click', async () => {
+  if(!ghost || cineBusy) return;
+  const r = ghostRect(ghost), c = cineCheck(r), o = offerOf(ghost.type, ghost.size);
+  if(!c.ok || o.cost > ticketsTotal){
+    showCineErr(!c.ok ? c.message : `Il te manque ${(o.cost - ticketsTotal).toLocaleString('fr-FR')} billets.`);
+    const bar = $('#cineGhostBar'); bar.classList.remove('nudge'); void bar.offsetWidth; bar.classList.add('nudge'); buzz(12);
+    return;
+  }
+  const res = await cineCall('cine_build_room', {p_type:ghost.type, p_size:ghost.size, p_x:r.x, p_y:r.y, p_rotated:!!ghost.rot});
+  if(res && res.ok) cancelGhost();
+  else if(ghost){ renderGhostBar(); cpDrawOverlay(); }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape' || currentView !== 'cinema') return;
+  if(buildSheet.classList.contains('on')) closeBuildMenu();
+  else if(ghost) cancelGhost();
+  else if(cineBuildMode) setBuildMode(false);
+});
+// Montre une zone du plan si elle sort du cadre (décalage minimal, avec une marge)
+function cpReveal(r){
+  const s = cpv.ds / cpv.dpr * CPX.T, m = 24;
+  const vw = cpPlan.clientWidth, vh = cpPlan.clientHeight - 150;          // la barre de l'aperçu couvre le bas
+  const x0 = cpv.x + r.x * s, x1 = cpv.x + (r.x + r.w) * s, y0 = cpv.y + r.y * s, y1 = cpv.y + (r.y + r.h) * s;
+  if(x0 < m) cpv.x += m - x0; else if(x1 > vw - m) cpv.x -= Math.min(x1 - (vw - m), x0 - m);
+  if(y0 < 90) cpv.y += 90 - y0; else if(y1 > vh) cpv.y -= Math.min(y1 - vh, y0 - 90);
+  cpPlace();
+}
 
 /* =====================================================================
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche

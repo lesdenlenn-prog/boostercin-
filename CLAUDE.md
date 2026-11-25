@@ -212,6 +212,16 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      Banc d'essai : état réel enregistré dans une transaction annulée + page sans serveur (rpc remplacé), captures via iframe
      (Chrome sans tête ne descend pas sous ~500 px ; transitions CSS figées : `--force-prefers-reduced-motion`).
      Piège : les classes globales `.stack`, `.film` existent déjà (préfixer les nouvelles classes).
+   - **J3** (à tester) : construction sur le plan. Scène `#cpStage` = 3 calques qui glissent ensemble (`cpCanvas` plan,
+     `cpHl` surbrillance des emplacements, pulsation en opacity ; `cpGhost` aperçu). Emplacement = case libre collée à une
+     pièce construite (`cineSpots`). Un appui court sans glisser (< 8 px, un seul doigt) sur un emplacement (`cineTap`)
+     ouvre `#cineBuildSheet` : type (prix « dès … » = `offers`) puis taille (cases, gain, durée, prix, « il manque … »).
+     Aperçu `ghost` = {type, size, rot, side, wall, along} : collé au mur côté `side`, décalé de `along` ; place initiale =
+     la plus proche du doigt qui soit valide (`ghostSeat`). Barre `#cineGhostBar` : ✕, ◀ ▶ (▲ ▼ sur un mur vertical),
+     ⟳ pivoter, « Construire » (prix ; gris si place invalide ou billets insuffisants). Toucher un autre emplacement
+     déplace l'aperçu. Vert/rouge et porte dorée calculés par `cineDoor` / `cineCheck`, copies exactes de `_cine_door` et
+     des contrôles de `cine_build_room` (mêmes messages) ; le serveur revérifie. 🔨 bascule la surbrillance ; Échap ferme.
+     Test : `node supabase/tests/cinema_rules.mjs .env index.html 800` compare client et serveur (800 placements, 0 écart).
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
