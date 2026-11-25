@@ -122,6 +122,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .cp-fin:active{transform:translateY(2px)}
 .cp-fin:disabled{opacity:.6}
 .cp-fin svg{width:15px;height:15px}
+.cp-film{position:absolute;transform:translateX(-50%);max-width:120px;padding:1px 6px;border-radius:6px;background:rgba(10,4,8,.78);
+  color:#fff1c4;font-size:.62rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:inset 0 0 0 1px rgba(246,196,83,.45)}
+.cp-film.empty{color:#ffb3a3;font-style:italic}
+#cpTags.z1 .cp-film{display:none}
+.gh-go[aria-pressed="true"]{background:linear-gradient(180deg,#f6c453,#c98a12);color:#3a1a00;box-shadow:inset 0 0 0 1.5px #6b4300,0 3px 0 #6b4300}
 .cp-done{position:absolute;transform:translate(-50%,-50%);padding:5px 10px;border-radius:99px;background:rgba(10,40,22,.92);
   color:#8af5b9;font-weight:800;font-size:.85rem;white-space:nowrap;box-shadow:inset 0 0 0 1.5px #46d98a}
 @keyframes cp-pulse{50%{opacity:.45}}
@@ -1738,6 +1744,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
           <button class="gh-btn" id="ghRot" type="button" aria-label="Pivoter">⟳</button>
           <button class="gh-btn" id="ghNext" type="button">▶</button>
           <button class="gh-btn gh-go" id="ghGo" type="button">Construire</button>
+        </div>
+      </div>
+      <!-- Mode Arcade : acheter une machine et la poser, ou déplacer une machine -->
+      <div class="cine-ui cine-ghost" id="cineArcBar" hidden>
+        <p class="gh-info" style="margin:0"><b id="arcName"></b><span id="arcMsg"></span></p>
+        <div class="gh-row">
+          <button class="gh-btn" id="arcClose" type="button" aria-label="Fermer l'arcade">✕</button>
+          <button class="gh-btn gh-go" id="arcBuy" type="button" aria-pressed="false">Acheter</button>
         </div>
       </div>
     </section>
@@ -4797,6 +4811,7 @@ function applyCinema(st, {bump = false} = {}){
   cinePlanSet(st);
   renderPlanTags(prev);
   renderCineRooms();
+  if(arc){ renderArcBar(); cpDrawOverlay(); }
   if(payOpen && payModal.dataset.ctx === 'cine' && !st.build) closePayPopup();   // chantier fini entre-temps
   tickCinema();
 }
@@ -4900,7 +4915,10 @@ function buildRoomOf(st){
 const tagPos = r => `left:${(r.x + r.w / 2) / cpGrid.cols * 100}%;top:${(r.y + r.h / 2) / cpGrid.rows * 100}%`;
 function renderPlanTags(prev){
   const st = cine.st, r = buildRoomOf(st), box = $('#cpTags');
-  box.querySelectorAll('.cp-tag').forEach(el => el.remove());
+  box.querySelectorAll('.cp-tag, .cp-film').forEach(el => el.remove());
+  box.insertAdjacentHTML('afterbegin', st.rooms.filter(x => x.type === 'projection' && x.built).map(x =>
+    `<div class="cp-film${x.film ? '' : ' empty'}" style="left:${(x.x + x.w / 2) / cpGrid.cols * 100}%;top:${(x.y + .15) / cpGrid.rows * 100}%">` +
+    (x.film ? '🎬 ' + esc(x.film.title || '') : 'choisir un film') + '</div>').join(''));
   if(r) box.insertAdjacentHTML('afterbegin', `<div class="cp-tag" style="${tagPos(r)}"><b>🚧 ${esc(buildName(st.build))}</b>
       <span class="t" id="cpTagTime"></span>
       <button class="cp-fin" id="cpTagFin" type="button" aria-label="Finir tout de suite en gemmes">Finir <b id="cpTagGems"></b>${GEM_ICO}</button></div>`);
@@ -4964,6 +4982,7 @@ function renderCineRooms(){
     }else if(r.type === 'arcade'){
       const n = r.machines.length;
       info = `<span>${n} machine${n > 1 ? 's' : ''}</span><span class="gain">+${fmtN(r.income)} / h</span>`;
+      act = `<button class="rm-act rm-film" type="button" data-cine="arcade" data-room="${r.id}">Gérer</button>`;
     }else if(r.type === 'toilets' || r.type === 'snacks'){
       info = `<span class="gain">+${fmtN(r.bonus_pct)} % pour tout le cinéma</span>`;
     }else if(r.type === 'box_office'){
@@ -4992,6 +5011,7 @@ $('#cineRooms').addEventListener('click', e => {
   if(!a || !cine) return;
   const what = a.dataset.cine;
   if(what === 'film') openScreenPicker(+a.dataset.room);
+  else if(what === 'arcade') openArcade(+a.dataset.room);
   else if(what === 'finish') openFinishPay();
   else if(what === 'upgrade'){
     const nx = cine.st.box_office.next;
@@ -5107,7 +5127,8 @@ const CP_FONT = {
   I:['111','010','010','010','111'], L:['100','100','100','100','111'], M:['10001','11011','10101','10001','10001'],
   N:['1001','1101','1011','1001','1001'], O:['010','101','101','101','010'], P:['110','101','110','100','100'],
   R:['110','101','110','101','101'], S:['011','100','010','001','110'], T:['111','010','010','010','010'],
-  U:['101','101','101','101','111'], 'É':['111','100','110','100','111'], ' ':['00','00','00','00','00'],
+  U:['101','101','101','101','111'], D:['110','101','101','101','110'], K:['1001','1010','1100','1010','1001'],
+  W:['10001','10001','10101','11011','10001'], 'É':['111','100','110','100','111'], ' ':['00','00','00','00','00'],
 };
 const cpTextW = (s, k = 1) => [...s].reduce((w, ch) => w + ((CP_FONT[ch] || CP_FONT[' '])[0].length + 1) * k, -k);
 
@@ -5309,6 +5330,25 @@ function cpRender(cv){
     for(let i = 0; i < 4; i++){ R(x + 2, y + 3 + i * 3, 10, 1, '#d8e6dc'); R(x + 15, y + 3 + i * 3, 3, 1, CPC.gold); }
   }
 
+  function machine(x, foot, id){                                          // borne d'arcade (12 × 24 px, pied au point x, foot)
+    const pal = [['#3b6fd8', '#21409a'], ['#d83b5f', '#8f1d38'], ['#2fb67c', '#1a6e4a'], ['#e0a020', '#8a5e0b']][id % 4];
+    shade(x - 1, foot - 1, 14, 2, .35);
+    R(x, foot - 24, 12, 24, pal[1]); R(x + 1, foot - 24, 10, 23, pal[0]);
+    R(x + 1, foot - 24, 10, 4, '#ffe9a8'); R(x + 2, foot - 23, 8, 2, '#ffb347');
+    R(x + 2, foot - 19, 8, 7, '#0d1b2a'); R(x + 3, foot - 18, 6, 5, ['#4be3ff', '#ff6fd8', '#8aff80', '#ffd84b'][(id >> 2) % 4]);
+    R(x + 4, foot - 16, 2, 1, '#ffffff'); R(x + 6, foot - 15, 1, 1, '#0d1b2a');
+    R(x, foot - 11, 12, 3, '#2a2a33'); R(x + 3, foot - 13, 1, 2, '#dddddd'); R(x + 2, foot - 14, 3, 1, '#ff4040');
+    R(x + 7, foot - 10, 1, 1, '#ff4040'); R(x + 9, foot - 10, 1, 1, '#40c0ff');
+    R(x + 2, foot - 7, 8, 5, pal[1]); R(x + 5, foot - 5, 2, 1, '#f6d04a');
+    out(x, foot - 24, 12, 24);
+  }
+  function jar(x, y){ R(x, y - 6, 5, 6, '#cfeaf3'); R(x + 1, y - 4, 3, 3, ['#ff5c8a', '#ffd23f', '#5cd6ff'][(x >> 3) % 3]); R(x, y - 7, 5, 1, '#e0473f'); out(x, y - 7, 5, 7); }
+  function fridge(x, foot){                                               // frigo vitré de boissons
+    shade(x - 1, foot, 14, 2, .3);
+    R(x, foot - 22, 12, 22, '#d9dde3'); R(x + 1, foot - 21, 10, 18, '#9fd6ef');
+    for(let row = 0; row < 3; row++) for(let k = 0; k < 3; k++) R(x + 2 + k * 3, foot - 19 + row * 6, 2, 4, ['#e0473f', '#2fb67c', '#f6d04a'][(row + k) % 3]);
+    R(x + 1, foot - 21, 1, 18, '#ffffff'); out(x, foot - 22, 12, 22);
+  }
   // --- Décor propre à chaque type de pièce (coordonnées relatives au sol F et au mur du fond Wl de la pièce)
   const DECOR = {
     hall(z){
@@ -5341,6 +5381,87 @@ function cpRender(cv){
       qx.slice(1).forEach((x, i, a) => { post(x, q2); if(i) rope(a[i - 1], x, q2 - 9); });
       plant(F.x + F.w - 10, F.y + F.h - 1);
     },
+    // --- Pièces construites par le joueur (J5) : mobilier selon le type ; r = pièce (film, machines)
+    projection(z, r){                                                     // écran, rideaux, faisceau, rangées de fauteuils
+      const {F, Wl} = z;
+      theatre(F.x, F.y, F.w, F.h);
+      // écran dans la plus grande partie du mur du fond qui n'est pas ouverte par une porte (rideaux compris)
+      const seg = pieces(Wl.x, Wl.x + Wl.w, wallDoors.map(([p, q]) => [p - 3, q + 3])).reduce((m, s) => s[1] - s[0] > m[1] - m[0] ? s : m, [0, 0]);
+      const sw = seg[1] - seg[0] - 20, sx = seg[0] + 10, sy = Wl.y + 4, sh = WH - 12;
+      if(sw >= 12){
+        for(const cx0 of [sx - 8, sx + sw + 2]) for(let k = 0; k < 6; k++) R(cx0 + k, Wl.y + 1, 1, WH - 5, k % 2 ? '#8e1f2a' : '#b8323d');
+        R(sx - 2, sy - 2, sw + 4, sh + 4, '#1a1014');
+        if(r.film){                                                       // film projeté : image claire, propre au film
+          const rr = cpRng(r.film.id), pal = [['#7fb7ff', '#2f5aa8'], ['#ffb36b', '#a8452f'], ['#9be3a1', '#2f7a4f'], ['#d6a6ff', '#5b2f9a']][r.film.id % 4];
+          R(sx, sy, sw, sh, pal[0]); R(sx, sy + (sh >> 1) + 2, sw, sh - (sh >> 1) - 2, pal[1]);
+          R(sx + 3 + Math.floor(rr() * (sw - 10)), sy + 3, 4, 4, '#fff6d0');
+          for(let i = 0; i < sw; i += 3) R(sx + i, sy + (sh >> 1) + 1 - Math.floor(rr() * 3), 3, 2, pal[1]);
+          R(sx, sy, sw, 1, '#ffffff');
+          g.globalAlpha = .09;                                            // faisceau du projecteur, depuis le fond de la salle
+          const cx = sx + (sw >> 1), y0 = F.y, y1 = F.y + F.h;
+          for(let y = y0; y < y1; y++){ const w = Math.max(3, Math.round(sw * (1 - (y - y0) / (y1 - y0)) * .9)); R(cx - (w >> 1), y, w, 1, '#fff6d0'); }
+          g.globalAlpha = 1;
+        }else{ R(sx, sy, sw, sh, '#454b57'); R(sx, sy, sw, 1, '#5a616e'); }
+      }
+      const cx = F.x + (F.w >> 1);
+      for(let y = F.y + 9; y + 7 <= F.y + F.h - 1; y += 9) for(let x = F.x + 3; x + 6 <= F.x + F.w - 3; x += 8){
+        if(F.w > 44 && Math.abs(x + 3 - cx) < 6) continue;                // allée centrale dans les grandes salles
+        shade(x, y + 6, 6, 1, .3);
+        R(x, y, 6, 2, '#7d1820'); R(x, y + 2, 6, 3, '#b8282f'); R(x, y + 2, 6, 1, '#d9464d'); R(x, y + 5, 6, 1, '#4a0f15');
+      }
+    },
+    arcade(z, r){                                                         // moquette néon, enseigne, machines (cases de l'état)
+      const {F, Wl, P} = z, rnd = cpRng(13 + r.id * 3);
+      R(F.x, F.y, F.w, F.h, '#22142f');
+      for(let k = 0; k < F.w * F.h / 36; k++)
+        R(F.x + Math.floor(rnd() * (F.w - 2)), F.y + Math.floor(rnd() * F.h), 2, 1, ['#2de2e6', '#ff3cac', '#f6d04a', '#7b5cff'][k % 4]);
+      R(Wl.x, Wl.y + 3, Wl.w, 13, '#2b1840');
+      for(let x = Wl.x + 2; x < Wl.x + Wl.w; x += 5) R(x, Wl.y + 9, 1, 1, '#4a2a6a');
+      neon('ARCADE', Wl.x + (Wl.w >> 1), Wl.y + 6, cpTextW('ARCADE', 2) <= Wl.w - 14 ? 2 : 1, '#ff5ce1', '#b31fd6');
+      [...(r.machines || [])].sort((a, b) => a.y - b.y || a.x - b.x).forEach(m => machine(P.x + m.x * T + 2, P.y + m.y * T + T - 1, m.id));
+    },
+    toilets(z, r){                                                        // carrelage, miroirs et lavabos, cabines
+      const {F, Wl} = z;
+      for(let y = F.y; y < F.y + F.h; y += 8) for(let x = F.x; x < F.x + F.w; x += 8)
+        R(x, y, Math.min(8, F.x + F.w - x), Math.min(8, F.y + F.h - y), ((x - F.x) / 8 + (y - F.y) / 8) % 2 ? '#dfe8ee' : '#9fc3dc');
+      R(Wl.x, Wl.y + 3, Wl.w, WH - 6, '#d6e8f2');
+      for(let x = Wl.x + 5; x < Wl.x + Wl.w; x += 6) R(x, Wl.y + 3, 1, WH - 6, '#b3cfe0');
+      for(let y = Wl.y + 8; y < Wl.y + WH - 3; y += 6) R(Wl.x, y, Wl.w, 1, '#b3cfe0');
+      if(!onDoor(Wl.x + 2, Wl.x + 16)){ R(Wl.x + 3, Wl.y + 5, 13, 9, '#2b3d4a'); text('WC', Wl.x + 5, Wl.y + 7, 1, '#ffffff'); }
+      for(let x = Wl.x + 20; x + 12 <= Wl.x + Wl.w - 2; x += 17){
+        if(onDoor(x - 1, x + 13)) continue;
+        R(x + 1, Wl.y + 6, 10, 11, '#a9d8f0'); R(x + 2, Wl.y + 7, 3, 1, '#ffffff'); out(x + 1, Wl.y + 6, 10, 11);
+        R(x, Wl.y + WH - 6, 12, 5, '#f4f7f9'); R(x + 2, Wl.y + WH - 5, 8, 2, '#c9d6de'); R(x + 5, Wl.y + WH - 8, 2, 2, '#9aa4ad');
+        out(x, Wl.y + WH - 6, 12, 5);
+      }
+      if(F.h >= 26){                                                      // cabines contre la façade
+        const y0 = F.y + F.h - 20;
+        for(let x = F.x + 3; x + 14 <= F.x + F.w - 2; x += 15){
+          shade(x, y0 + 20, 15, 1, .3);
+          R(x, y0, 1, 20, '#6f8fa6'); R(x + 14, y0, 1, 20, '#6f8fa6'); R(x, y0, 15, 1, '#4d6b80');
+          R(x + 1, y0 + 2, 13, 16, '#7fb3d5'); R(x + 1, y0 + 2, 13, 1, '#a6cde6'); R(x + 11, y0 + 9, 1, 2, '#2b3d4a');
+        }
+      }
+    },
+    snacks(z, r){                                                         // carrelage crème, enseigne, comptoir, frigo, pop-corn
+      const {F, Wl} = z;
+      for(let y = F.y; y < F.y + F.h; y += 8) for(let x = F.x; x < F.x + F.w; x += 8)
+        R(x, y, Math.min(8, F.x + F.w - x), Math.min(8, F.y + F.h - y), ((x - F.x) / 8 + (y - F.y) / 8) % 2 ? '#f1dfc0' : '#d9b98c');
+      neon('SNACKS', Wl.x + (Wl.w >> 1), Wl.y + 8, cpTextW('SNACKS', 2) <= Wl.w - 14 ? 2 : 1, '#ffd23f', '#ff8a00');
+      const cy = F.y + 3, cw = F.w - 10;
+      counter(F.x + 5, cy, cw);
+      bucket(F.x + 9, cy + 4); jar(F.x + 18, cy + 4); jar(F.x + 25, cy + 4);
+      if(cw > 40) tickets(F.x + cw - 8, cy + 4);
+      if(F.h >= 34){ popcornMachine(F.x + 3, F.y + F.h - 2); if(F.w >= 44) fridge(F.x + F.w - 15, F.y + F.h - 2); }
+    },
+    corridor(z, r){                                                       // tapis dans la longueur, appliques, affiches, plantes
+      const {F, Wl} = z;
+      if(r.h >= r.w) runner(F.x + (F.w >> 1) - 6, F.y, 12, F.h);
+      else{ const y = F.y + (F.h >> 1) - 5; R(F.x, y, F.w, 10, CPC.carpet); R(F.x, y, F.w, 1, CPC.carpetGold); R(F.x, y + 9, F.w, 1, CPC.carpetGold); }
+      poster(Wl.x + 4, Wl.y + 6, 12, 20, [['#2f6b4f', '#163626', '#f7e08a', '#0a1d14'], ['#2a3f78', '#162248', '#ffd36b', '#0b1230'], ['#7a2f5c', '#3a1430', '#ffb25c', '#1d0a18']][r.id % 3]);
+      if(Wl.w >= 40) sconce(Wl.x + Wl.w - 12, Wl.y + 8);
+      if(F.h >= 30){ plant(F.x + 1, F.y + F.h - 1); plant(F.x + F.w - 9, F.y + F.h - 1); }
+    },
   };
   const MAT = {                                                            // paillasson d'une porte de façade (hall : « ENTRÉE »)
     hall(x, y, w){
@@ -5361,7 +5482,7 @@ function cpRender(cv){
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.w)) shade(F.x, P.y + a, 2, b - a, .12);
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.e)) shade(F.x + F.w - 2, P.y + a, 2, b - a, .08);
     wallDoors = doors.n.map(([a, b]) => [P.x + a, P.x + b]);
-    (DECOR[r.type] || (() => {}))(z);
+    (DECOR[r.type] || (() => {}))(z, r);
     for(const [a, b] of doors.n){
       g.save(); g.beginPath(); g.rect(P.x + a, P.y, b - a, F.y - P.y); g.clip();
       parquet(P.x, P.y, P.w, P.h, 17 + i * 101);
@@ -5466,7 +5587,8 @@ function cpRender(cv){
 }
 // État du serveur → plan (redessiné seulement si les pièces ou la grille changent)
 function cinePlanSet(st){
-  const rooms = st.rooms.map(r => ({id:r.id, type:r.type, size:r.size, x:r.x, y:r.y, w:r.w, h:r.h, built:r.built, doors:r.doors || []}));
+  const rooms = st.rooms.map(r => ({id:r.id, type:r.type, size:r.size, x:r.x, y:r.y, w:r.w, h:r.h, built:r.built, doors:r.doors || [],
+    film: r.film ? {id:r.film.id} : null, machines:(r.machines || []).map(m => ({id:m.id, x:m.x, y:m.y}))}));
   const build = st.build ? {kind:st.build.kind, room_id:st.build.room_id} : null;
   const sig = JSON.stringify([st.grid, rooms, build]);
   if(sig === cpSig) return;
@@ -5490,6 +5612,7 @@ function cpScale(){
   cpv.dpr = window.devicePixelRatio || 1;
   cpv.ds = Math.max(1, Math.round(cpv.lv * cpv.dpr));
   cpStage.style.width = cpCssW() + 'px'; cpStage.style.height = cpCssH() + 'px';
+  $('#cpTags').classList.toggle('z1', cpv.lv < 2);                     // zoom 1 : pas de titre de film (trop petit)
 }
 function cpPlace(){
   const vw = cpPlan.clientWidth, vh = cpPlan.clientHeight, cw = cpCssW(), ch = cpCssH();
@@ -5666,6 +5789,7 @@ function cpDrawOverlay(){
   cpHl.classList.toggle('on', cineBuildMode && !ghost);
   const g = cpGhostCv.getContext('2d');
   g.clearRect(0, 0, CPX.W, CPX.H);
+  if(arc) drawArcOverlay(g);
   if(!ghost) return;
   const r = ghostRect(ghost), c = cineCheck(r), ok = c.ok;
   const X = r.x * T, Y = r.y * T, W = r.w * T, H = r.h * T;
@@ -5690,7 +5814,14 @@ function cineTap(clientX, clientY){
   const b = cpStage.getBoundingClientRect();
   const cx = Math.floor((clientX - b.left) / (b.width / cpGrid.cols)), cy = Math.floor((clientY - b.top) / (b.height / cpGrid.rows));
   if(cx < 0 || cy < 0 || cx >= cpGrid.cols || cy >= cpGrid.rows) return;
-  if(cellTaken(cx, cy)) return;                                          // une pièce : rôles des pièces en J5
+  const room = roomAt(cx, cy);
+  if(arc){                                                               // mode Arcade : une case de sa salle, sinon on le ferme
+    const ar = cineRoom(arc.id);
+    if(ar && room && room.id === ar.id){ arcCell(ar, cx - ar.x, cy - ar.y); return; }
+    closeArcade();
+    if(!room) return;
+  }
+  if(room){ if(!ghost && !cineBuildMode) roomTap(room, cx, cy); return; }
   const spot = cineSpots().get(cx + ',' + cy);
   if(!spot){ if(cineBuildMode || ghost) cineTip('Touche une case en surbrillance, collée au cinéma.'); return; }
   if(cine.st.build){ cineTip('Une construction est déjà en cours.'); return; }
@@ -5708,6 +5839,7 @@ function cineTap(clientX, clientY){
 $('#cineBuild').addEventListener('click', () => {
   if(!cine) return;
   buzz(6);
+  if(arc) closeArcade();
   if(ghost){ cancelGhost(); return; }
   if(cine.st.build && !cineBuildMode){ cineTip('Une construction est déjà en cours.'); return; }
   setBuildMode(!cineBuildMode);
@@ -5850,6 +5982,118 @@ function cpReveal(r){
   if(y0 < 90) cpv.y += 90 - y0; else if(y1 > vh) cpv.y -= Math.min(y1 - vh, y0 - 90);
   cpPlace();
 }
+
+/* ---------- Rôles des pièces (J5) ----------
+   Toucher une salle de projection → choix du film (modale du Top Films). Toucher une arcade → mode Arcade : acheter une
+   machine et la poser sur une case libre du sol, ou toucher une machine puis une case libre pour la déplacer
+   (cine_buy_machine / cine_move_machine revérifient tout). Autres pièces : une bulle rappelle leur rôle. */
+let arc = null;                       // mode Arcade : {id, mode:'idle' | 'buy' | 'move', sel: id de la machine choisie}
+const roomAt = (x, y) => cpRooms.find(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+const arcFloor = (r, x, y) => x >= 1 && x < r.w - 1 && y >= 2 && y < r.h - 1;     // sol où poser une machine (comme le serveur)
+const arcMax = r => (r.w - 2) * (r.h - 3);
+
+function roomTap(r, cx, cy){
+  if(r.built === false) return;                                            // chantier : son étiquette porte « Finir »
+  const full = cineRoom(r.id);
+  if(!full) return;
+  buzz(6);
+  if(r.type === 'projection') openScreenPicker(r.id);
+  else if(r.type === 'arcade') openArcade(r.id);
+  else if(r.type === 'toilets' || r.type === 'snacks') cineTip(`${roomName(full)} : +${fmtN(full.bonus_pct)} % de revenus pour tout le cinéma.`);
+  else if(r.type === 'corridor') cineTip(`${roomName(full)} : relie les pièces. Construis à ses côtés pour agrandir le cinéma.`);
+  else if(r.type === 'box_office'){
+    const bo = cine.st.box_office;
+    cineTip(`Guichet niveau ${bo.level}` + (Number(bo.bonus_pct) ? ` : +${fmtN(bo.bonus_pct)} % sur les revenus.` : '.') + (bo.next ? ' Améliore-le dans 📋 Mes pièces.' : ''));
+  }
+  else if(r.type === 'hall') cineTip('Couloir d\'accueil : l\'entrée de ton cinéma.');
+}
+
+function openArcade(id){
+  const r = cineRoom(id);
+  if(!r || r.type !== 'arcade' || !r.built) return;
+  if(ghost) cancelGhost();
+  if(cineBuildMode) setBuildMode(false);
+  closeBuildMenu(); openCineSheet(false);
+  arc = {id, mode:'idle', sel:null};
+  $('#view-cinema').classList.add('ghosting');
+  renderArcBar(); cpDrawOverlay(); cpReveal(r);
+}
+function closeArcade(){
+  if(!arc) return;
+  arc = null;
+  $('#cineArcBar').hidden = true;
+  $('#view-cinema').classList.remove('ghosting');
+  cpDrawOverlay();
+}
+function renderArcBar(){
+  const r = arc && cineRoom(arc.id);
+  if(!r){ closeArcade(); return; }
+  const n = r.machines.length, max = arcMax(r), price = cine.st.machine_price, miss = price - ticketsTotal;
+  $('#cineArcBar').hidden = false;
+  $('#arcName').textContent = `${roomName(r)} · ${n} / ${max} machine${max > 1 ? 's' : ''} · +${fmtN(r.income)} / h`;
+  const msg = arc.mode === 'buy' ? 'Touche une case libre du sol pour poser la machine.'
+            : arc.mode === 'move' ? 'Touche une case libre pour y déplacer la machine.'
+            : n >= max ? 'Salle pleine. Touche une machine pour la déplacer.'
+            : 'Touche une machine pour la déplacer, ou achètes-en une.';
+  $('#arcMsg').textContent = msg;
+  const buy = $('#arcBuy');
+  buy.innerHTML = n >= max ? 'Salle pleine' : `Acheter<small>${price.toLocaleString('fr-FR')}${TICKET_ICO}${miss > 0 ? ' · il manque ' + miss.toLocaleString('fr-FR') : ''}</small>`;
+  buy.classList.toggle('no', n >= max || miss > 0);
+  buy.setAttribute('aria-pressed', String(arc.mode === 'buy'));
+}
+// Case touchée dans l'arcade ouverte (coordonnées relatives à la salle)
+async function arcCell(r, x, y){
+  const m = r.machines.find(k => k.x === x && k.y === y);
+  if(m){
+    buzz(6);
+    if(arc.mode === 'move' && arc.sel === m.id){ arc.mode = 'idle'; arc.sel = null; }
+    else{ arc.mode = 'move'; arc.sel = m.id; }
+    renderArcBar(); cpDrawOverlay(); return;
+  }
+  if(!arcFloor(r, x, y)){ cineTip('Les machines se posent sur le sol de la salle.'); return; }
+  if(arc.mode === 'buy'){
+    const res = await cineCall('cine_buy_machine', {p_room:r.id, p_x:x, p_y:y});
+    if(arc){ if(res && res.ok) arc.mode = 'idle'; renderArcBar(); cpDrawOverlay(); }
+  }else if(arc.mode === 'move'){
+    const res = await cineCall('cine_move_machine', {p_machine:arc.sel, p_x:x, p_y:y});
+    if(arc){ if(res && res.ok){ arc.mode = 'idle'; arc.sel = null; } renderArcBar(); cpDrawOverlay(); }
+  }else cineTip('Touche « Acheter » pour poser une nouvelle machine ici.');
+}
+$('#arcClose').addEventListener('click', () => { buzz(6); closeArcade(); });
+$('#arcBuy').addEventListener('click', () => {
+  const r = arc && cineRoom(arc.id);
+  if(!r) return;
+  const price = cine.st.machine_price;
+  if(r.machines.length >= arcMax(r) || price > ticketsTotal){
+    showCineErr(r.machines.length >= arcMax(r) ? 'La salle est pleine.' : `Il te manque ${(price - ticketsTotal).toLocaleString('fr-FR')} billets.`);
+    const bar = $('#cineArcBar'); bar.classList.remove('nudge'); void bar.offsetWidth; bar.classList.add('nudge'); buzz(12);
+    return;
+  }
+  buzz(6);
+  arc.mode = arc.mode === 'buy' ? 'idle' : 'buy'; arc.sel = null;
+  renderArcBar(); cpDrawOverlay();
+});
+// Calque du mode Arcade : cases libres du sol (achat ou déplacement), machine choisie, contour de la salle
+function drawArcOverlay(g){
+  const r = cineRoom(arc.id);
+  if(!r) return;
+  const T = CPX.T, X = r.x * T, Y = r.y * T;
+  g.fillStyle = 'rgba(246,196,83,.9)';
+  g.fillRect(X, Y, r.w * T, 2); g.fillRect(X, Y + r.h * T - 2, r.w * T, 2); g.fillRect(X, Y, 2, r.h * T); g.fillRect(X + r.w * T - 2, Y, 2, r.h * T);
+  if(arc.mode !== 'idle') for(let y = 2; y < r.h - 1; y++) for(let x = 1; x < r.w - 1; x++){
+    if(r.machines.some(m => m.x === x && m.y === y)) continue;
+    // marque dans la moitié haute de la case : le haut d'une borne posée juste en dessous déborde sur la moitié basse
+    g.fillStyle = 'rgba(70,217,138,.45)'; g.fillRect(X + x * T + 2, Y + y * T + 1, T - 4, 7);
+    g.fillStyle = 'rgba(189,247,212,.95)'; g.fillRect(X + x * T + 6, Y + y * T + 3, 4, 3);
+  }
+  const m = arc.sel && r.machines.find(k => k.id === arc.sel);
+  if(m){
+    const mx = X + m.x * T, my = Y + m.y * T - 10;
+    g.fillStyle = '#f6c453';
+    g.fillRect(mx, my, T, 2); g.fillRect(mx, my + T + 10 - 2, T, 2); g.fillRect(mx, my, 2, T + 10); g.fillRect(mx + T - 2, my, 2, T + 10);
+  }
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && arc && currentView === 'cinema') closeArcade(); });
 
 /* =====================================================================
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche

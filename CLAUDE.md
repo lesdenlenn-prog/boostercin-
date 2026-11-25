@@ -231,6 +231,18 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      `tickPlanTags`), « Finir N 💎 » → fenêtre de paiement (prix = `gemPriceNow`, le serveur refuse s'il a monté) ; le
      pointerdown sur `.cp-fin` n'est pas capturé par le plan. Chantier terminé (état précédent comparé dans
      `applyCinema`) : « ✨ Terminé ! » / « Guichet niv. n ! » qui s'envole (`planBurst`, transform + opacity).
+   - **J5** (à tester) : mobilier par type dans `DECOR` (le décor reçoit `(z, r)`, r = pièce avec `film` et `machines`,
+     qui font partie de la signature du plan) : projection = moquette, écran entre rideaux placé dans la plus grande partie
+     du mur du fond sans porte (image claire propre au film, faisceau ; écran gris sans film), rangées de fauteuils (allée
+     centrale si large) ; arcade = moquette néon, enseigne « ARCADE », bornes `machine()` aux cases de l'état (12 × 24 px,
+     pied en bas de la case, dessinées de haut en bas) ; toilettes = carrelage, plaque « WC », miroirs + lavabos, cabines ;
+     boutique = carrelage crème, « SNACKS », comptoir (pot de pop-corn, bocaux), machine à pop-corn, frigo ; couloir = tapis
+     dans la longueur, affiche, applique, plantes. Police : D, K, W ajoutés. Titre du film (ou « choisir un film ») en haut
+     de chaque salle (`.cp-film`, masqué au zoom 1). Toucher une pièce (`roomTap`) : salle → modale du film ; arcade →
+     mode Arcade (`arc`, barre `#cineArcBar` : nombre / maximum de machines, revenu, « Acheter » prix → mode achat, cases
+     libres du sol marquées → `cine_buy_machine` ; toucher une borne → la choisir (cadre doré) → case libre →
+     `cine_move_machine`) ; toilettes, boutique, couloir, guichet, hall → bulle avec leur rôle / bonus. « Gérer » sur
+     l'arcade dans Mes pièces. Les décors purement visuels (pop-corn qui éclate, caisse qui sonne…) viennent en J6.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
