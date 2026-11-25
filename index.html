@@ -109,6 +109,21 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 #cpStage canvas{position:absolute;left:0;top:0;display:block;width:100%;height:100%;
   image-rendering:crisp-edges;image-rendering:pixelated}
 #cpHl.on{animation:cp-pulse 1.4s ease-in-out infinite}
+/* étiquette du chantier, posée au centre de la pièce ; « Terminé ! » qui s'envole à la fin */
+#cpTags{position:absolute;inset:0;pointer-events:none}
+.cp-tag{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 9px 7px;border-radius:12px;background:rgba(30,12,6,.9);color:#fff1c4;white-space:nowrap;line-height:1.15;
+  box-shadow:inset 0 0 0 1.5px #f2c230,0 4px 10px rgba(0,0,0,.45)}
+.cp-tag b{font-size:.72rem}
+.cp-tag .t{font-weight:800;font-size:.95rem;color:#f2c230;font-variant-numeric:tabular-nums}
+.cp-fin{pointer-events:auto;display:flex;align-items:center;gap:3px;min-height:30px;padding:0 10px;border:0;border-radius:9px;
+  background:linear-gradient(180deg,#c79bff,#8a3ffc);color:#fff;font-weight:800;font-size:.76rem;
+  box-shadow:inset 0 0 0 1.5px #3b0d8f,0 2px 0 #3b0d8f;transition:transform .12s ease}
+.cp-fin:active{transform:translateY(2px)}
+.cp-fin:disabled{opacity:.6}
+.cp-fin svg{width:15px;height:15px}
+.cp-done{position:absolute;transform:translate(-50%,-50%);padding:5px 10px;border-radius:99px;background:rgba(10,40,22,.92);
+  color:#8af5b9;font-weight:800;font-size:.85rem;white-space:nowrap;box-shadow:inset 0 0 0 1.5px #46d98a}
 @keyframes cp-pulse{50%{opacity:.45}}
 .cine-ui{position:absolute;z-index:4}
 .view-cine.ghosting .cine-bottom{opacity:0;pointer-events:none}
@@ -1671,7 +1686,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </section>
     <!-- Cinéma (mode gestion) : plan pixel art en plein écran, HUD par-dessus. Tout est calculé par Supabase (cine_*). -->
     <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
-      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><div id="cpStage"><canvas id="cpCanvas"></canvas><canvas id="cpHl"></canvas><canvas id="cpGhost"></canvas></div></div>
+      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><div id="cpStage"><canvas id="cpCanvas"></canvas><canvas id="cpHl"></canvas><canvas id="cpGhost"></canvas><div id="cpTags"></div></div></div>
       <!-- colonne de boutons ronds : Construire, Mes pièces, outils admin -->
       <div class="cine-ui cine-side" id="cineSide">
         <button class="cside-btn" id="cineBuild" type="button" aria-pressed="false" aria-label="Construire" title="Construire">🔨</button>
@@ -4771,6 +4786,7 @@ function buildName(b){
 // État du serveur → affichage (les dates du serveur sont converties en horloge du téléphone via server_now)
 function applyCinema(st, {bump = false} = {}){
   cineSeq++;
+  const prev = cine && cine.st;                                  // état d'avant : chantier qui vient de finir ?
   const now = Date.now(), srv = Date.parse(st.server_now);
   cine = {st, recv:now, fullAt: now + (Date.parse(st.full_at) - srv), buildEnd: st.build ? now + Number(st.build.ms_left) : 0};
   ticketsTotal = Number(st.tickets);
@@ -4779,6 +4795,7 @@ function applyCinema(st, {bump = false} = {}){
   if(gemsTotal !== st.gems){ gemsTotal = st.gems; renderWallet(); }
   $('#cineSiteDot').hidden = !st.build;
   cinePlanSet(st);
+  renderPlanTags(prev);
   renderCineRooms();
   if(payOpen && payModal.dataset.ctx === 'cine' && !st.build) closePayPopup();   // chantier fini entre-temps
   tickCinema();
@@ -4800,6 +4817,7 @@ function tickCinema(){
   cineCollect.disabled = cineBusy || pending < 1;
   $('#cineRate').textContent = `+${fmtN(cine.st.rate)} / h · ` + (full ? 'caisse pleine !' : `pleine dans ${fmtDur(cine.fullAt - now)}`);
   cineCollect.setAttribute('aria-label', `Récolter la caisse : ${pending} billets`);
+  tickPlanTags(now);
   if(cine.st.build && cineSheet.classList.contains('on')){                 // chantier : minuteur + prix en gemmes du moment
     const left = cine.buildEnd - now, t = $('#rmSiteTime'), gb = $('#rmSiteGems');
     if(t) t.textContent = left > 0 ? `encore ${fmtDur(left)}` : 'Finition…';
@@ -4872,6 +4890,48 @@ $('#cineFinish').addEventListener('click', () => cineAdmin('cine_admin_finish_bu
 $('#cineReset').addEventListener('click', () => {
   if(confirm('Remettre le cinéma à la base (couloir + guichet) ? Les pièces et les machines disparaissent ; billets, gemmes et collection ne bougent pas.')) cineAdmin('cine_admin_reset');
 });
+
+/* ---------- Étiquette du chantier sur le plan (J4) : nom, temps restant, « Finir » en gemmes ----------
+   Posée au centre de la pièce en chantier (ou du guichet pendant son amélioration), dans la scène du plan. */
+function buildRoomOf(st){
+  if(!st || !st.build) return null;
+  return st.build.kind === 'room' ? st.rooms.find(r => r.id === st.build.room_id) : st.rooms.find(r => r.type === 'box_office');
+}
+const tagPos = r => `left:${(r.x + r.w / 2) / cpGrid.cols * 100}%;top:${(r.y + r.h / 2) / cpGrid.rows * 100}%`;
+function renderPlanTags(prev){
+  const st = cine.st, r = buildRoomOf(st), box = $('#cpTags');
+  box.querySelectorAll('.cp-tag').forEach(el => el.remove());
+  if(r) box.insertAdjacentHTML('afterbegin', `<div class="cp-tag" style="${tagPos(r)}"><b>🚧 ${esc(buildName(st.build))}</b>
+      <span class="t" id="cpTagTime"></span>
+      <button class="cp-fin" id="cpTagFin" type="button" aria-label="Finir tout de suite en gemmes">Finir <b id="cpTagGems"></b>${GEM_ICO}</button></div>`);
+  // chantier terminé depuis le dernier état : « Terminé ! » qui s'envole au-dessus de la pièce
+  const was = buildRoomOf(prev);
+  if(prev && prev.build && was && (!st.build || st.build.room_id !== prev.build.room_id || st.build.kind !== prev.build.kind)){
+    const done = prev.build.kind === 'room' ? st.rooms.find(x => x.id === was.id && x.built) : st.box_office.level >= prev.build.level;
+    if(done) planBurst(was, prev.build.kind === 'room' ? 'Terminé !' : `Guichet niv. ${prev.build.level} !`);
+  }
+  tickPlanTags();
+}
+function tickPlanTags(now = Date.now()){
+  const tm = $('#cpTagTime');
+  if(!tm || !cine || !cine.st.build) return;
+  const left = cine.buildEnd - now;
+  tm.textContent = left > 0 ? fmtDur(left) : 'Finition…';
+  $('#cpTagGems').textContent = gemPriceNow(now);
+  $('#cpTagFin').disabled = left <= 0;
+}
+function planBurst(r, text){
+  if(RM) return;
+  const el = document.createElement('div');
+  el.className = 'cp-done'; el.textContent = '✨ ' + text; el.setAttribute('style', tagPos(r));
+  $('#cpTags').appendChild(el);
+  play(el, [{opacity:0, transform:'translate(-50%, -50%) scale(.7)'},
+            {opacity:1, transform:'translate(-50%, -80%) scale(1)', offset:.25},
+            {opacity:1, transform:'translate(-50%, -110%) scale(1)', offset:.75},
+            {opacity:0, transform:'translate(-50%, -150%) scale(1)'}],
+       {duration:1800, easing:'cubic-bezier(.2,.8,.3,1)'}).then(() => el.remove());
+}
+$('#cpTags').addEventListener('click', e => { if(e.target.closest('.cp-fin')){ buzz(8); openFinishPay(); } });
 
 /* ---------- Mes pièces : liste, état, films projetés, chantier, guichet ---------- */
 function openCineSheet(on){
@@ -5020,7 +5080,7 @@ const CINE_BASE = [                                         // base identique po
   {id:0, type:'hall',       x:13, y:30, w:6, h:10, built:true, doors:[{side:'s', at:2, len:2}, {side:'e', at:5, len:3}]},
   {id:-1, type:'box_office', x:19, y:32, w:8, h:7,  built:true, doors:[{side:'w', at:3, len:3}]},
 ];
-let cpGrid = {cols:40, rows:40}, cpRooms = CINE_BASE, cpSig = '';
+let cpGrid = {cols:40, rows:40}, cpRooms = CINE_BASE, cpSig = '', cpBuild = null;   // cpBuild : chantier en cours {kind, room_id}
 const CPX = {T:16, WH:32, CAP:4, FRONT:6, MIN:1, MAX:5};   // pixels par case, hauteur du mur du fond, épaisseurs, zoom
 CPX.W = cpGrid.cols * CPX.T;
 CPX.H = cpGrid.rows * CPX.T;
@@ -5322,29 +5382,96 @@ function cpRender(cv){
     for(const [a, b] of doors.s) if(MAT[r.type]) MAT[r.type](P.x + a, P.y + P.h - 14, b - a);
     g.restore();
   }
+  // --- Chantier (J4) : dalle de béton, mur du fond en briques à moitié monté, échafaudage, rubalise et matériel.
+  //     Tout reste dans le rectangle de cases de la pièce (clip), comme une pièce finie.
+  function scaffold(Wl, yTop, yBot){                                      // échafaudage devant un mur du fond
+    const poles = [];
+    for(let x = Wl.x + 3; x < Wl.x + Wl.w - 3; x += 16) poles.push(x);
+    poles.push(Wl.x + Wl.w - 5);
+    for(const x of poles){ R(x, yTop, 2, yBot - yTop, '#7d8a95'); R(x, yTop, 1, yBot - yTop, '#c4ced6'); }
+    for(let k = 0; k + 1 < poles.length; k++){                             // croisillons dans la travée du bas
+      const a = poles[k] + 2, b = poles[k + 1], hh = Math.min(12, yBot - yTop - 16);
+      for(let t = 0; t < b - a; t++){ const yy = Math.round(t * hh / Math.max(1, b - a)); R(a + t, yBot - 2 - yy, 1, 1, '#6b7782'); }
+    }
+    for(const yy of [yTop + 9, yTop + 22]){                               // planchers
+      R(Wl.x + 1, yy, Wl.w - 2, 3, '#b07a3f'); R(Wl.x + 1, yy, Wl.w - 2, 1, '#d39a57'); shade(Wl.x + 1, yy + 3, Wl.w - 2, 1, .35);
+    }
+  }
+  function tape(x, y, w){ for(let k = 0; k < w; k += 4) R(x + k, y, Math.min(4, w - k), 2, (k >> 2) % 2 ? '#2a1a10' : '#f2c230'); }
+  function tapeV(x, y, h){ for(let k = 0; k < h; k += 4) R(x, y + k, 2, Math.min(4, h - k), (k >> 2) % 2 ? '#2a1a10' : '#f2c230'); }
+  function tapePost(x, y){ shade(x - 1, y, 4, 1, .35); R(x, y - 7, 2, 7, '#d9d2c3'); R(x, y - 7, 2, 1, '#ff6a2b'); }
+  function cone(x, y){                                                    // plot de chantier (pied au point x, y)
+    shade(x - 5, y + 1, 11, 1, .3);
+    for(let j = 0; j < 8; j++){ const hw = j >> 1; R(x - hw, y - 8 + j, 2 * hw + 1, 1, j === 3 || j === 4 ? '#f4efe6' : '#ff6a2b'); }
+    R(x - 5, y, 11, 2, '#b8441a');
+  }
+  function sand(x, y){ for(let j = 0; j < 6; j++){ const hw = 2 + j * 2; R(x - hw, y - 6 + j, 2 * hw, 1, j < 2 ? '#e6c27a' : '#d1a95e'); } shade(x - 13, y, 26, 1, .25); }
+  function bricks(x, y){ for(let row = 0; row < 3; row++) for(let c = 0; c < 2 - (row > 1); c++){ R(x + c * 7 + (row > 1 ? 3 : 0), y - 4 * (row + 1), 6, 3, '#a8603f'); R(x + c * 7 + (row > 1 ? 3 : 0), y - 4 * (row + 1), 6, 1, '#c9794f'); } }
+  function sack(x, y){ R(x, y - 5, 7, 5, '#d8cfb8'); R(x, y - 5, 7, 1, '#efe8d6'); R(x + 2, y - 3, 3, 1, '#9b8f75'); out(x, y - 5, 7, 5); }
+  function barrow(x, y){
+    shade(x - 2, y, 18, 1, .3);
+    R(x, y - 7, 12, 4, '#4f7fa6'); R(x, y - 7, 12, 1, '#7fb0d6'); R(x + 1, y - 3, 10, 1, '#365a78');
+    R(x - 2, y - 3, 3, 3, '#2b2b2b'); R(x - 1, y - 2, 1, 1, '#777');
+    R(x + 12, y - 5, 5, 1, '#6b4b2e'); R(x + 10, y - 3, 1, 3, '#555');
+  }
   function drawSite(r){
-    const P = {x:r.x * T, y:r.y * T, w:r.w * T, h:r.h * T};
+    const z = cpZones(r), {P, F, Wl} = z, rnd = cpRng(91 + r.id * 7);
     g.save(); g.beginPath(); g.rect(P.x, P.y, P.w, P.h); g.clip();
-    R(P.x, P.y, P.w, P.h, '#4a3d33');
-    for(let yy = P.y + 3; yy < P.y + P.h; yy += 6) for(let xx = P.x + 3 + (yy / 6 % 2 ? 3 : 0); xx < P.x + P.w; xx += 6) R(xx, yy, 1, 1, '#5b4c40');
-    for(let k = 0; k < 2 * (P.w + P.h); k += 4){                         // rubalise jaune et noire sur le pourtour
-      const c = (k / 4) % 2 ? '#2a1a10' : '#f2c230';
-      if(k < P.w) R(P.x + k, P.y, 4, 3, c);
-      else if(k < P.w + P.h) R(P.x + P.w - 3, P.y + k - P.w, 3, 4, c);
-      else if(k < 2 * P.w + P.h) R(P.x + P.w - (k - P.w - P.h) - 4, P.y + P.h - 3, 4, 3, c);
-      else R(P.x, P.y + P.h - (k - 2 * P.w - P.h) - 4, 3, 4, c);
+    // dalle de béton : joints tous les 2 cases, grains, quelques fissures
+    R(P.x, P.y, P.w, P.h, '#5d5249');
+    for(let xx = P.x + 2 * T; xx < P.x + P.w; xx += 2 * T) R(xx, P.y, 1, P.h, '#51473f');
+    for(let yy = P.y + 2 * T; yy < P.y + P.h; yy += 2 * T) R(P.x, yy, P.w, 1, '#51473f');
+    for(let k = 0; k < P.w * P.h / 28; k++) R(P.x + Math.floor(rnd() * P.w), P.y + Math.floor(rnd() * P.h), 1, 1, rnd() < .5 ? '#6e6258' : '#4f453d');
+    for(let k = 0; k < 2; k++){ let x = P.x + 8 + Math.floor(rnd() * (P.w - 16)), y = F.y + Math.floor(rnd() * Math.max(1, F.h - 8));
+      for(let s = 0; s < 7; s++){ R(x, y, 1, 1, '#463d36'); x += rnd() < .5 ? 1 : 0; y += 1; } }
+    // mur du fond : briques montées jusqu'à mi-hauteur, haut irrégulier
+    const wy = Wl.y, wb = Wl.y + WH;
+    for(let col = 0, x = Wl.x; x < Wl.x + Wl.w; x += 8, col++){
+      const top = wy + 12 + Math.floor(rnd() * 3) * 4;
+      for(let y = wb - 4, row = 0; y >= top; y -= 4, row++){
+        const ox = row % 2 ? 4 : 0, bx = Math.max(Wl.x, x - ox), bw = Math.min(x - ox + 8, Wl.x + Wl.w) - bx;
+        if(bw > 1){ R(bx, y, bw - 1, 3, ['#9c5638', '#a8603f', '#8e4d31'][(col + row) % 3]); R(bx, y + 3, bw, 1, '#6d4a3a'); }
+      }
+    }
+    // murs de côté et façade : premiers rangs de briques sur l'épaisseur des murs
+    for(const x of [P.x, P.x + P.w - CAP]) for(let y = P.y + CAP; y < P.y + P.h - FRONT; y += 4){ R(x, y, CAP, 3, '#8e4d31'); R(x, y + 3, CAP, 1, '#6d4a3a'); }
+    for(let x = P.x; x < P.x + P.w; x += 8){ R(x, P.y + P.h - FRONT - CAP, 7, 3, '#8e4d31'); R(x, P.y + P.h - FRONT, 7, FRONT - 1, '#7a4029'); }
+    scaffold(Wl, P.y + 2, F.y + 6);
+    // rubalise sur poteaux le long de l'avant et des côtés
+    const ty = P.y + P.h - FRONT - CAP - 6, lx = F.x + 2, rx = F.x + F.w - 4;
+    tape(lx, ty - 5, rx - lx + 2); tapeV(lx, F.y + 10, ty - F.y - 12); tapeV(rx, F.y + 10, ty - F.y - 12);
+    tapePost(lx, ty); tapePost(rx, ty); tapePost(lx, F.y + 12); tapePost(rx, F.y + 12);
+    // matériel, posé sur la dalle (seulement s'il y a la place)
+    const fx = F.x + 8, fw = F.w - 16, fy = F.y + 14, fh = ty - 10 - fy;
+    if(fw > 20 && fh > 6){
+      sand(fx + 12, fy + Math.min(fh, 10));
+      if(fw > 34) bricks(fx + fw - 16, fy + Math.min(fh, 12));
+      if(fh > 16) cone(fx + 4, fy + fh);
+      if(fh > 16 && fw > 40) barrow(fx + (fw >> 1) - 4, fy + fh);
+      if(fh > 16 && fw > 56) sack(fx + fw - 10, fy + fh);
     }
     g.restore();
   }
+  // Guichet en travaux (amélioration) : échafaudage devant le mur du fond, rubalise et plot devant le comptoir
+  function siteOver(r){
+    const z = cpZones(r), {P, F, Wl} = z;
+    g.save(); g.beginPath(); g.rect(P.x, P.y, P.w, P.h); g.clip();
+    scaffold(Wl, P.y + 2, F.y + 6);
+    tape(F.x + 2, F.y + F.h - 3, F.w - 4); tapePost(F.x + 2, F.y + F.h - 1); tapePost(F.x + F.w - 4, F.y + F.h - 1);
+    cone(F.x + F.w - 14, F.y + F.h - 5);
+    g.restore();
+  }
   cpRooms.forEach((r, i) => r.built === false ? drawSite(r) : drawRoom(r, i));
+  if(cpBuild && cpBuild.kind === 'box_office'){ const bo = cpRooms.find(r => r.type === 'box_office'); if(bo) siteOver(bo); }
 }
 // État du serveur → plan (redessiné seulement si les pièces ou la grille changent)
 function cinePlanSet(st){
   const rooms = st.rooms.map(r => ({id:r.id, type:r.type, size:r.size, x:r.x, y:r.y, w:r.w, h:r.h, built:r.built, doors:r.doors || []}));
-  const sig = JSON.stringify([st.grid, rooms]);
+  const build = st.build ? {kind:st.build.kind, room_id:st.build.room_id} : null;
+  const sig = JSON.stringify([st.grid, rooms, build]);
   if(sig === cpSig) return;
   const first = !cpSig;
-  cpSig = sig; cpRooms = rooms; cpGrid = {cols:+st.grid.cols, rows:+st.grid.rows};
+  cpSig = sig; cpRooms = rooms; cpBuild = build; cpGrid = {cols:+st.grid.cols, rows:+st.grid.rows};
   $('#cinePlan').setAttribute('aria-label', `Plan du cinéma : ${rooms.length} pièces. Glisse pour te déplacer, pince pour zoomer.`);
   if(!cpv.ready) return;                                    // dessiné à la 1re mise en page
   cpRender(cpCanvas); cpScale();
@@ -5406,7 +5533,7 @@ window.addEventListener('resize', () => { if(cpv.ready && (window.devicePixelRat
   const two = () => { const [a, b] = [...pts.values()]; return {d:Math.hypot(a.x - b.x, a.y - b.y), m:rel({x:(a.x + b.x) / 2, y:(a.y + b.y) / 2})}; };
   const startDrag = p => { drag = {dx:p.x - cpv.x, dy:p.y - cpv.y}; };
   cpPlan.addEventListener('pointerdown', e => {
-    if(!cpv.ready) return;
+    if(!cpv.ready || e.target.closest('.cp-fin')) return;      // bouton posé sur le plan : clic normal
     cpPlan.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if(pts.size === 1){ startDrag({x:e.clientX, y:e.clientY}); cpPlan.classList.add('grabbing'); tap = {id:e.pointerId, x:e.clientX, y:e.clientY}; }

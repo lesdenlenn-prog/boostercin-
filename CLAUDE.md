@@ -222,6 +222,15 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      déplace l'aperçu. Vert/rouge et porte dorée calculés par `cineDoor` / `cineCheck`, copies exactes de `_cine_door` et
      des contrôles de `cine_build_room` (mêmes messages) ; le serveur revérifie. 🔨 bascule la surbrillance ; Échap ferme.
      Test : `node supabase/tests/cinema_rules.mjs .env index.html 800` compare client et serveur (800 placements, 0 écart).
+   - **J4** (à tester) : chantier dessiné dans le canvas (`drawSite`, dans le rectangle de la pièce, clip) : dalle de béton
+     à joints, mur du fond en briques à moitié monté, échafaudage (`scaffold` : poteaux, planchers, croisillons), premiers
+     rangs de briques sur les murs, rubalise sur poteaux, matériel selon la place (sable, briques, plot, brouette, sac ;
+     graine = id de la pièce). Amélioration du guichet : échafaudage + rubalise par-dessus le guichet (`siteOver`).
+     `cpBuild` ({kind, room_id}) fait partie de la signature du plan. Étiquette HTML `.cp-tag` dans `#cpTags` (dans la
+     scène : suit glissement et zoom, texte net) au centre de la pièce : nom, temps restant (chaque seconde,
+     `tickPlanTags`), « Finir N 💎 » → fenêtre de paiement (prix = `gemPriceNow`, le serveur refuse s'il a monté) ; le
+     pointerdown sur `.cp-fin` n'est pas capturé par le plan. Chantier terminé (état précédent comparé dans
+     `applyCinema`) : « ✨ Terminé ! » / « Guichet niv. n ! » qui s'envole (`planBurst`, transform + opacity).
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
