@@ -95,95 +95,95 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   text-shadow:0 0 10px rgba(246,196,83,.45)}
 
 /* =====================================================================
-   CINÉMA (mode gestion) : plan en haut (~60 %), caisse en bas.
+   CINÉMA (mode gestion) : le plan occupe toute la page, du haut jusqu'à la barre du bas ; tout se joue par-dessus
+   (Billets + gemmes du HUD en haut, colonne de boutons ronds à droite, caisse flottante en bas, panneau « Mes pièces »).
    Seuls transform et opacity sont animés ; rien ne bouge avec prefers-reduced-motion.
    ===================================================================== */
-.view-cine{display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;   /* le bas de page défile sous le plan */
-  padding-top:calc(env(safe-area-inset-top,0px) + 86px);   /* sous le HUD (Billets + gemmes) */
-  background:radial-gradient(70% 38% at 50% 0%,rgba(255,196,140,.12),transparent 70%),
-             radial-gradient(120% 80% at 50% 35%,#3a0b13 0%,#16070b 60%,#0b0406 100%)}
-.cine-title{position:absolute;left:18px;top:calc(env(safe-area-inset-top,0px) + 22px);margin:0;
-  font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:clamp(1.2rem,6.2vw,1.7rem);letter-spacing:.04em;
-  color:#fff1c4;text-shadow:0 0 10px rgba(246,196,83,.45)}
+.view-cine{overflow:hidden;background:#221630}
 /* plan pixel art : cadre qui masque le canvas ; le canvas glisse (transform) et s'agrandit par paliers entiers */
-.cine-plan{position:relative;flex:none;height:clamp(280px,56vh,640px);height:clamp(280px,56svh,640px);margin:0 10px;overflow:hidden;border-radius:14px;
-  background:#221630;box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.28),0 6px 18px rgba(0,0,0,.35);
+.cine-plan{position:absolute;left:0;right:0;top:0;bottom:var(--bar);overflow:hidden;background:#221630;
   touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
 .cine-plan.grabbing{cursor:grabbing}
 #cpCanvas{position:absolute;left:0;top:0;display:block;transform-origin:0 0;will-change:transform;
   image-rendering:crisp-edges;image-rendering:pixelated}
-.cine-foot{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 14px 12px}
-.cine-rate{margin:0;font-weight:800;font-size:.95rem;color:#ffe3da;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.cine-rate > span:first-child{display:flex;align-items:center;gap:5px}
-.cine-rate b{color:#8af5b9}
-.cine-rate svg{width:20px;height:20px}
-.cine-collect{position:relative;overflow:hidden;width:100%;max-width:340px;height:58px;padding:0 18px;border:0;border-radius:16px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  background:#2a0a10;color:#fff6e0;font-weight:800;font-size:1.08rem;text-shadow:0 1px 2px rgba(0,0,0,.5);
-  box-shadow:inset 0 0 0 2px rgba(138,245,185,.5),0 6px 16px rgba(0,0,0,.35);transition:transform .12s ease,opacity .2s}
-.cine-collect:not(:disabled):active{transform:scale(.97)}
-.cine-collect:disabled{opacity:.55;cursor:default}
-/* jauge de remplissage sur 12 h : scaleX seulement */
-.cc-fill{position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(0);
-  background:linear-gradient(90deg,#14693c,#2fbf71);transition:transform 1s linear}
-.cine-collect.full{box-shadow:inset 0 0 0 2px #f6c453,0 0 18px rgba(246,196,83,.45),0 6px 16px rgba(0,0,0,.35)}
-.cine-collect.full .cc-fill{background:linear-gradient(90deg,#b77a12,#f6c453)}
-.cc-label,.cc-amount{position:relative}
-.cc-amount{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
-.cc-amount svg{width:24px;height:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.cine-ui{position:absolute;z-index:4}
+/* colonne de boutons ronds, à droite sous les compteurs */
+.cine-side{right:10px;top:calc(env(safe-area-inset-top,0px) + 92px);display:flex;flex-direction:column;gap:10px}
+.cside-btn{position:relative;width:46px;height:46px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;
+  font-size:1.35rem;line-height:1;background:radial-gradient(circle at 50% 35%,#5a1a26,#2a0a10 75%);color:#fff1c4;
+  box-shadow:inset 0 0 0 2px rgba(246,196,83,.55),0 4px 10px rgba(0,0,0,.45);transition:transform .12s ease}
+.cside-btn:active{transform:scale(.92)}
+.cside-btn[aria-pressed="true"]{box-shadow:inset 0 0 0 2.5px #f6c453,0 0 14px rgba(246,196,83,.55),0 4px 10px rgba(0,0,0,.45)}
+.cside-btn.adm{width:38px;height:38px;margin-left:8px;font-size:1.05rem;background:#2a0a10;
+  box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.6),0 3px 8px rgba(0,0,0,.4)}
+.cside-btn.adm[hidden]{display:none}
+.cside-dot{position:absolute;right:-2px;top:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;
+  background:#f6c453;color:#2a0a10;font-size:.62rem;font-weight:800;line-height:16px;font-style:normal}
+.cside-dot[hidden]{display:none}
+/* caisse flottante : anneau de remplissage sur 12 h, montant, revenu par heure */
+.cine-bottom{left:50%;bottom:calc(var(--bar) + 14px);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;
+  width:max-content;max-width:calc(100% - 24px)}
+.cine-collect{position:relative;display:flex;align-items:center;gap:10px;min-height:60px;padding:6px 18px 6px 7px;border:0;border-radius:99px;
+  background:linear-gradient(180deg,#3d0f17,#2a0a10);color:#fff6e0;text-align:left;
+  box-shadow:inset 0 0 0 2px rgba(138,245,185,.5),0 6px 16px rgba(0,0,0,.5);transition:transform .12s ease,opacity .2s}
+.cine-collect:not(:disabled):active{transform:scale(.96)}
+.cine-collect:disabled{opacity:.75;cursor:default}
+.cine-collect.full{box-shadow:inset 0 0 0 2px #f6c453,0 0 18px rgba(246,196,83,.5),0 6px 16px rgba(0,0,0,.5)}
+.cc-ring{flex:none;position:relative;width:48px;height:48px}
+.cc-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.cc-ring circle{fill:none;stroke-width:5}
+.cc-ring .bg{stroke:rgba(255,255,255,.12)}
+.cc-ring .fg{stroke:#2fbf71;stroke-linecap:round}
+.cine-collect.full .cc-ring .fg{stroke:#f6c453}
+.cc-ring .ico{position:absolute;inset:0;display:grid;place-items:center}
+.cc-ring .ico svg{position:static;width:24px;height:24px;transform:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.cc-txt{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.cc-label{font-weight:800;font-size:.98rem;text-shadow:0 1px 2px rgba(0,0,0,.5);white-space:nowrap}
+.cc-amount{font-weight:800;font-size:1.15rem;color:#8af5b9;font-variant-numeric:tabular-nums}
+.cine-collect.full .cc-amount{color:#f6c453}
+.cc-rate{font-size:.72rem;font-weight:700;color:rgba(255,227,218,.8);white-space:nowrap;font-variant-numeric:tabular-nums}
 .cc-float{position:absolute;left:50%;top:0;z-index:2;pointer-events:none;font-weight:800;font-size:1.3rem;color:#8af5b9;
   text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap}
-.cine-cap{font-weight:600;font-size:.78rem;color:rgba(255,227,218,.7)}
-.cine-cap:not(:empty)::before{content:'·';margin:0 6px 0 2px}
-.cine-cap.full{color:#f6c453}
-/* bandeau du chantier en cours */
-.cine-site{width:100%;max-width:340px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:14px;
-  background:rgba(246,196,83,.1);box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.45)}
-.cine-site[hidden]{display:none}
-.cs-ico{font-size:1.2rem}
-.cs-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
-.cs-txt b{font-size:.85rem;color:#fff1c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cs-txt span{font-size:.78rem;font-weight:700;color:#ffe3da;font-variant-numeric:tabular-nums}
-.cs-finish{flex:none;display:flex;align-items:center;gap:4px;min-height:38px;padding:0 12px;border:0;border-radius:11px;
-  background:linear-gradient(180deg,#c79bff,#8a3ffc);color:#fff;font-weight:800;font-size:.85rem;
-  box-shadow:inset 0 0 0 1.5px #3b0d8f,0 3px 0 #3b0d8f;transition:transform .12s ease}
-.cs-finish:active{transform:translateY(2px)}
-.cs-finish svg{width:18px;height:18px}
-/* menu à onglets Salles / Arcade / Guichet / Équipements */
-.cine-tabs{width:100%;max-width:340px;display:flex;gap:3px;padding:3px;border-radius:12px;background:rgba(0,0,0,.35)}
-.cine-tabs button{flex:1 1 0;min-width:0;min-height:32px;padding:0 2px;border:0;border-radius:9px;background:transparent;
-  color:#e9d6cf;font-weight:800;font-size:clamp(.66rem,2.9vw,.76rem);letter-spacing:-.01em;white-space:nowrap}
-.cine-tabs button[aria-selected="true"]{background:#5a1620;color:#fff1c4;box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55)}
-.cine-cards{width:100%;max-width:340px;display:grid;gap:6px}
-.cine-cards.equip{grid-template-columns:repeat(3,minmax(0,1fr))}
-.bcard{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 8px 8px 10px;border-radius:14px;
-  background:linear-gradient(180deg,#3d0f17,#2a0a10);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.25)}
-.bc-ico{flex:none;font-size:1.6rem;line-height:1}
-.bc-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.2}
-.bc-main b{font-size:.9rem;color:#fff1c4}
-.bc-main span{font-size:.74rem;color:#e9d6cf}
-.bc-main .bc-gain{color:#8af5b9;font-weight:800}
-.bc-buy{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:86px;min-height:46px;
-  padding:3px 8px;border:0;border-radius:11px;background:linear-gradient(180deg,#46d98a,#1f9a57);color:#06301a;
-  font-weight:800;font-size:.88rem;box-shadow:inset 0 0 0 1.5px #0b4728,0 3px 0 #0b4728;transition:transform .12s ease}
-.bc-buy:active{transform:translateY(2px)}
-.bc-buy .bc-cost{display:flex;align-items:center;gap:3px}
-.bc-buy svg{width:17px;height:17px}
-.bc-buy small{font-size:.68rem;font-weight:700;opacity:.85}
-.bc-buy.no{background:#3a2a2c;color:#c9b3ae;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.4)}
-.bc-buy:disabled{opacity:.7}
-/* équipements : 3 petites cartes en colonne */
-.equip .bcard{flex-direction:column;align-items:stretch;gap:5px;padding:8px 6px;text-align:center}
-.equip .bc-ico{font-size:1.4rem}
-.equip .bc-main b{font-size:.8rem}
-.equip .bc-buy{min-width:0;min-height:42px;padding:3px 4px;font-size:.8rem}
-.bcard.nudge{animation:nudge .4s ease}
-.cine-err{margin:0;font-size:.85rem;font-weight:700;color:#ffb3a3;text-align:center}
-.cine-admin{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:4px}
-.cine-admin[hidden]{display:none}
-.cine-admin button{min-height:32px;padding:0 10px;border:1.5px dashed rgba(255,140,120,.5);border-radius:10px;
-  background:transparent;color:#ffb3a3;font-weight:800;font-size:.7rem;letter-spacing:.04em}
-@media (prefers-reduced-motion:reduce){.cc-fill{transition:none}}
+.cine-err{margin:0;max-width:300px;padding:6px 12px;border-radius:12px;background:rgba(20,4,8,.9);
+  font-size:.82rem;font-weight:700;color:#ffb3a3;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,140,120,.4)}
+.cine-err[hidden]{display:none}
+/* panneau « Mes pièces » : feuille qui monte du bas, au-dessus de la caisse */
+.cine-sheet{left:0;right:0;bottom:var(--bar);z-index:6;max-height:62%;display:flex;flex-direction:column;
+  border-radius:18px 18px 0 0;background:linear-gradient(180deg,#3a0d16,#1c060b);
+  box-shadow:0 -8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(246,196,83,.35);
+  transform:translateY(105%);opacity:0;visibility:hidden;transition:transform .28s cubic-bezier(.22,.8,.24,1),opacity .2s,visibility .28s}
+.cine-sheet.on{transform:none;opacity:1;visibility:visible}
+.csh-head{flex:none;display:flex;align-items:center;gap:8px;padding:12px 12px 8px 18px}
+.csh-head h3{margin:0;flex:1;font-family:'Limelight','Bricolage Grotesque',serif;font-weight:400;font-size:1.3rem;color:#fff1c4}
+.csh-head p{margin:0;font-size:.78rem;font-weight:700;color:#8af5b9}
+.csh-close{flex:none;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#fff1c4;font-size:1.1rem}
+.csh-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:6px;padding:0 12px 14px}
+.rm-row{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 8px 8px 10px;border-radius:14px;
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.2)}
+.rm-row.site{box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55);background:rgba(246,196,83,.08)}
+.rm-ico{flex:none;font-size:1.5rem;line-height:1}
+.rm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.25}
+.rm-main b{font-size:.88rem;color:#fff1c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-main span{font-size:.74rem;color:#e9d6cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-main .gain{color:#8af5b9;font-weight:800}
+.rm-main .empty{font-style:italic;opacity:.7}
+.rm-act{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;min-width:78px;min-height:40px;padding:3px 10px;
+  border:0;border-radius:11px;background:linear-gradient(180deg,#46d98a,#1f9a57);color:#06301a;font-weight:800;font-size:.8rem;
+  line-height:1.1;box-shadow:inset 0 0 0 1.5px #0b4728,0 3px 0 #0b4728;transition:transform .12s ease}
+.rm-act:active{transform:translateY(2px)}
+.rm-act svg{width:16px;height:16px}
+.rm-act.gem{background:linear-gradient(180deg,#c79bff,#8a3ffc);color:#fff;box-shadow:inset 0 0 0 1.5px #3b0d8f,0 3px 0 #3b0d8f}
+.rm-act.rm-film{background:rgba(255,255,255,.08);color:#fff1c4;box-shadow:inset 0 0 0 1.5px rgba(246,196,83,.55)}
+.rm-act.no{background:#3a2a2c;color:#c9b3ae;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.4)}
+.rm-act small{display:block;font-size:.64rem;font-weight:700;opacity:.85}
+.rm-act.rm-stack{flex-direction:column;gap:0}
+.rm-row.nudge{animation:nudge .4s ease}
+/* bulle d'information (ex. « Construire » arrive à l'étape suivante) */
+.cine-tip{left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);max-width:min(280px,calc(100% - 90px));
+  padding:8px 12px;border-radius:12px;background:rgba(20,4,8,.92);color:#fff1c4;font-size:.8rem;font-weight:700;text-align:center;
+  box-shadow:inset 0 0 0 1px rgba(246,196,83,.45);pointer-events:none;opacity:0;transition:opacity .25s}
+.cine-tip.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.cine-sheet,.cine-tip{transition:none}}
 /* HUD de la page Cinéma : Billets + gemmes, sans profil ni bobines */
 .res-tickets{display:none}
 .app[data-page="cinema"] .res-tickets{display:flex}
@@ -517,15 +517,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   background:rgba(4,30,16,.92);color:#8af5b9;font-weight:800;font-size:.6rem;white-space:nowrap;pointer-events:none;
   box-shadow:inset 0 0 0 1px rgba(138,245,185,.5)}
 .pk-tag.used{background:rgba(40,24,4,.92);color:#f6c453;box-shadow:inset 0 0 0 1px rgba(246,196,83,.6)}
-.cine-hint{grid-column:1 / -1;margin:0;text-align:center;font-size:.74rem;color:rgba(255,227,218,.65)}
-/* onglet Salles : une puce par salle pour choisir le film projeté */
-.cine-screens{grid-column:1 / -1;display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
-.cs-chip{display:flex;flex-direction:column;align-items:flex-start;min-width:0;max-width:150px;min-height:40px;padding:4px 10px;
-  border:0;border-radius:10px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(246,196,83,.32);
-  color:#ffe3da;font-size:.7rem;line-height:1.25;text-align:left}
-.cs-chip b{font-size:.72rem;color:#f6c453}
-.cs-chip span{max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cs-chip.empty span{opacity:.6;font-style:italic}
 
 /* =====================================================================
    MAGASIN
@@ -1642,38 +1633,41 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
         <button class="admin-only" id="resetCol" hidden>Vider ma collection</button>
       </footer>
     </section>
-    <!-- Cinéma (mode gestion) : plan SVG généré depuis l'état du serveur + caisse. Tout est calculé par Supabase. -->
+    <!-- Cinéma (mode gestion) : plan pixel art en plein écran, HUD par-dessus. Tout est calculé par Supabase (cine_*). -->
     <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
-      <h2 class="cine-title">Mon cinéma</h2>
-      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma : couloir d'accueil et guichet. Glisse pour te déplacer, pince pour zoomer."><canvas id="cpCanvas"></canvas></div>
-      <div class="cine-foot">
-        <p class="cine-rate"><span id="cineRate">&nbsp;</span><span class="cine-cap" id="cineCap" role="status"></span></p>
-        <button class="cine-collect" id="cineCollect" type="button" disabled>
-          <span class="cc-fill" id="cineFill"></span>
-          <span class="cc-label">Récolter la caisse</span>
-          <span class="cc-amount"><span id="cinePending">0</span><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg></span>
-        </button>
-        <p class="cine-err" id="cineErr" role="alert" hidden></p>
-        <!-- Chantier en cours : nom, minuteur, « Terminer » payé en gemmes (prix confirmé dans la fenêtre de paiement) -->
-        <div class="cine-site" id="cineSite" hidden>
-          <span class="cs-ico" aria-hidden="true">🚧</span>
-          <span class="cs-txt"><b id="csName"></b><span id="csTime"></span></span>
-          <button class="cs-finish" id="csFinish" type="button">Terminer <b id="csGems">0</b><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg></button>
-        </div>
-        <!-- Menu de construction -->
-        <div class="cine-tabs" id="cineTabs" role="tablist" aria-label="Constructions">
-          <button type="button" role="tab" data-tab="screen" aria-selected="true">Salles</button>
-          <button type="button" role="tab" data-tab="arcade" aria-selected="false">Arcade</button>
-          <button type="button" role="tab" data-tab="box_office" aria-selected="false">Guichet</button>
-          <button type="button" role="tab" data-tab="equip" aria-selected="false">Équipements</button>
-        </div>
-        <div class="cine-cards" id="cineCards" role="tabpanel"></div>
+      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><canvas id="cpCanvas"></canvas></div>
+      <!-- colonne de boutons ronds : Construire, Mes pièces, outils admin -->
+      <div class="cine-ui cine-side" id="cineSide">
+        <button class="cside-btn" id="cineBuild" type="button" aria-pressed="false" aria-label="Construire" title="Construire">🔨</button>
+        <button class="cside-btn" id="cineRoomsBtn" type="button" aria-expanded="false" aria-controls="cineSheet" aria-label="Mes pièces" title="Mes pièces">📋<i class="cside-dot" id="cineSiteDot" hidden>1</i></button>
         <!-- OUTILS DE TEST : réservés à l'admin -->
-        <div class="cine-admin admin-only" hidden>
-          <button type="button" id="cineAddT">+1 000 billets</button>
-          <button type="button" id="cineFinish">Terminer la construction</button>
-          <button type="button" id="cineReset">Réinitialiser le cinéma</button>
+        <button class="cside-btn adm admin-only" id="cineAddT" type="button" hidden aria-label="Admin : +1 000 billets" title="+1 000 billets">🎟️</button>
+        <button class="cside-btn adm admin-only" id="cineFinish" type="button" hidden aria-label="Admin : terminer le chantier" title="Terminer le chantier">⏩</button>
+        <button class="cside-btn adm admin-only" id="cineReset" type="button" hidden aria-label="Admin : revenir à la base" title="Revenir à la base">↺</button>
+      </div>
+      <p class="cine-ui cine-tip" id="cineTip" role="status"></p>
+      <!-- caisse flottante -->
+      <div class="cine-ui cine-bottom">
+        <p class="cine-err" id="cineErr" role="alert" hidden></p>
+        <button class="cine-collect" id="cineCollect" type="button" disabled>
+          <span class="cc-ring" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><circle class="bg" cx="24" cy="24" r="21"/><circle class="fg" id="cineRing" cx="24" cy="24" r="21"/></svg>
+            <span class="ico"><svg viewBox="0 0 24 24"><use href="#ticket"/></svg></span>
+          </span>
+          <span class="cc-txt">
+            <span class="cc-label">Récolter la caisse</span>
+            <span class="cc-amount" id="cinePending">0</span>
+            <span class="cc-rate" id="cineRate" role="status">&nbsp;</span>
+          </span>
+        </button>
+      </div>
+      <!-- Mes pièces : liste, état, films projetés, chantier en cours, guichet -->
+      <div class="cine-ui cine-sheet" id="cineSheet" role="dialog" aria-modal="false" aria-labelledby="cineSheetTitle">
+        <div class="csh-head">
+          <div style="flex:1;min-width:0"><h3 id="cineSheetTitle">Mes pièces</h3><p id="cineSheetSum"></p></div>
+          <button class="csh-close" id="cineSheetClose" type="button" aria-label="Fermer">✕</button>
         </div>
+        <div class="csh-list" id="cineRooms"></div>
       </div>
     </section>
     <section class="view view-ph" id="view-friends" aria-label="Amis"><p>Menu en construction...</p></section>
@@ -2664,7 +2658,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => track.classList.remove('
   pagerEl.addEventListener('touchstart', e => {
     g = null;
     if(e.touches.length !== 1 || !canNavigate() || imOpen || imBusy || profileOpen || acctOpen) return;
-    if(e.target.closest('.fdrop, input, .cine-plan')) return;   // menu des filtres ouvert, ou plan du cinéma (il glisse lui-même)
+    if(e.target.closest('.fdrop, input, .cine-plan, .cine-ui')) return;   // menu des filtres ouvert, ou plan du cinéma et son HUD
     const t = e.touches[0];
     g = {x:t.clientX, y:t.clientY, dx:0, mode:null, w:pagerEl.clientWidth, hover:viewIdx, samples:[{x:t.clientX, t:e.timeStamp}]};
   }, {passive:true});
@@ -3320,12 +3314,12 @@ function renderPickList(){
     <div class="slots">${row.map(c => `<div class="slot" data-id="${c.id}" data-r="${c.rarity}">${c.rarity === 'ultra' ? '<i class="uhalo" aria-hidden="true"><i></i></i>' : ''}${cardHTML(c, {lazy:true})}${pickTarget === 'cine' ? cineTag(c) : ''}</div>`).join('')}</div></div></div>`).join('')}</div>`;
   pickList.scrollTop = 0;
 }
-// Deux usages : une case du Top Films (target 'top'), ou une salle du Cinéma (target 'cine', slotIndex = n° de salle)
+// Deux usages : une case du Top Films (target 'top'), ou une salle du Cinéma (target 'cine', slotIndex = id de la pièce)
 function openPicker(slotIndex, target = 'top'){
   pickSlot = slotIndex; pickTarget = target;
-  const screen = target === 'cine' && cine ? cine.st.screens.find(s => s.no === slotIndex) : null;
-  $('#pickTitle').textContent = target === 'cine' ? `Film de la salle ${slotIndex}` : `Top film n° ${slotIndex + 1}`;
-  $('#pickRemove').hidden = !(screen && screen.film_id);
+  const screen = target === 'cine' ? cineRoom(slotIndex) : null;
+  $('#pickTitle').textContent = target === 'cine' ? `Film de la ${screen ? roomName(screen).toLowerCase() : 'salle'}` : `Top film n° ${slotIndex + 1}`;
+  $('#pickRemove').hidden = !(screen && screen.film);
   $('#pickSpacer').hidden = !$('#pickRemove').hidden;
   pickQuery = ''; pkSearch.value = ''; pkClear.hidden = true;   // la recherche repart à zéro, le tri choisi est conservé
   closePickFilter();
@@ -4656,24 +4650,67 @@ $('#demoBtn').addEventListener('click', async () => {
 });
 
 /* =====================================================================
-   16 bis. CINÉMA (mode gestion)
-   Le serveur fait tout, à son heure : get_cinema_state, collect_cash, start_build, finish_build_with_gems, fonctions admin.
-   Ici : copie locale de l'état, caisse qui monte entre deux synchronisations (même calcul que _cinema_accrued),
-   plan SVG généré depuis l'état, menu de construction lu dans les tables d'équilibrage. Rien dans localStorage.
+   16 bis. CINÉMA (mode gestion, jouable sur le plan)
+   Le serveur fait tout, à son heure (fonctions cine_*, voir CLAUDE.md § 6) : pièces, prix, chantiers, revenus.
+   Ici : copie locale de l'état, caisse qui monte entre deux synchronisations (même calcul que _cine_accrued),
+   plan dessiné depuis state.rooms, HUD par-dessus le plan. Rien dans localStorage.
    ===================================================================== */
 let cine = null;                      // {st: état du serveur, recv/fullAt/buildEnd : horloge du téléphone}
 let cineSeq = 0, cineBusy = false, cineRefreshAt = 0;
 let ticketsTotal = 0;                 // Billets (copie d'affichage)
+let cineCfg = null;                   // {p: cine_params, rar: multiplicateurs de rareté}, lus une fois
 const valTickets = $('#valTickets');
-const cineCollect = $('#cineCollect'), cinePendingEl = $('#cinePending'), cineFill = $('#cineFill');
-const cineCap = $('#cineCap'), cineErr = $('#cineErr');
+const cineCollect = $('#cineCollect'), cinePendingEl = $('#cinePending'), cineRing = $('#cineRing'), cineErr = $('#cineErr');
+const cineSheet = $('#cineSheet'), cineRoomsBtn = $('#cineRoomsBtn');
+const RING_C = 2 * Math.PI * 21;      // circonférence de l'anneau (r = 21)
+cineRing.style.strokeDasharray = RING_C.toFixed(2);
+cineRing.style.strokeDashoffset = RING_C.toFixed(2);
 const fmtN = n => Number(n).toLocaleString('fr-FR', {maximumFractionDigits:1});
 // durée lisible : « 3 h 05 », « 12 min 30 s »
 function fmtDur(ms){
   const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
   return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min ${String(s % 60).padStart(2, '0')} s`;
 }
-function showCineErr(msg){ cineErr.textContent = msg || ''; cineErr.hidden = !msg; }
+// durée d'un chantier : « 45 min », « 1 h 30 », « 12 h »
+const fmtMin = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}`;
+const TICKET_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg>';
+const GEM_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg>';
+let cineErrT = 0;
+function showCineErr(msg){
+  cineErr.textContent = msg || ''; cineErr.hidden = !msg;
+  clearTimeout(cineErrT); if(msg) cineErrT = setTimeout(() => { cineErr.hidden = true; }, 5000);
+}
+let cineTipT = 0;
+function cineTip(msg){
+  const t = $('#cineTip'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(cineTipT); cineTipT = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+// Types de pièces : icône et nom affichés
+const ROOM_INFO = {
+  hall:       {ico:'🚪', name:'Couloir d\'accueil'},
+  box_office: {ico:'🎟️', name:'Guichet'},
+  projection: {ico:'🎬', name:'Salle'},
+  arcade:     {ico:'🕹️', name:'Arcade'},
+  toilets:    {ico:'🚻', name:'Toilettes'},
+  snacks:     {ico:'🍿', name:'Boutique'},
+  corridor:   {ico:'🧱', name:'Couloir'},
+};
+const SIZE_NAME = {S:'petite', M:'moyenne', L:'grande'};
+// Nom d'une pièce : « Salle 2 », « Arcade », « Toilettes 2 »… (numéro dans l'ordre de construction de son type)
+function roomName(r){
+  const same = cine ? cine.st.rooms.filter(x => x.type === r.type) : [r];
+  const n = same.findIndex(x => x.id === r.id) + 1;
+  return ROOM_INFO[r.type].name + (r.type === 'projection' || same.length > 1 ? ' ' + n : '');
+}
+const cineRoom = id => cine && cine.st.rooms.find(r => r.id === id);
+// Nom du chantier en cours : la pièce, ou « Guichet niv. n »
+function buildName(b){
+  if(!b) return '';
+  if(b.kind === 'box_office') return `Guichet niv. ${b.level}`;
+  const r = cineRoom(b.room_id);
+  return r ? roomName(r) : 'Construction';
+}
 
 // État du serveur → affichage (les dates du serveur sont converties en horloge du téléphone via server_now)
 function applyCinema(st, {bump = false} = {}){
@@ -4684,10 +4721,9 @@ function applyCinema(st, {bump = false} = {}){
   valTickets.textContent = ticketsTotal.toLocaleString('fr-FR');
   if(bump){ valTickets.classList.remove('bump'); void valTickets.offsetWidth; valTickets.classList.add('bump'); }
   if(gemsTotal !== st.gems){ gemsTotal = st.gems; renderWallet(); }
-  $('#cineRate').innerHTML = `<b>+${fmtN(st.rate)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg> par heure`;
-  $('#cineSite').hidden = !st.build;
-  if(st.build) $('#csName').textContent = buildName(st.build.kind, st.build.level);
-  renderCineCards();
+  $('#cineSiteDot').hidden = !st.build;
+  cinePlanSet(st);
+  renderCineRooms();
   if(payOpen && payModal.dataset.ctx === 'cine' && !st.build) closePayPopup();   // chantier fini entre-temps
   tickCinema();
 }
@@ -4701,17 +4737,17 @@ function tickCinema(){
   if(!cine) return;
   const now = Date.now(), capMs = cine.st.cap_hours * 3600e3;
   const pending = Math.floor(cinePending(now)), full = now >= cine.fullAt;
+  const fill = clamp(1 - (cine.fullAt - now) / capMs, 0, 1);
   cinePendingEl.textContent = pending.toLocaleString('fr-FR');
-  cineFill.style.transform = `scaleX(${clamp(1 - (cine.fullAt - now) / capMs, 0, 1).toFixed(4)})`;   // jauge sur 12 h
+  cineRing.style.strokeDashoffset = (RING_C * (1 - fill)).toFixed(2);             // anneau sur 12 h
   cineCollect.classList.toggle('full', full);
   cineCollect.disabled = cineBusy || pending < 1;
-  cineCap.textContent = full ? 'caisse pleine !' : `pleine dans ${fmtDur(cine.fullAt - now)}`;
-  cineCap.classList.toggle('full', full);
-  if(cine.st.build){                                          // bandeau du chantier : minuteur + prix en gemmes du moment
-    const left = cine.buildEnd - now;
-    $('#csTime').textContent = left > 0 ? `encore ${fmtDur(left)}` : 'Finition…';
-    $('#csGems').textContent = gemPriceNow(now);
-    $('#csFinish').disabled = left <= 0;
+  $('#cineRate').textContent = `+${fmtN(cine.st.rate)} / h · ` + (full ? 'caisse pleine !' : `pleine dans ${fmtDur(cine.fullAt - now)}`);
+  cineCollect.setAttribute('aria-label', `Récolter la caisse : ${pending} billets`);
+  if(cine.st.build && cineSheet.classList.contains('on')){                 // chantier : minuteur + prix en gemmes du moment
+    const left = cine.buildEnd - now, t = $('#rmSiteTime'), gb = $('#rmSiteGems');
+    if(t) t.textContent = left > 0 ? `encore ${fmtDur(left)}` : 'Finition…';
+    if(gb){ gb.textContent = gemPriceNow(now); gb.closest('button').disabled = left <= 0; }
   }
   // construction échue : le serveur la termine à la prochaine lecture (au plus une relecture toutes les 5 s)
   if(cine.buildEnd && now >= cine.buildEnd + 500 && now > cineRefreshAt){ cineRefreshAt = now + 5000; loadCinema(); }
@@ -4719,27 +4755,43 @@ function tickCinema(){
 setInterval(() => { if(currentView === 'cinema' && !document.hidden) tickCinema(); }, 1000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden && currentView === 'cinema') loadCinema(); });
 
+async function loadCineConfig(){
+  if(cineCfg) return;
+  const [pr, ra] = await Promise.all([sb.from('cine_params').select('key,value'), sb.from('cinema_rarity').select('rarity,mult')]);
+  const bad = pr.error || ra.error;
+  if(bad) throw new Error(netMsg(bad.message));
+  const cfg = {p:{}, rar:{}};
+  pr.data.forEach(r => { cfg.p[r.key] = Number(r.value); });
+  ra.data.forEach(r => { cfg.rar[r.rarity] = Number(r.mult); });
+  cineCfg = cfg;
+}
 async function loadCinema(){
   if(!userId) return;
   const seq = cineSeq;
   try{
-    const [st] = await Promise.all([rpc('get_cinema_state'), loadCineConfig()]);
+    const [st] = await Promise.all([rpc('cine_get_state'), loadCineConfig()]);
     if(seq === cineSeq && !cineBusy){ applyCinema(st); showCineErr(''); }
   }catch(e){ if(!cine) showCineErr(e.message); }      // hors ligne : on garde la copie locale
+}
+// Appel au serveur qui renvoie {ok, state, message} : état appliqué, refus expliqué sur place
+async function cineCall(fn, args, {bump = false} = {}){
+  if(cineBusy) return null;
+  cineBusy = true; buzz(12);
+  try{
+    const r = await rpc(fn, args);
+    cineBusy = false;
+    applyCinema(r.state || r, {bump});
+    showCineErr(r.ok === false ? r.message : '');
+    return r;
+  }catch(err){ showCineErr(err.message); return null; }
+  finally{ cineBusy = false; tickCinema(); }
 }
 
 // « Récolter la caisse » : le serveur crédite floor(caisse) et relance les 12 h
 cineCollect.addEventListener('click', async () => {
-  if(cineBusy || !cine) return;
-  cineBusy = true; cineCollect.disabled = true; buzz(12);
-  try{
-    const r = await rpc('collect_cash');
-    cineBusy = false;
-    applyCinema(r.state, {bump: r.collected > 0});
-    if(r.collected > 0) floatGain(r.collected);
-    showCineErr('');
-  }catch(e){ showCineErr(e.message); }
-  finally{ cineBusy = false; tickCinema(); }
+  if(!cine) return;
+  const r = await cineCall('cine_collect', {}, {bump:true});
+  if(r && r.collected > 0) floatGain(r.collected);
 });
 // « +N » qui s'envole au-dessus du bouton (transform + opacity seulement)
 function floatGain(n){
@@ -4754,50 +4806,91 @@ function floatGain(n){
        {duration:1100, easing:'cubic-bezier(.2,.8,.3,1)'}).then(() => el.remove());
 }
 
-// OUTILS DE TEST (admin) : +1 000 billets, terminer la construction, remise à zéro
+// « Construire » : le choix d'une case arrive à l'étape J3
+$('#cineBuild').addEventListener('click', () => { buzz(6); cineTip('Bientôt : touche une case violette collée au cinéma pour y construire une pièce.'); });
+
+// OUTILS DE TEST (admin) : +1 000 billets, terminer le chantier, retour à la base
 async function cineAdmin(fn, args){
-  try{ applyCinema(await rpc(fn, args), {bump: fn === 'admin_add_tickets'}); }catch(err){ adminError(err); }
+  try{ applyCinema(await rpc(fn, args), {bump: fn === 'cine_admin_add_tickets'}); }catch(err){ adminError(err); }
 }
-$('#cineAddT').addEventListener('click', () => cineAdmin('admin_add_tickets', {p_amount:1000}));
-$('#cineFinish').addEventListener('click', () => cineAdmin('admin_finish_build'));
+$('#cineAddT').addEventListener('click', () => cineAdmin('cine_admin_add_tickets', {p_amount:1000}));
+$('#cineFinish').addEventListener('click', () => cineAdmin('cine_admin_finish_build'));
 $('#cineReset').addEventListener('click', () => {
-  if(confirm('Remettre le cinéma à zéro (salles, niveaux, billets) ? La collection ne bouge pas.')) cineAdmin('admin_reset_cinema');
+  if(confirm('Remettre le cinéma à la base (couloir + guichet) ? Les pièces et les machines disparaissent ; billets, gemmes et collection ne bougent pas.')) cineAdmin('cine_admin_reset');
 });
 
-/* ---------- Constructions (C3) ----------
-   Coûts, durées, revenus et bonus viennent des tables d'équilibrage (cinema_levels, cinema_params), lues une fois.
-   Le client ne fait qu'afficher et demander : start_build et finish_build_with_gems revérifient tout. */
-let cineCfg = null;                    // {lv: {kind: {niveau: ligne}}, p: {cap_hours, empty_mult, gem_minutes}}
-let cineTab = 'screen';
-const BUILD_INFO = {
-  screen:     {ico:'🎬', name:'Salle'},
-  arcade:     {ico:'🕹️', name:'Arcade'},
-  box_office: {ico:'🎟️', name:'Guichet'},
-  popcorn:    {ico:'🍿', name:'Pop-corn'},
-  vip:        {ico:'💺', name:'Sièges VIP'},
-  sound:      {ico:'🔊', name:'Son Dolby'}
-};
-const buildName = (kind, level) => kind === 'screen' ? `Salle ${level}` : `${BUILD_INFO[kind].name} niv. ${level}`;
-// durée d'un chantier : « 45 min », « 1 h 30 », « 12 h »
-const fmtMin = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}`;
-const TICKET_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ticket"/></svg>';
-const GEM_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#gem"/></svg>';
-
-async function loadCineConfig(){
-  if(cineCfg) return;
-  const [lv, pr, ra] = await Promise.all([
-    sb.from('cinema_levels').select('kind,level,cost,build_minutes,income,bonus_pct,requires_screens'),
-    sb.from('cinema_params').select('key,value'),
-    sb.from('cinema_rarity').select('rarity,mult')]);
-  const bad = lv.error || pr.error || ra.error;
-  if(bad) throw new Error(netMsg(bad.message));
-  const cfg = {lv:{}, p:{}, rar:{}};
-  lv.data.forEach(r => { (cfg.lv[r.kind] ||= {})[r.level] = r; });
-  pr.data.forEach(r => { cfg.p[r.key] = Number(r.value); });
-  ra.data.forEach(r => { cfg.rar[r.rarity] = Number(r.mult); });
-  cineCfg = cfg;
+/* ---------- Mes pièces : liste, état, films projetés, chantier, guichet ---------- */
+function openCineSheet(on){
+  cineSheet.classList.toggle('on', on);
+  cineRoomsBtn.setAttribute('aria-expanded', String(on));
+  cineRoomsBtn.setAttribute('aria-pressed', String(on));
+  if(on){ renderCineRooms(); tickCinema(); }
 }
-// Prix en gemmes du temps restant (même règle que _cinema_gem_price : 1 gemme par tranche entamée, 1 au minimum)
+cineRoomsBtn.addEventListener('click', () => { buzz(6); openCineSheet(!cineSheet.classList.contains('on')); });
+$('#cineSheetClose').addEventListener('click', () => openCineSheet(false));
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && cineSheet.classList.contains('on')) openCineSheet(false); });
+
+function renderCineRooms(){
+  const box = $('#cineRooms');
+  if(!cine){ box.innerHTML = ''; return; }
+  const st = cine.st, b = st.build;
+  const bo = st.box_office;
+  $('#cineSheetSum').textContent = `+${fmtN(st.rate)} billets / h` + (Number(st.bonus_pct) ? ` · bonus +${fmtN(st.bonus_pct)} %` : '');
+  const rows = st.rooms.map(r => {
+    const i = ROOM_INFO[r.type], site = !r.built;
+    let info, act = '';
+    if(site){
+      info = `<span id="rmSiteTime">en chantier</span>`;
+      act = `<button class="rm-act gem" type="button" data-cine="finish" aria-label="Finir tout de suite en gemmes">Finir <b id="rmSiteGems">${b ? b.gem_price : 0}</b>${GEM_ICO}</button>`;
+    }else if(r.type === 'projection'){
+      info = r.film ? `<span>${esc(r.film.title || '')}${r.film.mult ? ' · ×' + fmtN(r.film.mult) : ''}</span>`
+                    : `<span class="empty">aucun film (×${fmtN(cineCfg ? cineCfg.p.empty_mult : .25)})</span>`;
+      info += `<span class="gain">+${fmtN(r.income)} / h</span>`;
+      act = `<button class="rm-act rm-film rm-stack" type="button" data-cine="film" data-room="${r.id}">${r.film ? 'Changer' : 'Choisir'}<small>le film</small></button>`;
+    }else if(r.type === 'arcade'){
+      const n = r.machines.length;
+      info = `<span>${n} machine${n > 1 ? 's' : ''}</span><span class="gain">+${fmtN(r.income)} / h</span>`;
+    }else if(r.type === 'toilets' || r.type === 'snacks'){
+      info = `<span class="gain">+${fmtN(r.bonus_pct)} % pour tout le cinéma</span>`;
+    }else if(r.type === 'box_office'){
+      info = `<span>Niveau ${bo.level}${Number(bo.bonus_pct) ? ` · +${fmtN(bo.bonus_pct)} %` : ' : à rénover'}</span>`;
+      if(bo.next) info += `<span class="gain">niv. ${bo.next.level} : +${fmtN(bo.next.bonus_pct)} %</span>`;
+      act = bo.next
+        ? `<button class="rm-act rm-stack${b || ticketsTotal < bo.next.cost ? ' no' : ''}" type="button" data-cine="upgrade"
+             aria-label="Améliorer le guichet : ${bo.next.cost} billets, ${fmtMin(bo.next.minutes)}">
+             <span style="display:flex;align-items:center;gap:3px">${bo.next.cost.toLocaleString('fr-FR')}${TICKET_ICO}</span><small>⏱ ${fmtMin(bo.next.minutes)}</small></button>`
+        : `<button class="rm-act no" type="button" disabled>Max</button>`;
+    }else{
+      info = `<span>${r.type === 'hall' ? 'Entrée du cinéma' : 'Relie les pièces'}</span>`;
+    }
+    const size = r.size ? ` · ${SIZE_NAME[r.size]}` : '';
+    return `<div class="rm-row${site ? ' site' : ''}" data-room="${r.id}"><span class="rm-ico" aria-hidden="true">${site ? '🚧' : i.ico}</span>
+      <span class="rm-main"><b>${esc(roomName(r))}${size}</b>${info}</span>${act}</div>`;
+  });
+  // niveau du guichet en chantier : ligne à part, au-dessus
+  if(b && b.kind === 'box_office') rows.unshift(`<div class="rm-row site"><span class="rm-ico" aria-hidden="true">🚧</span>
+      <span class="rm-main"><b>${esc(buildName(b))}</b><span id="rmSiteTime">en chantier</span></span>
+      <button class="rm-act gem" type="button" data-cine="finish" aria-label="Finir tout de suite en gemmes">Finir <b id="rmSiteGems">${b.gem_price}</b>${GEM_ICO}</button></div>`);
+  box.innerHTML = rows.join('');
+}
+$('#cineRooms').addEventListener('click', e => {
+  const a = e.target.closest('[data-cine]');
+  if(!a || !cine) return;
+  const what = a.dataset.cine;
+  if(what === 'film') openScreenPicker(+a.dataset.room);
+  else if(what === 'finish') openFinishPay();
+  else if(what === 'upgrade'){
+    const nx = cine.st.box_office.next;
+    if(cine.st.build || ticketsTotal < nx.cost){
+      showCineErr(cine.st.build ? 'Une construction est déjà en cours.' : `Il te manque ${(nx.cost - ticketsTotal).toLocaleString('fr-FR')} billets.`);
+      const row = a.closest('.rm-row'); row.classList.remove('nudge'); void row.offsetWidth; row.classList.add('nudge'); buzz(12);
+      return;
+    }
+    cineCall('cine_upgrade_box_office', {});
+  }
+});
+
+// Prix en gemmes du temps restant (même règle que _cine_gem_price : 1 gemme par tranche entamée, 1 au minimum)
 function gemPriceNow(now = Date.now()){
   const st = cine && cine.st;
   if(!st || !st.build) return 0;
@@ -4805,96 +4898,10 @@ function gemPriceNow(now = Date.now()){
   const sec = Math.max(0, (cine.buildEnd - now) / 1000);
   return Math.max(1, Math.ceil(sec / (cineCfg.p.gem_minutes * 60)));
 }
-
-// Prochain niveau d'un élément → ce que la carte affiche et, s'il y a lieu, pourquoi on ne peut pas le lancer
-function nextBuild(kind){
-  const st = cine.st, lv = st.levels, cur = lv[kind], row = cineCfg.lv[kind][cur + 1];
-  const raw = st.screens.reduce((s, x) => s + Number(x.base) * Number(x.mult), 0);   // revenu des salles avant bonus
-  const o = {kind, row, title: kind === 'screen' ? `Salle ${cur + 1}` : `${BUILD_INFO[kind].name} niv. ${cur + 1}`};
-  if(!row){
-    o.title = kind === 'screen' ? 'Salles' : BUILD_INFO[kind].name;
-    o.desc = kind === 'screen' ? '20 salles sur 20' : `Niveau ${cur} (max)`;
-    o.block = 'max'; return o;
-  }
-  if(kind === 'screen'){
-    o.desc = `${cur} salle${cur > 1 ? 's' : ''} sur 20`;
-    o.gain = `${fmtN(row.income)}/h × rareté du film`;
-  }else if(kind === 'arcade'){
-    const now = cur ? cineCfg.lv.arcade[cur].income : 0;
-    o.desc = cur ? `Niveau ${cur} : ${fmtN(now)}/h` : 'Jeux vidéo dans le hall';
-    o.gain = `+${fmtN(row.income - now)}/h`;
-  }else{
-    const now = cur ? cineCfg.lv[kind][cur].bonus_pct : 0, d = Number(row.bonus_pct) - Number(now);
-    o.desc = kind === 'box_office' ? (cur ? `Niveau ${cur} : +${fmtN(now)} %` : 'Délabré : à rénover') : `+${fmtN(row.bonus_pct)} % sur les salles`;
-    o.gain = `+${fmtN(d)} %` + (raw ? ` (≈ +${fmtN(raw * d / 100)}/h)` : '');
-  }
-  if(lv.screen < row.requires_screens) o.block = 'locked';
-  else if(st.build) o.block = 'busy';
-  else if(ticketsTotal < row.cost) o.block = 'tickets';
-  return o;
-}
-function buildCard(o, small){
-  const i = BUILD_INFO[o.kind];
-  let btn;
-  if(o.block === 'max') btn = `<button class="bc-buy no" type="button" disabled>Max</button>`;
-  else if(o.block === 'locked') btn = `<button class="bc-buy no" type="button" disabled><span>Dès ${o.row.requires_screens}</span><small>salles</small></button>`;
-  else btn = `<button class="bc-buy${o.block ? ' no' : ''}" type="button" data-build="${o.kind}"
-      aria-label="Construire ${esc(o.title)} : ${o.row.cost} billets, ${fmtMin(o.row.build_minutes)}">
-      <span class="bc-cost">${o.row.cost.toLocaleString('fr-FR')}${TICKET_ICO}</span><small>⏱ ${fmtMin(o.row.build_minutes)}</small></button>`;
-  return `<div class="bcard" data-kind="${o.kind}">
-    <span class="bc-ico" aria-hidden="true">${i.ico}</span>
-    <span class="bc-main"><b>${esc(small && o.row ? `${i.name} ${o.row.level}` : o.title)}</b>${small ? '' : `<span>${esc(o.desc)}</span>`}${o.gain && o.block !== 'max' ? `<span class="bc-gain">${esc(o.gain)}</span>` : ''}</span>
-    ${btn}</div>`;
-}
-function renderCineCards(){
-  const box = $('#cineCards');
-  if(!cine || !cineCfg){ box.innerHTML = ''; return; }
-  const equip = cineTab === 'equip';
-  box.classList.toggle('equip', equip);
-  box.innerHTML = equip ? ['popcorn', 'vip', 'sound'].map(k => buildCard(nextBuild(k), true)).join('')
-                        : buildCard(nextBuild(cineTab), false)
-                          + (cineTab === 'screen' ? screenChips() : '');
-}
-function screenChips(){
-  return '<p class="cine-hint">Touche une salle pour choisir son film.</p><div class="cine-screens">' +
-    cine.st.screens.map(s => `<button class="cs-chip${s.film_id ? '' : ' empty'}" type="button" data-screen="${s.no}">` +
-      `<b>Salle ${s.no}</b><span>${s.film_id ? esc(s.title || '') : 'choisir un film'}</span></button>`).join('') + '</div>';
-}
-$('#cineTabs').addEventListener('click', e => {
-  const b = e.target.closest('[data-tab]');
-  if(!b) return;
-  cineTab = b.dataset.tab;
-  $('#cineTabs').querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-  renderCineCards();
-});
-
-// Lancer une construction : refus expliqué sur place (le serveur revérifie de toute façon)
-$('#cineCards').addEventListener('click', async e => {
-  const sc = e.target.closest('[data-screen]');
-  if(sc){ openScreenPicker(+sc.dataset.screen); return; }
-  const b = e.target.closest('[data-build]');
-  if(!b || cineBusy || !cine) return;
-  const o = nextBuild(b.dataset.build);
-  if(o.block === 'busy' || o.block === 'tickets'){
-    showCineErr(o.block === 'busy' ? 'Une construction est déjà en cours.'
-                                   : `Il te manque ${(o.row.cost - ticketsTotal).toLocaleString('fr-FR')} billets.`);
-    const card = b.closest('.bcard'); card.classList.remove('nudge'); void card.offsetWidth; card.classList.add('nudge'); buzz(12);
-    return;
-  }
-  cineBusy = true; b.disabled = true; buzz(15);
-  try{
-    const r = await rpc('start_build', {p_kind:o.kind});
-    cineBusy = false;
-    applyCinema(r.state);
-    showCineErr(r.ok ? '' : r.message);
-  }catch(err){ showCineErr(err.message); }
-  finally{ cineBusy = false; b.disabled = false; tickCinema(); }
-});
-
-// « Terminer » : le prix du moment est affiché dans la fenêtre de paiement avant confirmation
-$('#csFinish').addEventListener('click', () => {
+// « Finir » : le prix du moment est affiché dans la fenêtre de paiement avant confirmation
+function openFinishPay(){
   if(!cine || !cine.st.build || cineBusy) return;
-  const price = gemPriceNow(), name = buildName(cine.st.build.kind, cine.st.build.level);
+  const price = gemPriceNow(), name = buildName(cine.st.build);
   const enough = gemsTotal >= price;
   $('#payTitle').textContent = enough ? 'Terminer maintenant' : 'Gemmes insuffisantes';
   $('#payBody').innerHTML = enough
@@ -4912,50 +4919,38 @@ $('#csFinish').addEventListener('click', () => {
   payOpen = true;
   payModal.classList.remove('hidden'); void payModal.offsetWidth; payModal.classList.add('on');
   payModal.querySelector('.pay-actions .btn').focus({preventScroll:true});
-});
-async function finishWithGems(maxGems){
-  if(cineBusy) return;
-  cineBusy = true; buzz(15);
-  try{
-    const r = await rpc('finish_build_with_gems', {p_max_gems:maxGems});
-    cineBusy = false;
-    applyCinema(r.state);
-    showCineErr(r.ok || r.reason === 'no_build' ? '' : r.message);   // déjà terminé d'elle-même : rien à signaler
-  }catch(err){ showCineErr(err.message); }
-  finally{ cineBusy = false; tickCinema(); }
+}
+function finishWithGems(maxGems){
+  cineCall('cine_finish_with_gems', {p_max_gems:maxGems}).then(r => {
+    if(r && r.reason === 'no_build') showCineErr('');               // déjà terminé d'elle-même : rien à signaler
+  });
 }
 
-/* ---------- Films projetés (C4) ----------
-   Un appui sur une salle du plan ouvre la modale de sélection du Top Films (mode 'cine').
-   set_screening vérifie que le film est dans la collection et le retire de son ancienne salle. */
+/* ---------- Films projetés ----------
+   « Choisir le film » ouvre la modale de sélection du Top Films en mode 'cine' (slotIndex = id de la salle).
+   cine_set_film vérifie que le film est dans la collection et le retire de son ancienne salle. */
 function cineTag(c){
   if(!cine) return '';
   const mult = cineCfg && cineCfg.rar[c.rarity];
-  const used = cine.st.screens.find(s => String(s.film_id) === String(c.id));
-  const txt = [mult ? '×' + fmtN(mult) : '', used ? `Salle ${used.no}` : ''].filter(Boolean).join(' · ');
+  const used = cine.st.rooms.find(r => r.film && String(r.film.id) === String(c.id));
+  const txt = [mult ? '×' + fmtN(mult) : '', used ? roomName(used) : ''].filter(Boolean).join(' · ');
   return txt ? `<span class="pk-tag${used ? ' used' : ''}">${txt}</span>` : '';
 }
-function openScreenPicker(no){
-  if(!cine || !cine.st.screens.some(s => s.no === no)) return;
+function openScreenPicker(id){
+  const r = cineRoom(id);
+  if(!r || r.type !== 'projection' || !r.built) return;
   buzz(6);
-  openPicker(no, 'cine');
+  openPicker(id, 'cine');
 }
-async function chooseScreenFilm(no, filmId){
-  const cur = cine && cine.st.screens.find(s => s.no === no);
+async function chooseScreenFilm(id, filmId){
+  const cur = cineRoom(id);
   closePicker();
-  if(!cur || cineBusy || (cur.film_id ?? null) === filmId) return;          // même film : rien à faire
-  cineBusy = true; buzz(10);
-  try{
-    const r = await rpc('set_screening', {p_screen:no, p_film:filmId});
-    cineBusy = false;
-    applyCinema(r.state);
-    showCineErr('');
-  }catch(err){ showCineErr(err.message); }
-  finally{ cineBusy = false; tickCinema(); }
+  if(!cur || (cur.film ? cur.film.id : null) === filmId) return;          // même film : rien à faire
+  cineCall('cine_set_film', {p_room:id, p_film:filmId});
 }
 
 /* ---------- Plan du cinéma : pixel art, vue de dessus en trois quarts (canvas) ----------
-   Grille de cases carrées (CINE_PLAN.cols × rows, CPX.T pixels de dessin par case). Vue trois quarts : sol vu de haut,
+   Grille de cases carrées (cpGrid.cols × rows, CPX.T pixels de dessin par case). Vue trois quarts : sol vu de haut,
    mur du fond vu de face (CPX.WH de haut), murs de côté et de façade en épaisseur (CPX.CAP), face avant de la façade
    (CPX.FRONT). RÈGLE : une pièce occupe exactement ses cases. Tout ce qui lui appartient (dessus des murs, mur du fond,
    sol, épaisseurs, façade, plinthes, ombres, décor) est dessiné À L'INTÉRIEUR de son rectangle de cases, et son dessin
@@ -4964,21 +4959,17 @@ async function chooseScreenFilm(no, filmId){
    et à gauche / à droite l'épaisseur des murs de côté (CAP). Les portes (doors) laissent le sol passer jusqu'au bord.
    Affichage : dessiné une fois, puis agrandi par un facteur ENTIER de pixels PHYSIQUES (devicePixelRatio compris),
    décalage arrondi au pixel physique : aucun lissage, quelle que soit la densité de l'écran.
-   Structure prévue pour l'agrandissement (voir CLAUDE.md) : une pièce = {id, type, level, x, y, w, h, doors}
-   (x, y = case du coin haut-gauche ; w × h cases ; doors = ouvertures {side:'n'|'s'|'e'|'w', at, len} en cases,
-   comptées depuis le coin haut-gauche de la pièce). Une case est libre si aucune pièce ne la couvre ;
-   le prix d'une pièce = w × h × prix par case de son type. */
-const CINE_PLAN = {
-  cols: 28, rows: 24,
-  rooms: [
-    {id:'hall',    type:'hall',       level:1, x:9,  y:10, w:6, h:10, doors:[{side:'s', at:2, len:2}, {side:'e', at:5, len:3}]},
-    {id:'guichet', type:'box_office', level:1, x:15, y:12, w:8, h:7,  doors:[{side:'w', at:3, len:3}]},
-  ],
-};
+   Pièces lues dans l'état du serveur (state.rooms, voir CLAUDE.md § 6) : {id, type, size, x, y, w, h, doors, built}
+   (x, y = case du coin haut-gauche ; w × h cases ; doors = ouvertures {side:'n'|'s'|'e'|'w', at, len, to} en cases,
+   comptées depuis le coin haut-gauche de la pièce). Une porte au nord traverse le mur du fond ; au sud, la façade. */
+const CINE_BASE = [                                         // base identique pour tous (affichée avant la 1re lecture)
+  {id:0, type:'hall',       x:13, y:30, w:6, h:10, built:true, doors:[{side:'s', at:2, len:2}, {side:'e', at:5, len:3}]},
+  {id:-1, type:'box_office', x:19, y:32, w:8, h:7,  built:true, doors:[{side:'w', at:3, len:3}]},
+];
+let cpGrid = {cols:40, rows:40}, cpRooms = CINE_BASE, cpSig = '';
 const CPX = {T:16, WH:32, CAP:4, FRONT:6, MIN:1, MAX:5};   // pixels par case, hauteur du mur du fond, épaisseurs, zoom
-CPX.W = CINE_PLAN.cols * CPX.T;
-CPX.H = CINE_PLAN.rows * CPX.T;
-const cellsOf = r => r.w * r.h;                             // nombre de cases d'une pièce (base du prix futur)
+CPX.W = cpGrid.cols * CPX.T;
+CPX.H = cpGrid.rows * CPX.T;
 
 // Palette (chaude, bois et velours ; violet pour l'hors-plan)
 const CPC = {
@@ -5024,6 +5015,7 @@ function cpZones(r){
 
 function cpRender(cv){
   const {T, WH, CAP, FRONT} = CPX;
+  CPX.W = cpGrid.cols * T; CPX.H = cpGrid.rows * T;
   cv.width = CPX.W; cv.height = CPX.H;
   const g = cv.getContext('2d');
   g.imageSmoothingEnabled = false;
@@ -5034,8 +5026,8 @@ function cpRender(cv){
 
   // --- Hors plan : aplat violet sombre et léger quadrillage (le trait appartient à la case qui commence là)
   R(0, 0, CPX.W, CPX.H, CPC.void);
-  for(let i = 0; i < CINE_PLAN.cols; i++) R(i * T, 0, 1, CPX.H, CPC.voidLine);
-  for(let j = 0; j < CINE_PLAN.rows; j++) R(0, j * T, CPX.W, 1, CPC.voidLine);
+  for(let i = 0; i < cpGrid.cols; i++) R(i * T, 0, 1, CPX.H, CPC.voidLine);
+  for(let j = 0; j < cpGrid.rows; j++) R(0, j * T, CPX.W, 1, CPC.voidLine);
 
   // --- Matières
   function parquet(x, y, w, h, seed){
@@ -5118,13 +5110,18 @@ function cpRender(cv){
       x += (gl[0].length + 1) * k;
     }
   }
+  // Décor du mur du fond : rien là où une porte au nord ouvre le mur (wallDoors = ouvertures de la pièce en cours, en px)
+  let wallDoors = [];
+  const onDoor = (x0, x1) => wallDoors.some(([a, b]) => x0 < b + 2 && a - 2 < x1);
   function neon(s, cx, y, k, c, halo){                                     // tube lumineux sur plaque sombre, halo en escalier
     const w = cpTextW(s, k), x = cx - (w >> 1), acc = s.includes('É') ? 2 * k : 0;
+    if(onDoor(x - 5, x + w + 5)) return;
     R(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc, '#1d0d17'); out(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc);
     g.globalAlpha = .28; text(s, x - 1, y, k, halo); text(s, x + 1, y, k, halo); text(s, x, y - 1, k, halo); text(s, x, y + 1, k, halo);
     g.globalAlpha = 1; text(s, x, y, k, c);
   }
   function poster(x, y, w, h, pal){                                        // affiche de film imaginaire, cadre doré
+    if(onDoor(x, x + w + 3)) return;
     shade(x + 1, y + 1, w + 2, h + 2, .3);
     R(x, y, w, h, CPC.goldLo); R(x + 1, y + 1, w - 2, h - 2, CPC.gold);
     const ix = x + 2, iy = y + 2, iw = w - 4, ih = h - 4;
@@ -5135,6 +5132,7 @@ function cpRender(cv){
     out(x, y, w, h);
   }
   function sconce(x, y){                                                   // applique murale, halo chaud
+    if(onDoor(x - 8, x + 11)) return;
     glow(x - 5, y - 4, 13, 12, '#ffd27a', .16); glow(x - 8, y - 6, 19, 16, '#ffd27a', .12);
     R(x, y + 4, 3, 3, CPC.goldLo); R(x - 1, y, 5, 4, '#fff1c4'); R(x - 1, y, 5, 1, '#ffffff'); out(x - 1, y, 5, 4);
   }
@@ -5192,6 +5190,7 @@ function cpRender(cv){
     R(x, y - 5, 6, 5, '#e7c453'); R(x + 1, y - 4, 4, 3, '#c8283a'); R(x + 6, y - 2, 4, 2, '#f1d97c'); out(x, y - 5, 6, 5);
   }
   function priceBoard(x, y){                                               // tableau des tarifs
+    if(onDoor(x, x + 20)) return;
     R(x, y, 20, 16, '#1d2a26'); out(x, y, 20, 16); R(x, y, 20, 1, CPC.goldLo);
     for(let i = 0; i < 4; i++){ R(x + 2, y + 3 + i * 3, 10, 1, '#d8e6dc'); R(x + 15, y + 3 + i * 3, 3, 1, CPC.gold); }
   }
@@ -5247,7 +5246,15 @@ function cpRender(cv){
     shade(F.x, F.y, F.w, 2, .28); shade(F.x, F.y + 2, F.w, 2, .16); shade(F.x, F.y + 4, F.w, 3, .07);   // pied du mur du fond
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.w)) shade(F.x, P.y + a, 2, b - a, .12);
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.e)) shade(F.x + F.w - 2, P.y + a, 2, b - a, .08);
+    wallDoors = doors.n.map(([a, b]) => [P.x + a, P.x + b]);
     (DECOR[r.type] || (() => {}))(z);
+    for(const [a, b] of doors.n){
+      g.save(); g.beginPath(); g.rect(P.x + a, P.y, b - a, F.y - P.y); g.clip();
+      parquet(P.x, P.y, P.w, P.h, 17 + i * 101);
+      g.restore();
+      shade(P.x + a, F.y - 4, b - a, 4, .18);
+      R(P.x + a - 2, P.y + CAP, 2, F.y - P.y - CAP, CPC.goldLo); R(P.x + b, P.y + CAP, 2, F.y - P.y - CAP, CPC.goldLo);
+    }
     // dessus du mur du fond (et ouvertures au nord : le sol continue jusqu'au bord)
     for(const [a, b] of pieces(0, P.w, doors.n)) cap(P.x + a, P.y, b - a, CAP);
     // murs de côté : épaisseur sur toute la hauteur, sauf les portes
@@ -5261,7 +5268,33 @@ function cpRender(cv){
     for(const [a, b] of doors.s) if(MAT[r.type]) MAT[r.type](P.x + a, P.y + P.h - 14, b - a);
     g.restore();
   }
-  CINE_PLAN.rooms.forEach(drawRoom);
+  function drawSite(r){
+    const P = {x:r.x * T, y:r.y * T, w:r.w * T, h:r.h * T};
+    g.save(); g.beginPath(); g.rect(P.x, P.y, P.w, P.h); g.clip();
+    R(P.x, P.y, P.w, P.h, '#4a3d33');
+    for(let yy = P.y + 3; yy < P.y + P.h; yy += 6) for(let xx = P.x + 3 + (yy / 6 % 2 ? 3 : 0); xx < P.x + P.w; xx += 6) R(xx, yy, 1, 1, '#5b4c40');
+    for(let k = 0; k < 2 * (P.w + P.h); k += 4){                         // rubalise jaune et noire sur le pourtour
+      const c = (k / 4) % 2 ? '#2a1a10' : '#f2c230';
+      if(k < P.w) R(P.x + k, P.y, 4, 3, c);
+      else if(k < P.w + P.h) R(P.x + P.w - 3, P.y + k - P.w, 3, 4, c);
+      else if(k < 2 * P.w + P.h) R(P.x + P.w - (k - P.w - P.h) - 4, P.y + P.h - 3, 4, 3, c);
+      else R(P.x, P.y + P.h - (k - 2 * P.w - P.h) - 4, 3, 4, c);
+    }
+    g.restore();
+  }
+  cpRooms.forEach((r, i) => r.built === false ? drawSite(r) : drawRoom(r, i));
+}
+// État du serveur → plan (redessiné seulement si les pièces ou la grille changent)
+function cinePlanSet(st){
+  const rooms = st.rooms.map(r => ({id:r.id, type:r.type, size:r.size, x:r.x, y:r.y, w:r.w, h:r.h, built:r.built, doors:r.doors || []}));
+  const sig = JSON.stringify([st.grid, rooms]);
+  if(sig === cpSig) return;
+  const first = !cpSig;
+  cpSig = sig; cpRooms = rooms; cpGrid = {cols:+st.grid.cols, rows:+st.grid.rows};
+  $('#cinePlan').setAttribute('aria-label', `Plan du cinéma : ${rooms.length} pièces. Glisse pour te déplacer, pince pour zoomer.`);
+  if(!cpv.ready) return;                                    // dessiné à la 1re mise en page
+  cpRender(cpCanvas); cpScale();
+  if(first) cpFocus(); else cpPlace();
 }
 
 /* ---------- Plan : glisser (pointeurs), zoom par paliers entiers (pincement, molette) ----------
@@ -5294,7 +5327,7 @@ function cpZoom(lv, ax, ay){                                 // zoom autour du p
   cpPlace();
 }
 function cpFocus(){                                          // la base (toutes les pièces) au centre du cadre
-  const rs = CINE_PLAN.rooms, T = CPX.T, s = cpv.ds / cpv.dpr;
+  const rs = cpRooms, T = CPX.T, s = cpv.ds / cpv.dpr;
   const x0 = Math.min(...rs.map(r => r.x)) * T, x1 = Math.max(...rs.map(r => r.x + r.w)) * T;
   const y0 = Math.min(...rs.map(r => r.y)) * T, y1 = Math.max(...rs.map(r => r.y + r.h)) * T;
   cpv.x = cpPlan.clientWidth / 2 - (x0 + x1) / 2 * s;

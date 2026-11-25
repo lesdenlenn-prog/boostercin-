@@ -197,6 +197,21 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
        L'état renvoie aussi `offers` (prix et durée du moment de chaque pièce), `machine_price`, `box_office.next` : le
        client ne calcule aucun prix.
      - Tests : `node supabase/tests/cinema_rooms.mjs .env <migration|->` (44 vérifications dans une transaction annulée).
+   - **J2** (à tester) : page Cinéma = plan plein écran (`.cine-plan` du haut jusqu'à la barre), plus de titre ni de menus ;
+     HUD par-dessus (`.cine-ui`, ignoré par le carrousel) : Billets + gemmes du HUD général en haut, colonne `.cine-side`
+     (🔨 Construire : simple bulle d'annonce jusqu'à J3 ; 📋 Mes pièces avec pastille si chantier ; 🎟️ ⏩ ↺ admin),
+     caisse flottante `.cine-collect` (anneau SVG `stroke-dashoffset` mis à jour chaque seconde, montant, revenu/h, « pleine
+     dans… »). Panneau `#cineSheet` « Mes pièces » : chaque pièce (état, film et multiplicateur, revenu/h, bonus), « Choisir /
+     Changer le film » (modale du Top Films, `pickTarget 'cine'`, slotIndex = id de la pièce → `cine_set_film`), « Finir »
+     en gemmes (fenêtre de paiement → `cine_finish_with_gems`), amélioration du guichet (`cine_upgrade_box_office`).
+     Client entièrement branché sur `cine_*` (`cineCall` : appel, état appliqué, refus affiché) ; config lue une fois dans
+     `cine_params` + `cinema_rarity`. Plan : pièces de `state.rooms` (`cinePlanSet`, redessiné seulement si les pièces
+     changent ; base `CINE_BASE` affichée avant la 1re lecture), grille 40 × 40, porte au nord = mur du fond ouvert
+     (le décor du mur — néons, affiches, tableau, applique — saute les ouvertures : `onDoor`), chantier provisoire
+     (béton + rubalise, J4 le dessinera vraiment), pièces neuves encore sans mobilier (J5).
+     Banc d'essai : état réel enregistré dans une transaction annulée + page sans serveur (rpc remplacé), captures via iframe
+     (Chrome sans tête ne descend pas sous ~500 px ; transitions CSS figées : `--force-prefers-reduced-motion`).
+     Piège : les classes globales `.stack`, `.film` existent déjà (préfixer les nouvelles classes).
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
