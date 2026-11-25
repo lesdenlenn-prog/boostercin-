@@ -155,13 +155,48 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      grille est verrouillé (violet sombre, grille légère). Le plan n'a pas encore de salles : le choix du film se fait par
      les puces « Salle n » de l'onglet Salles (`screenChips`). Serveur et économie inchangés. Référence visuelle dans
      `ref/` (ignoré par git, ne pas publier).
-   - **Plus tard (pas encore codé) : agrandir le cinéma sur la grille.** Le joueur achète des pièces posées sur des cases
-     libres, payées en Billets au nombre de cases. Exemple : arcade niveau 1 = 4 × 3 = 12 cases × 20 billets = 240 billets.
-     Types prévus : `arcade`, `projection` (salle), `toilets`, `snacks`, `corridor`. Données : une pièce =
-     `{id, type, level, x, y, w, h, doors:[{side:'n'|'s'|'e'|'w', at, len}]}` (x, y = case du coin haut-gauche, w × h cases,
-     `cellsOf(r) = w × h`) ; une case est libre si aucune pièce ne la couvre ; la base (`hall`, `box_office`) est fixe.
-     À faire côté serveur le moment venu : table `cinema_rooms` (user_id, type, level, x, y, w, h), prix par case et par type
-     dans une table d'équilibrage, contrôle des chevauchements et des limites de grille dans une fonction `security definer`.
+6. **Cinéma jouable sur le plan** (branche `cinema-jeu`, étapes J1 → J6, « commit » de l'utilisateur à chaque étape).
+   Décidé : plan en plein écran (jusqu'à la barre du bas) avec HUD par-dessus (Billets/Gemmes en haut, « Récolter la caisse »
+   en bas avec anneau 12 h et revenu/h, colonne de boutons ronds à droite : Construire, Mes pièces, outils admin) ; on touche
+   une case violette collée au bâtiment → type, taille (prix, durée) → aperçu fantôme vert/rouge, décalable le long du mur
+   et pivotable ; chantier dessiné (échafaudage, rubalise, temps restant, finir en gemmes) ; salle de projection = choix
+   du film (modale existante) ; arcade = 1 machine offerte puis machines achetées et déplaçables ; toilettes et
+   boutique/snacks = bonus pour tout le cinéma ; couloir = relier ; décor animé sans récompense (transform/opacity).
+   Découpage : J1 serveur · J2 plein écran + HUD · J3 construction (menu, fantôme, rotation) · J4 chantier dessiné ·
+   J5 rôles des pièces · J6 animations du décor.
+   - **J1** (appliqué, testé) : `20261125120000_cinema_rooms.sql`, **à côté** de l'ancien modèle (le site en ligne utilise
+     encore `get_cinema_state`, `start_build`…) : tables et fonctions `cine_*`, seuls `profiles.tickets/gems` sont partagés.
+     À la fusion dans main : migration de nettoyage (supprimer `cinemas`, `cinema_screens`, `cinema_upgrades`,
+     `cinema_levels`, `cinema_params` et les anciennes fonctions ; garder `cinema_rarity`), **avec confirmation**.
+     - Équilibrage : `cine_params` (grille 40 × 40, `cap_hours` 12, `empty_mult` 0,25, `gem_minutes` 10, `price_growth` 1,5,
+       `first_screen_free` 1, `machine_cost` 100, `machine_growth` 1,5, `machine_income` 10), `cine_room_types`
+       (type × taille S/M/L : w, h, prix par case, minutes, revenu, bonus %), `cine_box_office` (niveaux du guichet, +10 %
+       par niveau), `cinema_rarity` (partagée).
+     - Tailles (w × h, avant rotation) : projection 4×5 / 5×6 / 6×8 (20 billets/case ; 20 / 35 / 60 par h × rareté) ;
+       arcade 4×5 / 5×6 / 6×7 (20/case ; 10 par h et par machine) ; toilettes 4×4 / 4×5 / 5×5 (10/case ; +5 / +10 / +15 %) ;
+       boutique 4×4 / 4×5 / 5×5 (15/case ; +8 / +15 / +25 %) ; couloir 4×4 / 4×6 / 4×8 (5/case). Durées 15 / 45 / 120 min
+       (couloir 5 / 10 / 20). Minimum 4 × 4 cases : en vue ¾ le haut d'une pièce (CAP + mur du fond) prend plus de 2 cases.
+       Prix = cases × prix/case × 1,5^(pièces de ce type déjà possédées) ; 1re salle de projection offerte et immédiate.
+     - Joueur : `cine_states` (caisse, taux, niveau du guichet, chantier unique : `build_room_id` ou `build_box_office`),
+       `cine_rooms` (`id, type, size, x, y, w, h, doors, film_id, built_at` ; `built_at` null = en chantier ; base créée au
+       1er appel : `hall` (13, 30, 6 × 10, entrée au sud sur le bord de la grille) et `box_office` (19, 32, 8 × 7)),
+       `cine_machines` (case relative à la salle).
+     - **Règles de pose** (à reproduire à l'identique dans l'aperçu fantôme) : dans la grille, aucune case commune avec une
+       autre pièce (chantier compris), et un mur commun avec une pièce construite assez long pour une porte. Porte sur un mur
+       vertical (e/w) : rangées [y + 2, y + h − 1) des deux pièces, 1 à 3 cases, centrée ; sur un mur horizontal (n/s) :
+       colonnes [x + 1, x + w − 1) des deux pièces, 2 cases (il faut ≥ 2), centrée. Si plusieurs voisins : mur le plus long,
+       puis couloir/hall, puis la pièce la plus ancienne. La porte est ajoutée aux `doors` des deux pièces :
+       `{side, at, len, to: id de l'autre pièce}` (`to` null = entrée du cinéma). Sol d'une arcade pour les machines :
+       colonnes [1, w − 1), rangées [2, h − 1) ; 1re machine offerte en (1, 2).
+     - Revenu = [Σ projection (revenu × rareté, 0,25 sans film) + machines × 10] × (1 + bonus % guichet + toilettes + boutiques).
+     - API (refus `{ok:false, reason, message, state}`) : `cine_get_state`, `cine_collect`,
+       `cine_build_room(type, size, x, y, rotated)` (busy, out_of_grid, overlap, no_door, insufficient_tickets),
+       `cine_upgrade_box_office`, `cine_finish_with_gems(max)`, `cine_set_film(room, film)`,
+       `cine_buy_machine(room, x, y)` / `cine_move_machine(machine, x, y)` (bad_cell, cell_taken) ; admin :
+       `cine_admin_add_tickets`, `cine_admin_finish_build`, `cine_admin_reset` (retour à la base, Billets gardés).
+       L'état renvoie aussi `offers` (prix et durée du moment de chaque pièce), `machine_price`, `box_office.next` : le
+       client ne calcule aucun prix.
+     - Tests : `node supabase/tests/cinema_rooms.mjs .env <migration|->` (44 vérifications dans une transaction annulée).
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
@@ -177,6 +212,7 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
 
 ## Règles
 
+- **Langue** : toujours répondre en français.
 - **Secrets** : les clés sont dans `.env` (ignoré par git). Ne jamais afficher ni lire son contenu dans la conversation.
   Seule la *publishable key* Supabase peut apparaître dans `index.html` ; jamais la secret/service_role key ni la clé TMDB.
   **Ne jamais afficher un secret, ni demander à l'utilisateur d'en coller un dans le chat** : s'il en manque un, lui demander
