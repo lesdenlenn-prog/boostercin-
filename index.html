@@ -109,6 +109,25 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 #cpStage canvas{position:absolute;left:0;top:0;display:block;width:100%;height:100%;
   image-rendering:crisp-edges;image-rendering:pixelated}
 #cpHl.on{animation:cp-pulse 1.4s ease-in-out infinite}
+/* décor vivant (J6) : ambiance en opacity seulement, en pause hors de la page Cinéma */
+#cpFx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#cpFx > *{position:absolute;display:block}
+.fx-neon{border-radius:3px;background:var(--c);mix-blend-mode:screen;opacity:.16;box-shadow:0 0 12px 4px var(--c);
+  animation:fx-flicker 7s steps(1) infinite}
+@keyframes fx-flicker{0%,58%,100%{opacity:.16}60%{opacity:.03}61%{opacity:.2}63%{opacity:.04}65%,90%{opacity:.18}}
+.fx-lamp{border-radius:50%;background:radial-gradient(closest-side,rgba(255,214,130,.5),rgba(255,214,130,0));
+  opacity:.6;animation:fx-breathe 4s ease-in-out infinite}
+@keyframes fx-breathe{50%{opacity:1}}
+.fx-beam{background:linear-gradient(to bottom,rgba(255,246,208,.22),rgba(255,246,208,.02));mix-blend-mode:screen;
+  clip-path:polygon(0 0,100% 0,52% 100%,48% 100%);opacity:.7;animation:fx-beam 2.6s steps(1) infinite}
+@keyframes fx-beam{0%{opacity:.7}23%{opacity:.45}31%{opacity:.8}57%{opacity:.6}74%{opacity:.85}}
+.app:not([data-page="cinema"]) #cpFx > *{animation-play-state:paused}
+.fx-sprite{image-rendering:crisp-edges;image-rendering:pixelated}
+.fx-bit{border-radius:1px}
+.fx-off{background:#1d0d17}
+.fx-flash{border-radius:50%;background:radial-gradient(closest-side,rgba(255,240,190,.95),rgba(255,214,130,0))}
+.fx-say{transform:translate(-50%,-50%);padding:2px 8px;border-radius:99px;background:#f6c453;color:#3a1a00;font-weight:800;
+  font-size:.78rem;white-space:nowrap;box-shadow:0 2px 0 #8a5e0b,0 4px 10px rgba(0,0,0,.4)}
 /* étiquette du chantier, posée au centre de la pièce ; « Terminé ! » qui s'envole à la fin */
 #cpTags{position:absolute;inset:0;pointer-events:none}
 .cp-tag{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -240,7 +259,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
   padding:8px 12px;border-radius:12px;background:rgba(20,4,8,.92);color:#fff1c4;font-size:.8rem;font-weight:700;text-align:center;
   box-shadow:inset 0 0 0 1px rgba(246,196,83,.45);pointer-events:none;opacity:0;transition:opacity .25s}
 .cine-tip.on{opacity:1}
-@media (prefers-reduced-motion:reduce){.cine-sheet,.cine-tip{transition:none}#cpHl.on{animation:none}}
+@media (prefers-reduced-motion:reduce){.cine-sheet,.cine-tip{transition:none}#cpHl.on{animation:none}#cpFx > *{animation:none}}
 /* HUD de la page Cinéma : Billets + gemmes, sans profil ni bobines */
 .res-tickets{display:none}
 .app[data-page="cinema"] .res-tickets{display:flex}
@@ -1692,7 +1711,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
     </section>
     <!-- Cinéma (mode gestion) : plan pixel art en plein écran, HUD par-dessus. Tout est calculé par Supabase (cine_*). -->
     <section class="view view-cine" id="view-cinema" aria-label="Cinéma">
-      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><div id="cpStage"><canvas id="cpCanvas"></canvas><canvas id="cpHl"></canvas><canvas id="cpGhost"></canvas><div id="cpTags"></div></div></div>
+      <div class="cine-plan" id="cinePlan" role="img" aria-label="Plan du cinéma. Glisse pour te déplacer, pince pour zoomer."><div id="cpStage"><canvas id="cpCanvas"></canvas><canvas id="cpHl"></canvas><canvas id="cpGhost"></canvas><div id="cpFx"></div><div id="cpTags"></div></div></div>
       <!-- colonne de boutons ronds : Construire, Mes pièces, outils admin -->
       <div class="cine-ui cine-side" id="cineSide">
         <button class="cside-btn" id="cineBuild" type="button" aria-pressed="false" aria-label="Construire" title="Construire">🔨</button>
@@ -5100,7 +5119,8 @@ const CINE_BASE = [                                         // base identique po
   {id:0, type:'hall',       x:13, y:30, w:6, h:10, built:true, doors:[{side:'s', at:2, len:2}, {side:'e', at:5, len:3}]},
   {id:-1, type:'box_office', x:19, y:32, w:8, h:7,  built:true, doors:[{side:'w', at:3, len:3}]},
 ];
-let cpGrid = {cols:40, rows:40}, cpRooms = CINE_BASE, cpSig = '', cpBuild = null;   // cpBuild : chantier en cours {kind, room_id}
+let cpGrid = {cols:40, rows:40}, cpRooms = CINE_BASE, cpSig = '', cpBuild = null;
+let cpSpots = [];                     // éléments de décor du dernier dessin : {kind, x, y, w, h, room, color} (pixels de dessin)   // cpBuild : chantier en cours {kind, room_id}
 const CPX = {T:16, WH:32, CAP:4, FRONT:6, MIN:1, MAX:5};   // pixels par case, hauteur du mur du fond, épaisseurs, zoom
 CPX.W = cpGrid.cols * CPX.T;
 CPX.H = cpGrid.rows * CPX.T;
@@ -5158,6 +5178,10 @@ function cpRender(cv){
   const shade = (x, y, w, h, a) => R(x, y, w, h, CPC.shadow + a + ')');
   const out = (x, y, w, h) => { R(x - 1, y - 1, w + 2, 1, CPC.ink); R(x - 1, y + h, w + 2, 1, CPC.ink); R(x - 1, y, 1, h, CPC.ink); R(x + w, y, 1, h, CPC.ink); };
   const glow = (x, y, w, h, c, a) => { g.globalAlpha = a; R(x, y, w, h, c); g.globalAlpha = 1; };
+  // éléments de décor qu'on peut toucher ou animer (J6), avec la pièce en cours de dessin
+  let curRoom = null;
+  cpSpots = [];
+  const spot = (kind, x, y, w, h, extra = {}) => cpSpots.push({kind, x, y, w, h, room: curRoom && curRoom.id, ...extra});
 
   // --- Hors plan : aplat violet sombre et léger quadrillage (le trait appartient à la case qui commence là)
   R(0, 0, CPX.W, CPX.H, CPC.void);
@@ -5251,12 +5275,14 @@ function cpRender(cv){
   function neon(s, cx, y, k, c, halo){                                     // tube lumineux sur plaque sombre, halo en escalier
     const w = cpTextW(s, k), x = cx - (w >> 1), acc = s.includes('É') ? 2 * k : 0;
     if(onDoor(x - 5, x + w + 5)) return;
+    spot('neon', x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc, {color:c});
     R(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc, '#1d0d17'); out(x - 4, y - 4 - acc, w + 8, 5 * k + 8 + acc);
     g.globalAlpha = .28; text(s, x - 1, y, k, halo); text(s, x + 1, y, k, halo); text(s, x, y - 1, k, halo); text(s, x, y + 1, k, halo);
     g.globalAlpha = 1; text(s, x, y, k, c);
   }
   function poster(x, y, w, h, pal){                                        // affiche de film imaginaire, cadre doré
     if(onDoor(x, x + w + 3)) return;
+    spot('poster', x, y, w + 2, h + 2);
     shade(x + 1, y + 1, w + 2, h + 2, .3);
     R(x, y, w, h, CPC.goldLo); R(x + 1, y + 1, w - 2, h - 2, CPC.gold);
     const ix = x + 2, iy = y + 2, iw = w - 4, ih = h - 4;
@@ -5268,6 +5294,7 @@ function cpRender(cv){
   }
   function sconce(x, y){                                                   // applique murale, halo chaud
     if(onDoor(x - 8, x + 11)) return;
+    spot('lamp', x - 1, y, 5, 7);
     glow(x - 5, y - 4, 13, 12, '#ffd27a', .16); glow(x - 8, y - 6, 19, 16, '#ffd27a', .12);
     R(x, y + 4, 3, 3, CPC.goldLo); R(x - 1, y, 5, 4, '#fff1c4'); R(x - 1, y, 5, 1, '#ffffff'); out(x - 1, y, 5, 4);
   }
@@ -5284,6 +5311,7 @@ function cpRender(cv){
   }
   function ropeV(x, y1, y2){ for(let y = y1; y < y2; y++){ R(x, y, 1, 1, CPC.rope); R(x + 1, y, 1, 1, CPC.ropeLo); } }
   function plant(x, y){                                                    // plante en pot (pied au point x, y)
+    spot('plant', x - 1, y - 18, 10, 19);
     shade(x - 1, y - 1, 10, 2, .3);
     R(x, y - 6, 8, 6, '#b5653a'); R(x, y - 6, 8, 1, '#d27f4c'); R(x + 1, y - 1, 6, 1, '#8c4a27'); out(x, y - 6, 8, 6);
     [[1, -14, 3, 9], [4, -16, 3, 11], [0, -10, 2, 5], [6, -11, 2, 6], [2, -18, 2, 4]].forEach(([a, b, w, h], i) =>
@@ -5291,6 +5319,7 @@ function cpRender(cv){
     R(x + 4, y - 16, 1, 1, '#8fd18f'); R(x + 1, y - 13, 1, 1, '#8fd18f');
   }
   function popcornMachine(x, y){                                           // machine à pop-corn (pied au point x, y)
+    spot('popcorn', x - 1, y - 30, 18, 31);
     shade(x - 1, y, 18, 3, .32);
     R(x, y - 14, 16, 14, '#b8282f'); for(let i = 2; i < 16; i += 4) R(x + i, y - 14, 2, 14, '#e9e1d6');
     R(x, y - 14, 16, 1, '#7d1820');
@@ -5301,6 +5330,7 @@ function cpRender(cv){
     out(x, y - 27, 16, 27); out(x - 1, y - 30, 18, 3);
   }
   function counter(x, y, w){                                               // comptoir : dessus en bois clair, façade en lambris
+    spot(curRoom && curRoom.type === 'box_office' ? 'register' : 'candy', x, y - 10, w, 28);
     shade(x + 1, y + 18, w, 3, .3);
     R(x, y, w, 6, '#d9ab70'); R(x, y, w, 1, '#f0c88d'); R(x, y + 5, w, 1, '#b4834c');
     for(let xx = x, k = 0; xx < x + w; xx += 6, k++){
@@ -5326,6 +5356,7 @@ function cpRender(cv){
   }
   function priceBoard(x, y){                                               // tableau des tarifs
     if(onDoor(x, x + 20)) return;
+    spot('board', x, y, 20, 16);
     R(x, y, 20, 16, '#1d2a26'); out(x, y, 20, 16); R(x, y, 20, 1, CPC.goldLo);
     for(let i = 0; i < 4; i++){ R(x + 2, y + 3 + i * 3, 10, 1, '#d8e6dc'); R(x + 15, y + 3 + i * 3, 3, 1, CPC.gold); }
   }
@@ -5344,6 +5375,7 @@ function cpRender(cv){
   }
   function jar(x, y){ R(x, y - 6, 5, 6, '#cfeaf3'); R(x + 1, y - 4, 3, 3, ['#ff5c8a', '#ffd23f', '#5cd6ff'][(x >> 3) % 3]); R(x, y - 7, 5, 1, '#e0473f'); out(x, y - 7, 5, 7); }
   function fridge(x, foot){                                               // frigo vitré de boissons
+    spot('bounce', x - 1, foot - 22, 14, 23);
     shade(x - 1, foot, 14, 2, .3);
     R(x, foot - 22, 12, 22, '#d9dde3'); R(x + 1, foot - 21, 10, 18, '#9fd6ef');
     for(let row = 0; row < 3; row++) for(let k = 0; k < 3; k++) R(x + 2 + k * 3, foot - 19 + row * 6, 2, 4, ['#e0473f', '#2fb67c', '#f6d04a'][(row + k) % 3]);
@@ -5401,6 +5433,7 @@ function cpRender(cv){
           const cx = sx + (sw >> 1), y0 = F.y, y1 = F.y + F.h;
           for(let y = y0; y < y1; y++){ const w = Math.max(3, Math.round(sw * (1 - (y - y0) / (y1 - y0)) * .9)); R(cx - (w >> 1), y, w, 1, '#fff6d0'); }
           g.globalAlpha = 1;
+          spot('beam', cx - Math.round(sw * .45), y0, Math.round(sw * .9), y1 - y0);
         }else{ R(sx, sy, sw, sh, '#454b57'); R(sx, sy, sw, 1, '#5a616e'); }
       }
       const cx = F.x + (F.w >> 1);
@@ -5481,6 +5514,7 @@ function cpRender(cv){
     shade(F.x, F.y, F.w, 2, .28); shade(F.x, F.y + 2, F.w, 2, .16); shade(F.x, F.y + 4, F.w, 3, .07);   // pied du mur du fond
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.w)) shade(F.x, P.y + a, 2, b - a, .12);
     for(const [a, b] of pieces(F.y - P.y, F.y + F.h - P.y, doors.e)) shade(F.x + F.w - 2, P.y + a, 2, b - a, .08);
+    curRoom = r;
     wallDoors = doors.n.map(([a, b]) => [P.x + a, P.x + b]);
     (DECOR[r.type] || (() => {}))(z, r);
     for(const [a, b] of doors.n){
@@ -5584,6 +5618,7 @@ function cpRender(cv){
   }
   cpRooms.forEach((r, i) => r.built === false ? drawSite(r) : drawRoom(r, i));
   if(cpBuild && cpBuild.kind === 'box_office'){ const bo = cpRooms.find(r => r.type === 'box_office'); if(bo) siteOver(bo); }
+  cpBuildFx();                                              // ambiance du décor (néons, appliques, faisceaux)
 }
 // État du serveur → plan (redessiné seulement si les pièces ou la grille changent)
 function cinePlanSet(st){
@@ -5815,6 +5850,10 @@ function cineTap(clientX, clientY){
   const cx = Math.floor((clientX - b.left) / (b.width / cpGrid.cols)), cy = Math.floor((clientY - b.top) / (b.height / cpGrid.rows));
   if(cx < 0 || cy < 0 || cx >= cpGrid.cols || cy >= cpGrid.rows) return;
   const room = roomAt(cx, cy);
+  if(!arc && !ghost && !cineBuildMode && room && room.built !== false){
+    const sp = spotAt((clientX - b.left) / b.width * CPX.W, (clientY - b.top) / b.height * CPX.H);
+    if(sp){ playFx(sp); return; }
+  }
   if(arc){                                                               // mode Arcade : une case de sa salle, sinon on le ferme
     const ar = cineRoom(arc.id);
     if(ar && room && room.id === ar.id){ arcCell(ar, cx - ar.x, cy - ar.y); return; }
@@ -6047,7 +6086,7 @@ async function arcCell(r, x, y){
   if(m){
     buzz(6);
     if(arc.mode === 'move' && arc.sel === m.id){ arc.mode = 'idle'; arc.sel = null; }
-    else{ arc.mode = 'move'; arc.sel = m.id; }
+    else{ arc.mode = 'move'; arc.sel = m.id; fxMachine(r, m); }
     renderArcBar(); cpDrawOverlay(); return;
   }
   if(!arcFloor(r, x, y)){ cineTip('Les machines se posent sur le sol de la salle.'); return; }
@@ -6094,6 +6133,114 @@ function drawArcOverlay(g){
   }
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && arc && currentView === 'cinema') closeArcade(); });
+
+/* ---------- Décor vivant (J6) : purement visuel, aucune récompense ----------
+   Pendant le dessin du plan, les éléments de décor s'inscrivent dans cpSpots (rectangle en pixels de dessin, type, pièce).
+   Ambiance permanente dans #cpFx (dans la scène : suit glissement et zoom) : halo des néons qui grésille, appliques qui
+   respirent, faisceau du projecteur qui papillote ; animations CSS en opacity seulement, en pause hors de la page Cinéma.
+   Toucher un élément : machine à pop-corn qui éclate, caisse qui fait « Ka-ching ! », néon qui clignote, affiche qui
+   bouge, plante qui se balance… (Web Animations, transform + opacity). Rien avec prefers-reduced-motion. */
+const cpFx = $('#cpFx');
+const fxPos = (x, y, w, h) => `left:${x / CPX.W * 100}%;top:${y / CPX.H * 100}%;width:${w / CPX.W * 100}%;height:${h / CPX.H * 100}%`;
+function cpBuildFx(){
+  cpFx.innerHTML = cpSpots.map((s, i) => {
+    if(s.kind === 'neon') return `<i class="fx-neon" data-i="${i}" style="${fxPos(s.x, s.y, s.w, s.h)};--c:${s.color};animation-delay:-${(i * 2.3) % 7}s"></i>`;
+    if(s.kind === 'lamp') return `<i class="fx-lamp" style="${fxPos(s.x - 8, s.y - 7, s.w + 16, s.h + 14)};animation-delay:-${(i * 1.7) % 4}s"></i>`;
+    if(s.kind === 'beam') return `<i class="fx-beam" style="${fxPos(s.x, s.y, s.w, s.h)};animation-delay:-${(i * .9) % 2.6}s"></i>`;
+    return '';
+  }).join('');
+}
+// Élément de décor sous le doigt (le plus petit qui contient le point, en pixels de dessin)
+function spotAt(ax, ay){
+  let best = null;
+  for(const s of cpSpots){
+    if(s.kind === 'beam' || ax < s.x - 2 || ax > s.x + s.w + 2 || ay < s.y - 2 || ay > s.y + s.h + 2) continue;
+    if(!best || s.w * s.h < best.w * best.h) best = s;
+  }
+  return best;
+}
+// Copie d'un morceau du plan, posée exactement par-dessus, que l'on peut animer (affiche qui bouge, plante qui se balance…)
+function liftSprite(s, origin){
+  const c = document.createElement('canvas');
+  c.width = s.w; c.height = s.h; c.className = 'fx-sprite';
+  c.getContext('2d').drawImage(cpCanvas, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+  c.setAttribute('style', fxPos(s.x, s.y, s.w, s.h) + `;transform-origin:${origin}`);
+  cpFx.appendChild(c);
+  return c;
+}
+const fxPx = () => cpv.ds / cpv.dpr;                      // pixels CSS par pixel de dessin, au zoom actuel
+function fxBits(x, y, colors, n, {spread = 14, up = 26, size = 2} = {}){       // petits morceaux qui jaillissent puis retombent
+  const k = fxPx();
+  for(let i = 0; i < n; i++){
+    const b = document.createElement('i');
+    b.className = 'fx-bit';
+    b.setAttribute('style', fxPos(x - size / 2, y - size / 2, size, size) + `;background:${colors[i % colors.length]}`);
+    cpFx.appendChild(b);
+    const dx = (Math.random() * 2 - 1) * spread, dy = -(up * (.6 + Math.random() * .5));
+    play(b, [{transform:'translate(0,0)', opacity:1},
+             {transform:`translate(${dx * .6 * k}px,${dy * k}px)`, opacity:1, offset:.45},
+             {transform:`translate(${dx * k}px,${(dy + up * .9) * k}px)`, opacity:0}],
+         {duration:700 + Math.random() * 400, easing:'cubic-bezier(.25,.7,.45,1)', delay:i * 18}).then(() => b.remove());
+  }
+}
+function fxSay(text, x, y){                                // bulle qui monte (« Ka-ching ! »)
+  const el = document.createElement('div');
+  el.className = 'fx-say'; el.textContent = text;
+  el.setAttribute('style', `left:${x / CPX.W * 100}%;top:${y / CPX.H * 100}%`);
+  cpFx.appendChild(el);
+  play(el, [{transform:'translate(-50%,-50%) scale(.6)', opacity:0}, {transform:'translate(-50%,-110%) scale(1.05)', opacity:1, offset:.3},
+            {transform:'translate(-50%,-140%) scale(1)', opacity:1, offset:.7}, {transform:'translate(-50%,-180%) scale(1)', opacity:0}],
+       {duration:1300, easing:'cubic-bezier(.2,.8,.3,1)'}).then(() => el.remove());
+}
+function playFx(s){
+  buzz(s.kind === 'register' ? [8, 40, 8] : 6);
+  if(RM) return;
+  const cx = s.x + s.w / 2;
+  if(s.kind === 'popcorn'){                                 // la machine tressaute et le pop-corn éclate par le haut
+    const sp = liftSprite(s, '50% 100%');
+    play(sp, [{transform:'scale(1,1)'}, {transform:'scale(1.06,.92)', offset:.2}, {transform:'scale(.96,1.06)', offset:.45}, {transform:'scale(1,1)'}],
+         {duration:450}).then(() => sp.remove());
+    fxBits(cx, s.y + 4, ['#fff2b0', '#f6d04a', '#ffffff', '#ffe58a'], 16, {spread:16, up:30, size:3});
+  }else if(s.kind === 'register'){                          // la caisse sonne : bulle, pièces qui sautent, comptoir qui vibre
+    const sp = liftSprite(s, '50% 100%');
+    play(sp, [{transform:'translateX(0)'}, {transform:'translateX(-1.5%)', offset:.15}, {transform:'translateX(1.5%)', offset:.3},
+              {transform:'translateX(-1%)', offset:.45}, {transform:'translateX(0)'}], {duration:420}).then(() => sp.remove());
+    fxSay('Ka-ching !', s.x + 26, s.y + 2);
+    fxBits(s.x + 26, s.y + 6, ['#f6c453', '#ffe9a8', '#c98a12'], 8, {spread:12, up:22, size:3});
+  }else if(s.kind === 'candy'){                             // bonbons et pop-corn qui sautent du comptoir
+    fxBits(cx, s.y + 6, ['#ff5c8a', '#ffd23f', '#5cd6ff', '#fff2b0', '#8af5b9'], 14, {spread:20, up:24, size:2});
+  }else if(s.kind === 'neon'){                              // le néon s'éteint et se rallume en grésillant
+    const el = document.createElement('i');
+    el.className = 'fx-off'; el.setAttribute('style', fxPos(s.x + 3, s.y + 3, s.w - 6, s.h - 6));
+    cpFx.appendChild(el);
+    play(el, [{opacity:0}, {opacity:.88, offset:.08}, {opacity:0, offset:.16}, {opacity:.88, offset:.3}, {opacity:.88, offset:.55},
+              {opacity:.2, offset:.62}, {opacity:.88, offset:.7}, {opacity:0}], {duration:1100, easing:'steps(1)'}).then(() => el.remove());
+  }else if(s.kind === 'poster' || s.kind === 'board'){      // l'affiche, accrochée par le haut, se balance un peu
+    const sp = liftSprite(s, '50% 0%');
+    play(sp, [{transform:'rotate(0)'}, {transform:'rotate(-5deg)', offset:.2}, {transform:'rotate(4deg)', offset:.45},
+              {transform:'rotate(-2deg)', offset:.7}, {transform:'rotate(0)'}], {duration:900, easing:'ease-out'}).then(() => sp.remove());
+  }else if(s.kind === 'plant'){                             // la plante se balance depuis son pot
+    const sp = liftSprite(s, '50% 100%');
+    play(sp, [{transform:'rotate(0)'}, {transform:'rotate(7deg)', offset:.2}, {transform:'rotate(-6deg)', offset:.45},
+              {transform:'rotate(3deg)', offset:.7}, {transform:'rotate(0)'}], {duration:1000, easing:'ease-out'}).then(() => sp.remove());
+  }else if(s.kind === 'lamp'){                              // l'applique grésille
+    const el = document.createElement('i');
+    el.className = 'fx-flash'; el.setAttribute('style', fxPos(s.x - 10, s.y - 9, s.w + 20, s.h + 18));
+    cpFx.appendChild(el);
+    play(el, [{opacity:0}, {opacity:1, offset:.1}, {opacity:.2, offset:.25}, {opacity:1, offset:.4}, {opacity:0}], {duration:800}).then(() => el.remove());
+  }else{                                                    // frigo, bocal… : petit sursaut
+    const sp = liftSprite(s, '50% 100%');
+    play(sp, [{transform:'translateY(0)'}, {transform:'translateY(-8%)', offset:.3}, {transform:'translateY(0)', offset:.6},
+              {transform:'translateY(-3%)', offset:.8}, {transform:'translateY(0)'}], {duration:500}).then(() => sp.remove());
+  }
+}
+// Borne d'arcade choisie (mode Arcade) : petit sursaut
+function fxMachine(r, m){
+  if(RM) return;
+  const T = CPX.T, sp = liftSprite({x:(r.x + m.x) * T + 2, y:(r.y + m.y) * T + T - 1 - 24, w:12, h:24}, '50% 100%');
+  play(sp, [{transform:'translateY(0)'}, {transform:'translateY(-12%)', offset:.35}, {transform:'translateY(0)', offset:.7},
+            {transform:'translateY(-4%)', offset:.85}, {transform:'translateY(0)'}], {duration:450}).then(() => sp.remove());
+}
 
 /* =====================================================================
    17. DÉMARRAGE : session (anonyme la 1re fois), état du joueur et collection, puis le jeu s'affiche

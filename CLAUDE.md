@@ -243,6 +243,18 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      libres du sol marquées → `cine_buy_machine` ; toucher une borne → la choisir (cadre doré) → case libre →
      `cine_move_machine`) ; toilettes, boutique, couloir, guichet, hall → bulle avec leur rôle / bonus. « Gérer » sur
      l'arcade dans Mes pièces. Les décors purement visuels (pop-corn qui éclate, caisse qui sonne…) viennent en J6.
+   - **J6** (à tester) : décor vivant, purement visuel (aucune récompense, aucun appel au serveur). Pendant le dessin, les
+     éléments s'inscrivent dans `cpSpots` ({kind, x, y, w, h, room, color}, pixels de dessin ; `spot()` dans les fonctions
+     de décor, `curRoom` = pièce en cours). Calque `#cpFx` dans la scène : ambiance reconstruite à chaque dessin
+     (`cpBuildFx`) — halo des néons qui grésille (`fx-flicker`), appliques qui respirent, faisceau du projecteur qui
+     papillote — en CSS opacity seulement, en pause hors de la page Cinéma, coupée avec prefers-reduced-motion. Toucher un
+     élément d'une pièce construite (hors construction et mode Arcade ; `spotAt` = le plus petit sous le doigt) → `playFx` :
+     pop-corn qui éclate (`fxBits`), caisse du guichet « Ka-ching ! » (`fxSay` + pièces + comptoir qui vibre ; pas de son,
+     le jeu n'a pas d'audio), bonbons de la boutique, néon qui s'éteint et se rallume (cache sombre), affiche / tableau qui
+     se balancent et plante qui ondule (`liftSprite` : copie du morceau de plan animée par-dessus), applique qui grésille,
+     frigo qui sursaute ; borne choisie dans le mode Arcade qui sursaute (`fxMachine`). Web Animations transform + opacity,
+     éléments retirés à la fin. Toucher ailleurs dans la pièce garde son rôle (film, arcade, bulle).
+   - **Reste à faire avant la fusion dans main** : migration de nettoyage de l'ancien modèle (voir J1), avec confirmation.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.
