@@ -115,6 +115,7 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
 
 5. **Mode Cinéma** (jeu de gestion idle), découpé en C0 → C5, chaque étape testée avant commit :
    - C0 (validé) : modèle de données et équilibrage ci-dessous.
+   - *C1 à C6 décrivent l'ancien modèle par niveaux, remplacé par le § 6 (supprimé par `20261126120000_cinema_cleanup.sql`).*
    - **C1** (appliqué, testé) : `20261104140000_cinema.sql`. Équilibrage dans `cinema_levels` (coût, durée, revenu, bonus,
      salles requises par niveau de `screen`/`arcade`/`box_office`/`popcorn`/`vip`/`sound`), `cinema_params` (`cap_hours` 12,
      `empty_mult` 0,25, `gem_minutes` 10) et `cinema_rarity` (multiplicateurs) : lus par le client, modifiables sans migration.
@@ -254,7 +255,12 @@ Objectif : comptes Supabase, tirage et économie côté serveur, client en lectu
      se balancent et plante qui ondule (`liftSprite` : copie du morceau de plan animée par-dessus), applique qui grésille,
      frigo qui sursaute ; borne choisie dans le mode Arcade qui sursaute (`fxMachine`). Web Animations transform + opacity,
      éléments retirés à la fin. Toucher ailleurs dans la pièce garde son rôle (film, arcade, bulle).
-   - **Reste à faire avant la fusion dans main** : migration de nettoyage de l'ancien modèle (voir J1), avec confirmation.
+   - **Nettoyage** (préparé, testé, PAS encore appliqué) : `20261126120000_cinema_cleanup.sql`. Vérifie que `cine_*` existe,
+     verse la caisse de chaque ancien cinéma en Billets (`_cinema_settle` puis `floor(banked)`), supprime les 19 fonctions
+     et les 5 tables de l'ancien modèle ; garde `cinema_rarity` et `profiles.tickets`. Ordre : fusion de `cinema-jeu` dans
+     main + push, attendre que Vercel serve le nouveau client, PUIS `db push` (le nouveau client n'utilise plus l'ancien
+     modèle ; l'ancien client casserait si on nettoyait avant). Irréversible : confirmation de l'utilisateur obligatoire.
+     `supabase/tests/cinema.sql` (tests de l'ancien modèle) retiré ; le test 11b de `cinema_rooms.mjs` vérifie le nettoyage.
 
 ### Décisions
 - Collections localStorage existantes : on repart de zéro, pas d'import.

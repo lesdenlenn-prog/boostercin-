@@ -3,6 +3,7 @@
 // Aucun secret affiché (SUPABASE_DB_URL lue dans .env). Nécessite le paquet `pg` (npm i pg, hors du dépôt).
 // usage : node supabase/tests/cinema_rooms.mjs .env <migration.sql | ->
 //   avec une migration : l'exécute d'abord dans la transaction (test avant db push) ; « - » : schéma déjà appliqué.
+//   Le test 11b suppose le nettoyage de l'ancien modèle (20261126120000_cinema_cleanup.sql) appliqué.
 import fs from 'node:fs';
 import pg from 'pg';
 const env = Object.fromEntries(fs.readFileSync(process.argv[2], 'utf8').split(/\r?\n/)
@@ -141,8 +142,9 @@ try {
   const before = r.tickets;
   r = await as('cine_admin_reset');
   check('11a. remise à la base : 2 pièces, billets conservés', r.rooms.length === 2 && r.tickets === before && offer(r, 'projection', 'S').cost === 0, JSON.stringify(r).slice(0, 200));
-  r = await as('get_cinema_state');
-  check('11b. ancien get_cinema_state toujours fonctionnel', !r.error && Array.isArray(r.screens), JSON.stringify(r).slice(0, 120));
+  r = (await sql(`select to_regclass('public.cinemas') is null and to_regproc('public.get_cinema_state') is null
+                         and to_regclass('public.cinema_rarity') is not null as ok`)).rows[0];
+  check('11b. ancien modèle supprimé (cinemas, get_cinema_state…), cinema_rarity conservée', r.ok, JSON.stringify(r));
   await sql('savepoint z');
   await sql(`select set_config('request.jwt.claims', '{"role":"authenticated"}', true)`);
   await sql('set local role authenticated');
